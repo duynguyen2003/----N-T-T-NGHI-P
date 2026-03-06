@@ -1,0 +1,53 @@
+/* =========================================
+   LESSON PAGE
+   ========================================= */
+.lesson-layout {
+    display: flex;
+    height: 100vh;
+    background: var(--slate-100);
+    overflow: hidden;
+}
+
+.lesson-sidebar {
+    width: 300px;
+    background: white;
+    border-right: 1px solid var(--slate-200);
+    overflow-y: auto;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+}
+
+.lesson-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    position: relative;
+}
+
+.lesson-main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background: var(--slate-50);
+}
+
+.video-placeholder {
+    aspect-ratio: 16/9;
+    background: var(--navy-900);
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+.video-placeholder:hover {
+    transform: scale(1.01);
+    transition: transform 0.2s;
+}

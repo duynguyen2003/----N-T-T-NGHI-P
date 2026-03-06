@@ -1,0 +1,202 @@
+/* =========================================
+    TOP HEADER STYLES
+    ========================================= */
+.top-header {
+    height: 70px;
+    background-color: white;
+    border-bottom: 1px solid var(--slate-200);
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.top-header-container {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+.top-header-left {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    margin-bottom: 0;
+    margin-left: 0;
+}
+
+.logo-icon {
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+}
+
+.logo-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.01em;
+}
+
+/* Search Bar */
+.top-header-center {
+    flex: 1;
+    max-width: 600px;
+    margin: 0 16px;
+
+}
+
+.search-bar-container {
+    position: relative;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 14px 10px 44px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 99px;
+    font-size: 14px;
+    color: var(--navy-800);
+    transition: all 0.2s;
+    outline: none;
+}
+
+.search-input:focus {
+    background-color: white;
+    border-color: var(--blue-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Right Section Actions */
+.top-header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.my-courses-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #475569;
+    transition: color 0.2s;
+    text-decoration: none;
+}
+
+.my-courses-text:hover {
+    color: var(--blue-primary);
+}
+
+.top-action-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    position: relative;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.top-action-btn:hover {
+    color: var(--navy-900);
+}
+
+.btn-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444;
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
+.top-user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.top-avatar {
+    width: 38px;
+    height: 38px;
+    background-color: #f1f5f9;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s;
+}
+
+.top-avatar:hover {
+    border-color: var(--blue-primary);
+    background-color: #eef2ff;
+    color: var(--blue-primary);
+}
+
+/* RESPONSIVE TOP HEADER */
+@media (max-width: 768px) {
+    .top-header {
+        padding: 0 16px;
+        height: 60px;
+        padding-left: 60px;
+        /* Space for drawer toggle */
+    }
+
+    .top-header-left {
+        display: none;
+    }
+
+    .top-header-center {
+        margin: 0 10px;
+    }
+
+    .search-input {
+        padding: 8px 12px 8px 36px;
+        font-size: 13px;
+    }
+
+    .search-icon {
+        left: 10px;
+        width: 16px;
+        height: 16px;
+    }
+
+    .my-courses-text {
+        display: none;
+    }
+
+    .top-header-right {
+        gap: 12px;
+    }
+}
