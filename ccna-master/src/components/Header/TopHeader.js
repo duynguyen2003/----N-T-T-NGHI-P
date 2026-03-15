@@ -6,7 +6,7 @@ const TopHeader = () => {
     return (
         <header className="top-header">
             <div className="top-header-container">
-          <Link to="/" className="logo">
+          <Link to="/" className="loo">
           <div className="logo-icon">
             <RouterIcon size={24} color="white" />
           </div>
