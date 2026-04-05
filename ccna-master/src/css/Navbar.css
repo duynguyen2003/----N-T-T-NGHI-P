@@ -14,7 +14,6 @@
     flex-direction: column;
     min-width: 0;
     position: relative;
-    padding-left: 100px;
     /* New Sidebar width */
     transition: padding 0.3s ease;
 }
@@ -26,8 +25,8 @@
 
 /* --- Icon-Grid Sidebar Styles --- */
 .navbar {
-    position: fixed;
-    top: 15%;
+ position: fixed;
+    top: 10%;
     left: 0;
     z-index: 1000;
     background-color: #ffff;
@@ -37,24 +36,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 20px;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow-y: auto;
-    overflow-x: hidden;
-}
-
-/* Custom Scrollbar */
-.navbar::-webkit-scrollbar {
-    width: 4px;
-}
-
-.navbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.navbar::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 10px;
 }
 
 .nav-container {

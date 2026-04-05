@@ -11,10 +11,10 @@ import { A1, A2 } from '../../image';
 const bannerImages = [A1, A2];
 
 const statsData = [
-  { number: "120+", label: "Giờ học Video" },
-  { number: "50+", label: "Bài Lab Thực Hành" },
-  { number: "1000+", label: "Câu hỏi ôn thi" },
-  { number: "24/7", label: "Hỗ trợ cộng đồng" },
+  { number: "120+", label: "Giờ học Video", icon: PlayCircle },
+  { number: "50+", label: "Bài Lab Thực Hành", icon: Server },
+  { number: "1000+", label: "Câu hỏi ôn thi", icon: Layers },
+  { number: "24/7", label: "Hỗ trợ cộng đồng", icon: Globe },
 ];
 
 const courses = [
@@ -85,10 +85,15 @@ const FeatureCard = ({ icon: Icon, title, desc, to }) => (
   </Link>
 );
 
-const StatCard = ({ number, label }) => (
+const StatCard = ({ number, label, icon: Icon }) => (
   <div className="stat-card">
-    <span className="stat-number">{number}</span>
-    <span className="stat-label">{label}</span>
+    <div className="stat-icon-box">
+      {Icon ? <Icon className="stat-icon" /> : null}
+    </div>
+    <div className="stat-text">
+      <span className="stat-number">{number}</span>
+      <span className="stat-label">{label}</span>
+    </div>
   </div>
 );
 
