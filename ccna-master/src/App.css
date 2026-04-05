@@ -1,7 +1,15 @@
-/* =========================================
-   1. VARIABLES & RESET
-   ========================================= */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
 :root {
+  --primary-color: #007AFF;
+  --bg-color: #F8FAFC;
+  --text-color: #0f172a;
+  --card-bg: #ffffff;
+  --border-color: #e2e8f0;
+  --text-muted: #64748b;
+  --hover-bg: #f1f5f9;
+  --header-height: 64px;
   /* Global Colors */
   --navy-50: #E7E9EF;
   --navy-100: #C2C9D6;
@@ -28,7 +36,7 @@
   --slate-900: #0f172a;
 
   --white: #ffffff;
-    --system-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --system-ui: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   /* Exam Specific Variables */
   --primary: #2563eb;
   --primary-light: #eff6ff;
@@ -42,20 +50,17 @@
 }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: var(--system-ui);
-  -webkit-font-smoothing: antialiased; /* Giúp chữ hiển thị mịn màng hơn trên màn hình */
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--slate-50);
-  color: var(--navy-800);
-  -webkit-font-smoothing: antialiased;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s, color 0.3s;
+
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  min-height: 100vh;
 }
 
 /* Buttons */
@@ -96,16 +101,6 @@ body {
 }
 
 /* Badges */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
 .badge-blue {
   background: #dbeafe;
   color: #1e40af;

@@ -4,44 +4,39 @@ import { Search, Bell, User, Router as RouterIcon } from 'lucide-react';
 
 const TopHeader = () => {
     return (
-        <header className="top-header">
-            <div className="top-header-container">
-          <Link to="/" className="logo">
-          <div className="logo-icon">
-            <RouterIcon size={24} color="white" />
-          </div>
-          <span className="logo-text notranslate">NetMastery</span>
-        </Link>
-
-                {/* Center: Search Bar */}
-                <div className="top-header-center">
-                    <div className="search-bar-container">
-                        <Search size={18} className="search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Tìm kiếm khóa học, bài viết, video, ..."
-                            className="search-input "
-                        />
-                    </div>
+        <header className="header">
+            <Link to="/" className="header-left" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className="logo-icon">
+                    <span className="material-icons-round">router</span>
                 </div>
-
-                {/* Right: Actions & Profile */}
-                <div className="top-header-right">
-                    <Link to="/my-courses" className="my-courses-text">
-                        Khóa học của tôi
-                    </Link>
-
-                    <button className="top-action-btn" title="Thông báo">
-                        <Bell size={20} />
-                        <span className="btn-badge"></span>
-                    </button>
-
-                    <Link to="/profile" className="top-user-profile">
-                        <div className="top-avatar">
-                            <User size={18} />
-                        </div>
-                    </Link>
+                <div className="logo-text">
+                    <span className="logo-title">NetMastery</span>
+                    <span className="logo-subtitle">HỌC MẠNG ĐỂ ĐI LÀM</span>
                 </div>
+            </Link>
+
+            <div className="header-center">
+                <div className="search-box">
+                    <span className="material-icons-round search-icon">search</span>
+                    <input
+                        className="search-input"
+                        placeholder="Tìm kiếm khóa học..."
+                        type="text"
+                    />
+                </div>
+            </div>
+
+            <div className="header-right">
+                <a className="nav-link" href="#courses">Khóa học của tôi</a>
+                <button className="icon-btn">
+                    <span className="material-icons-round">notifications</span>
+                    <span className="badge"></span>
+                </button>
+                <img
+                    alt="User avatar"
+                    className="avatar"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg_zrRPJPMXRzm3ElxM9kgg7g6Sg-4ksF4aQtrojscWj216aqIWKJnHtSKkdXA0VPQtSzUg9bCHGMs4CZgMjkQIWS8u3qYNfs5hRhvPqTliuV2JlIeD5bLXfOXIIfzGVZjWFKykKKjkdpV2LatnBM7GfVZcUZErssjUFtqwhop_0rlhiaU_jn-uJ4MjDc3_f6vDiLP0A36dUsNcs7NaPUu-SSGZ0WuXTnDHVlCkqh3yPdG-GSYYl84u7YiEeMtAg3vXDQtgRvsMik"
+                />
             </div>
         </header>
     );

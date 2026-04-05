@@ -14,6 +14,7 @@ import './css/Labs.css';
 import './css/Exam.css';
 import './css/Doc.css';
 import './css/Profile.css';
+import './css/Footer.css';
 
 // Import Layout (Chứa Header và Footer)
 import Layout from './components/Content/Layout';

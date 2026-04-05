@@ -19,15 +19,20 @@ const Layout = ({ children }) => {
       {/* Overlay to close drawer when clicking outside */}
       {isDrawerOpen && <div className="drawer-overlay" onClick={toggleDrawer}></div>}
 
-      <Navbar isOpen={isDrawerOpen} closeMenu={() => setIsDrawerOpen(false)} />
+      <TopHeader />
+      <div className="layout-body">
+        <Navbar isOpen={isDrawerOpen} closeMenu={() => setIsDrawerOpen(false)} />
 
-      <div className="main-wrapper">
-        <TopHeader />
-        <main className="main-content">
-          {children}
-        </main>
-        <Footer />
+        <div className="main-wrapper">
+          <main className="main-content">
+            {children}
+          </main>
+        </div>
       </div>
+
+      {/* Footer nằm ngoài layout-body để span toàn bộ chiều rộng,
+          kể cả phần sidebar, không bị navbar che */}
+      <Footer />
     </div>
   );
 };

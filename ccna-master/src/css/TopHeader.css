@@ -1,194 +1,147 @@
-/* =========================================
-    TOP HEADER STYLES
-    ========================================= */
-.top-header {
-  width: 100%;
-  height: 65px; /* Độ cao chuẩn cho header */
-  background-color: #ffffff;
-  border-bottom: 1px solid #eaedf1; /* Đường viền mỏng ở dưới */
+/* Header */
+.header {
+  height: var(--header-height);
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   position: sticky;
   top: 0;
   z-index: 50;
 }
 
-.top-header-container {
-    display: flex;
-  justify-content: space-between; /* Đẩy 3 khối (Trái, Giữa, Phải) ra xa nhau */
-  align-items: center; /* Căn giữa tất cả theo chiều dọc */
-  height: 100%;
-  padding: 0 32px; /* Khoảng cách lề 2 bên */
-}
-
-.top-header-left {
-    display: none;
-    /* Hidden on Desktop because Sidebar Logo is present */
-}
-
-.logo {
+.header-left {
   display: flex;
-  align-items: center; /* Ép cái hộp icon và chữ nằm ngang hàng nhau */
-  gap: 12px; /* Khoảng cách giữa hộp icon và chữ */
-  text-decoration: none; /* Bỏ gạch chân của thẻ Link */
+  align-items: center;
+  gap: 12px;
+  width: 25%;
 }
 
 .logo-icon {
-  width: 44px;
-  height: 44px;
-  background-color: #007bff; /* Màu nền xanh cho hộp chứa icon */
-  border-radius: 12px; /* Bo góc cái hộp */
+  width: 36px;
+  height: 36px;
+  background-color: var(--primary-color);
+  border-radius: 8px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  /* Icon bên trong đã được set color="white" trong JS nên sẽ tự nổi bật */
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 122, 255, 0.2);
 }
 
 .logo-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: #000000; /* Màu chữ đen đậm */
+  display: flex;
+  flex-direction: column;
 }
 
-/* Search Bar */
-/*========================================= */
-.top-header-center {
-  flex: 1; /* Chiếm toàn bộ khoảng trống ở giữa */
-  display: flex;
-  justify-content: center; /* Căn giữa ô search */
-  padding: 0 40px; /* Tránh ô search ép sát vào 2 bên */
+.logo-title {
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.2;
 }
 
-.search-bar-container {
-  display: flex;
-  align-items: center;
-  width: 420px;
-  max-width: 100%; /* Độ rộng tối đa của ô search */
-  height: 40px;
-  background-color: #f4f6f9; /* Nền ô search xám nhạt */
-  border: 2px solid rgb(232, 232, 232);
-  border-radius: 24px; /* Bo tròn ô search */
-  padding: 0 16px 0 8px;
-  gap: 10px; /* Khoảng cách giữa kính lúp và chữ */
-  transition: border-color .2s ease-in-out;
+.logo-subtitle {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
-.search-bar-container:focus-within {
-  border-color: #007bff;
-  background-color: #ffffff;
+
+/* Search */
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.search-box {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
 }
 
 .search-icon {
-  color: #888; /* Màu icon kính lúp */
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 18px;
 }
+
 .search-input {
-   flex: 1; /* Input giãn hết cỡ trong hộp chứa */
-  border: none;
-  background: transparent;
-  outline: none; /* Xóa viền mặc định của trình duyệt */
+  width: 100%;
+  padding: 8px 16px 8px 40px;
+  background-color: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
   font-size: 14px;
-  color: #333;
+  color: var(--text-color);
+  outline: none;
+  transition: all 0.2s;
 }
-.search-input::placeholder {
-  color: #888;
+
+.search-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
 }
 
-
-
-/* Right Section Actions */
-.top-header-right {
+/* Header Actions */
+.header-right {
   display: flex;
   align-items: center;
-  gap: 24px; /* Khoảng cách đều giữa Khóa học, Chuông và Avatar */
+  justify-content: flex-end;
+  gap: 20px;
+  width: 25%;
 }
 
-.my-courses-text {
+.nav-link {
   font-size: 14px;
   font-weight: 600;
-  color: #333333;
+  color: var(--text-color);
   text-decoration: none;
   transition: color 0.2s;
 }
 
-.my-courses-text:hover {
-  color: #007bff; /* Trỏ chuột vào đổi màu xanh */
+.nav-link:hover {
+  color: var(--primary-color);
 }
 
-/* Nút thông báo */
-.top-action-btn {
-  position: relative; /* Để neo cái chấm đỏ bên trong */
+.icon-btn {
+  position: relative;
   background: none;
   border: none;
-  padding: 0;
+  color: var(--text-muted);
   cursor: pointer;
-  color: #64748b; /* Màu icon chuông */
-  display: flex;
-}
-
-/* Chấm đỏ thông báo */
-.btn-badge {
-  position: absolute;
-  top: -2px;
-  right: -2px;
-  width: 8px;
-  height: 8px;
-  background-color: #ef4444; /* Màu đỏ */
+  padding: 8px;
   border-radius: 50%;
-  border: 2px solid #ffffff; /* Viền trắng để phân tách với chuông */
-}
-
-/* Avatar User */
-.top-user-profile {
-  text-decoration: none;
-}
-
-.top-avatar {
-  width: 40px;
-  height: 40px;
-  background-color: #f4f6f9; /* Nền xám nhạt cho avatar */
-  border-radius: 50%; /* Tròn xoe */
   display: flex;
-  justify-content: center;
   align-items: center;
-  color: #64748b;
-  cursor: pointer;
   transition: background-color 0.2s;
 }
 
-.top-avatar:hover {
-  background-color: #e2e8f0;
+.icon-btn:hover {
+  background-color: var(--hover-bg);
 }
 
-/* RESPONSIVE TOP HEADER */
-@media (max-width: 768px) {
-    .top-header {
-        padding: 0 16px;
-        height: 60px;
-        padding-left: 60px;
-        /* Space for drawer toggle */
-    }
+.badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  background-color: #ef4444;
+  border-radius: 50%;
+  border: 2px solid var(--card-bg);
+}
 
-    .top-header-left {
-        display: none;
-    }
-
-    .top-header-center {
-        margin: 0 10px;
-    }
-
-    .search-input {
-        padding: 8px 12px 8px 36px;
-        font-size: 13px;
-    }
-
-    .search-icon {
-        left: 10px;
-        width: 16px;
-        height: 16px;
-    }
-
-    .my-courses-text {
-        display: none;
-    }
-
-    .top-header-right {
-        gap: 12px;
-    }
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--border-color);
 }

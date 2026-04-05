@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Server, Shield, Cpu, PlayCircle, ChevronLeft, ChevronRight, Globe, Layers } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Globe, Layers, Cpu } from 'lucide-react';
 import { A1, A2 } from '../../image';
 
 
@@ -9,13 +9,6 @@ import { A1, A2 } from '../../image';
 ================================= */
 
 const bannerImages = [A1, A2];
-
-const statsData = [
-  { number: "120+", label: "Giờ học Video", icon: PlayCircle },
-  { number: "50+", label: "Bài Lab Thực Hành", icon: Server },
-  { number: "1000+", label: "Câu hỏi ôn thi", icon: Layers },
-  { number: "24/7", label: "Hỗ trợ cộng đồng", icon: Globe },
-];
 
 const courses = [
   {
@@ -43,59 +36,140 @@ const courses = [
 
 const features = [
   {
-    icon: Server,
-    title: "Phòng Lab Ảo",
-    desc: "Thực hành Topology Packet Tracer từng bước.",
-    to: "/labs",
+    materialIcon: "calculate",
+    title: "Trình tính toán Subnet",
+    desc: "Phân chia dải mạng, tính toán host và broadcast nhanh chóng.",
+    to: "/tools/subnet",
   },
   {
-    icon: Shield,
-    title: "Thi Thử Real-time",
-    desc: "Mô phỏng áp lực phòng thi thật.",
-    to: "/exam",
+    materialIcon: "functions",
+    title: "Tính toán Wildcard Mask",
+    desc: "Chuyển đổi Subnet Mask sang Wildcard Mask cho ACL và OSPF.",
+    to: "/tools/wildcard",
   },
   {
-    icon: PlayCircle,
-    title: "Video Chất Lượng",
-    desc: "Giải thích trực quan bằng sơ đồ mạng.",
-    to: "/lesson",
+    materialIcon: "terminal",
+    title: "Tra cứu Cisco CLI",
+    desc: "Từ điển lệnh IOS đầy đủ cho Router và Switch.",
+    to: "/tools/cli",
   },
   {
-    icon: Cpu,
-    title: "Tài Nguyên Số",
-    desc: "Ebook, Slide, Cheat Sheet miễn phí.",
-    to: "/resources",
+    materialIcon: "format_list_bulleted",
+    title: "Tra cứu Port & Giao thức",
+    desc: "Danh sách các cổng dịch vụ phổ biến (HTTP, SSH, Telnet...).",
+    to: "/tools/ports",
   },
 ];
+
+/* ===============================
+   HOOKS
+ ================================= */
+
+/**
+ * Counts from 0 → target over `duration` ms, then resets and repeats every `interval` ms.
+ */
+const useCountUp = (target, duration = 1500, interval = 3000) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let frameId;
+    let startTime = null;
+
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out quad
+      const eased = 1 - (1 - progress) * (1 - progress);
+      setCount(Math.floor(eased * target));
+
+      if (progress < 1) {
+        frameId = requestAnimationFrame(animate);
+      }
+    };
+
+    frameId = requestAnimationFrame(animate);
+
+    // reset & repeat every `interval` ms
+    const repeater = setInterval(() => {
+      startTime = null;
+      cancelAnimationFrame(frameId);
+      setCount(0);
+      frameId = requestAnimationFrame(animate);
+    }, interval);
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearInterval(repeater);
+    };
+  }, [target, duration, interval]);
+
+  return count;
+};
 
 /* ===============================
    REUSABLE COMPONENTS
  ================================= */
 
-const FeatureCard = ({ icon: Icon, title, desc, to }) => (
+const FeatureCard = ({ materialIcon, title, desc, to }) => (
   <Link to={to} className="feat-card">
     <div className="feat-icon-box">
-      <Icon className="feat-icon" />
+      <span className="material-icons-round feat-icon">{materialIcon}</span>
     </div>
     <h3 className="feat-title">{title}</h3>
     <p className="feat-desc">{desc}</p>
-    <span className="feat-link">
-      Khám phá <ArrowRight size={16} />
-    </span>
   </Link>
 );
 
-const StatCard = ({ number, label, icon: Icon }) => (
-  <div className="stat-card">
-    <div className="stat-icon-box">
-      {Icon ? <Icon className="stat-icon" /> : null}
-    </div>
-    <div className="stat-text">
-      <span className="stat-number">{number}</span>
-      <span className="stat-label">{label}</span>
-    </div>
-  </div>
-);
+const StatsSection = () => {
+  const count120 = useCountUp(120);
+  const count50 = useCountUp(50);
+  const count1000 = useCountUp(1000);
+
+  return (
+    <section className="stats-grid">
+      <div className="stat-card">
+        <div className="stat-icon icon-blue">
+          <span className="material-icons-round">play_circle</span>
+        </div>
+        <div className="stat-info">
+          <h3>{count120}+</h3>
+          <p>Giờ học video</p>
+        </div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon icon-indigo">
+          <span className="material-icons-round">terminal</span>
+        </div>
+        <div className="stat-info">
+          <h3>{count50}+</h3>
+          <p>Bài lab thực hành</p>
+        </div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon icon-purple">
+          <span className="material-icons-round">fact_check</span>
+        </div>
+        <div className="stat-info">
+          <h3>{count1000}+</h3>
+          <p>Câu hỏi ôn thi</p>
+        </div>
+      </div>
+      <div className="stat-card">
+        <div className="stat-icon icon-emerald">
+          <span className="material-icons-round">support_agent</span>
+        </div>
+        <div className="stat-info">
+          <div className="stat-value-row">
+            <h3>24/7</h3>
+            <span className="online-dot" title="Đang online"></span>
+          </div>
+          <p>Hỗ trợ cộng đồng</p>
+        </div>
+      </div>
+    </section>
+  );
+};
 
 /* ===============================
    MAIN COMPONENT
@@ -167,13 +241,7 @@ export const Home = () => {
       </section>
 
       {/* ================= Stats ================= */}
-      <section className="stats-banner">
-        <div className="stats-grid">
-          {statsData.map((stat, i) => (
-            <StatCard key={i} {...stat} />
-          ))}
-        </div>
-      </section>
+      <StatsSection />
 
       {/* ================= Curriculum ================= */}
       <section className="curriculum">
@@ -210,6 +278,7 @@ export const Home = () => {
       <section className="features">
         <div className="section-header">
           <h2 className="section-title">Công cụ hỗ trợ học tập</h2>
+          <p>Các tiện ích giúp bạn tối ưu hóa quá trình học tập và thực hành mạng.</p>
         </div>
 
         <div className="features-grid">

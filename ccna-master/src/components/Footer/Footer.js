@@ -1,259 +1,88 @@
-import React from "react";
-import {
-  Router as RouterIcon,
-  Facebook,
-  Youtube,
-  Linkedin,
-} from "lucide-react";
+import React from 'react';
+import { Link } from 'react-router-dom';
+import '../../css/Footer.css';
+
+const COL_COURSES = [
+  { label: 'Mạng căn bản (Network Fundamentals)', to: '/roadmap' },
+  { label: 'Định tuyến & Chuyển mạch (Routing & Switching)', to: '/lesson' },
+  { label: 'Bảo mật mạng (Security)', to: '/lesson' },
+  { label: 'Tự động hóa mạng (Automation)', to: '/lesson' },
+];
+
+const COL_RESOURCES = [
+  { label: 'Làm đề thi thử (Mock Exams)', to: '/exam' },
+  { label: 'Bài tập Packet Tracer Labs', to: '/labs' },
+  { label: 'Công cụ Subnetting Calculator', to: '/tools/subnet' },
+  { label: 'Lộ trình học tập', to: '/roadmap' },
+];
+
+const COL_ABOUT = [
+  { label: 'Giới thiệu đồ án tốt nghiệp', to: '/' },
+  { label: 'Câu hỏi thường gặp (FAQ)', to: '/' },
+  { label: 'Điều khoản sử dụng', to: '/' },
+  { label: 'Chính sách bảo mật', to: '/' },
+];
+
+const NavColumn = ({ title, links }) => (
+  <div className="footer__col">
+    <h3 className="footer__col-title">{title}</h3>
+    <ul className="footer__nav">
+      {links.map(({ label, to }) => (
+        <li key={label}>
+          <Link to={to} className="footer__nav-link">{label}</Link>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer
-      style={{
-        backgroundColor: "#060D17",
-        color: "#94a3b8",
-        padding: "4rem 0 2rem",
-        borderTop: "1px solid #1e293b",
-      }}
-    >
-      <div className="container">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "2rem",
-            marginBottom: "3rem",
-          }}
-        >
-          {/* Cột 1: Thông tin chung */}
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "1rem",
-              }}
-            >
-              <div
-                style={{
-                  backgroundColor: "#2563eb",
-                  padding: "4px",
-                  borderRadius: "4px",
-                  display: "flex",
-                }}
-              >
-                <RouterIcon size={16} color="white" />
+    <footer className="footer" role="contentinfo">
+      <div className="footer__inner">
+        <div className="footer__grid">
+
+          <div className="footer__col">
+            <Link to="/" className="footer__brand-logo" aria-label="NetMastery - Trang chủ">
+              <div className="footer__brand-icon">
+                <span className="material-icons-round">hub</span>
               </div>
-              <span
-                style={{
-                  fontWeight: "bold",
-                  fontSize: "1.25rem",
-                  color: "white",
-                  marginLeft: "0.5rem",
-                }}
-              >
-                NetMastery
-              </span>
-            </div>
-            <p
-              style={{
-                fontSize: "0.875rem",
-                lineHeight: "1.6",
-                color: "#64748b",
-              }}
-            >
-              Nền tảng đào tạo mạng máy tính chuyên sâu, bám sát thực tế và
-              chuẩn kỹ sư quốc tế Cisco CCNA.
+              <span className="footer__brand-name">NetMastery</span>
+            </Link>
+            <p className="footer__brand-slogan">
+              Nền tảng học và luyện thi CCNA thực chiến. Từ nền tảng đến kỹ sư mạng chuyên nghiệp.
             </p>
-          </div>
-
-          {/* Cột 2: Khóa học */}
-          <div>
-            <h3
-              style={{
-                color: "white",
-                fontWeight: "600",
-                marginBottom: "1rem",
-                fontSize: "1rem",
-              }}
-            >
-              Khóa học
-            </h3>
-            <ul
-              style={{
-                fontSize: "0.875rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.75rem",
-              }}
-            >
-              <li>
-                <a
-                  href="#"
-                  style={{ transition: "0.2s" }}
-                  onMouseOver={(e) => (e.target.style.color = "#60a5fa")}
-                  onMouseOut={(e) => (e.target.style.color = "inherit")}
-                >
-                  CCNA 200-301
-                </a>
+            <ul className="footer__contact-list">
+              <li className="footer__contact-item">
+                <span className="material-icons-round">mail_outline</span>
+                contact@netmastery.edu.vn
               </li>
-              <li>
-                <a
-                  href="#"
-                  style={{ transition: "0.2s" }}
-                  onMouseOver={(e) => (e.target.style.color = "#60a5fa")}
-                  onMouseOut={(e) => (e.target.style.color = "inherit")}
-                >
-                  Network Security
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  style={{ transition: "0.2s" }}
-                  onMouseOver={(e) => (e.target.style.color = "#60a5fa")}
-                  onMouseOut={(e) => (e.target.style.color = "inherit")}
-                >
-                  Automation (DevNet)
-                </a>
+              <li className="footer__contact-item">
+                <span className="material-icons-round">phone_in_talk</span>
+                1900 1234
               </li>
             </ul>
           </div>
 
-          {/* Cột 3: Hỗ trợ */}
-          <div>
-            <h3
-              style={{
-                color: "white",
-                fontWeight: "600",
-                marginBottom: "1rem",
-                fontSize: "1rem",
-              }}
-            >
-              Hỗ trợ
-            </h3>
-            <ul
-              style={{
-                fontSize: "0.875rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.75rem",
-              }}
-            >
-              <li>
-                <a
-                  href="#"
-                  style={{ transition: "0.2s" }}
-                  onMouseOver={(e) => (e.target.style.color = "#60a5fa")}
-                  onMouseOut={(e) => (e.target.style.color = "inherit")}
-                >
-                  Trung tâm trợ giúp
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  style={{ transition: "0.2s" }}
-                  onMouseOver={(e) => (e.target.style.color = "#60a5fa")}
-                  onMouseOut={(e) => (e.target.style.color = "inherit")}
-                >
-                  Cộng đồng
-                </a>
-              </li>
-              <li>
-                <a
-                  href="#"
-                  style={{ transition: "0.2s" }}
-                  onMouseOver={(e) => (e.target.style.color = "#60a5fa")}
-                  onMouseOut={(e) => (e.target.style.color = "inherit")}
-                >
-                  Liên hệ giảng viên
-                </a>
-              </li>
-            </ul>
-          </div>
+          <NavColumn title="Khóa học" links={COL_COURSES} />
+          <NavColumn title="Tài nguyên" links={COL_RESOURCES} />
+          <NavColumn title="Về NetMastery" links={COL_ABOUT} />
 
-          {/* Cột 4: Liên hệ */}
-          <div>
-            <h3
-              style={{
-                color: "white",
-                fontWeight: "600",
-                marginBottom: "1rem",
-                fontSize: "1rem",
-              }}
-            >
-              Thông tin
-            </h3>
-            <div
-              style={{
-                fontSize: "0.875rem",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-              }}
-            >
-              <p style={{ margin: 0 }}>Email: contact@netmastery.edu.vn</p>
-              <p style={{ margin: 0 }}>Hotline: 1900 1234</p>
-              <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    background: "#1e293b",
-                    borderRadius: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Facebook size={16} />
-                </div>
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    background: "#1e293b",
-                    borderRadius: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Youtube size={16} />
-                </div>
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    background: "#1e293b",
-                    borderRadius: "4px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                  }}
-                >
-                  <Linkedin size={16} />
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
+      </div>
 
-        <div
-          style={{
-            borderTop: "1px solid #1e293b",
-            paddingTop: "2rem",
-            textAlign: "center",
-            fontSize: "0.75rem",
-            color: "#475569",
-          }}
-        >
-          &copy; 2025 NetMastery. Built for future network engineers.
-        </div>
+      <hr className="footer__divider" />
+
+      <div className="footer__bottom">
+        <p className="footer__copyright">
+          &copy; {currentYear} <strong>NetMastery</strong>. All rights reserved.
+          Đồ án tốt nghiệp — Nền tảng học CCNA trực tuyến.
+        </p>
+        <p className="footer__made-with">
+          Made with <span aria-label="tình yêu">♥</span> for future Network Engineers
+        </p>
       </div>
     </footer>
   );
