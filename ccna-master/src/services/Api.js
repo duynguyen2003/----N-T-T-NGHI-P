@@ -2,7 +2,7 @@
 
 // --- CẤU HÌNH ---
 // Nếu chạy Backend (Node.js) thì dùng link này:
-const API_URL = "http://localhost:5000/api";
+const API_URL = "http://localhost:5500/api";
 
 // Hàm delay giả lập mạng (dùng cho Mock Data)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -168,6 +168,62 @@ const MOCK_PROFILE = {
 // =================================================================
 
 export const api = {
+  // ========================
+  // AUTH APIs
+  // ========================
+
+  // Đăng ký tài khoản mới
+  register: async (fullName, email, password) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Đăng ký thất bại');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Đăng nhập
+  login: async (email, password) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Đăng nhập thất bại');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Đăng xuất
+  logout: async (token) => {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      return { success: true };
+    } catch (error) {
+      console.error('Logout API error:', error);
+    }
+  },
+
+  // ========================
+  // DATA APIs
+  // ========================
+
   // 1. Lấy danh sách khóa học
   getCourses: async () => {
     try {

@@ -1,8 +1,38 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Search, Bell, User, Router as RouterIcon } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const TopHeader = () => {
+    const { user, isAuthenticated, logout } = useAuth();
+    const navigate = useNavigate();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    // Đóng dropdown khi click bên ngoài
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Xử lý Đăng xuất
+    const handleLogout = async () => {
+        setIsDropdownOpen(false);
+        await logout();
+        navigate('/');
+    };
+
+    // Lấy chữ cái đầu tên để làm avatar mặc định
+    const getInitials = (name) => {
+        if (!name) return 'U';
+        const parts = name.trim().split(' ');
+        return parts[parts.length - 1].charAt(0).toUpperCase();
+    };
+
     return (
         <header className="header">
             <Link to="/" className="header-left" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -27,16 +57,74 @@ const TopHeader = () => {
             </div>
 
             <div className="header-right">
-                <a className="nav-link" href="#courses">Khóa học của tôi</a>
-                <button className="icon-btn">
-                    <span className="material-icons-round">notifications</span>
-                    <span className="badge"></span>
-                </button>
-                <img
-                    alt="User avatar"
-                    className="avatar"
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBg_zrRPJPMXRzm3ElxM9kgg7g6Sg-4ksF4aQtrojscWj216aqIWKJnHtSKkdXA0VPQtSzUg9bCHGMs4CZgMjkQIWS8u3qYNfs5hRhvPqTliuV2JlIeD5bLXfOXIIfzGVZjWFKykKKjkdpV2LatnBM7GfVZcUZErssjUFtqwhop_0rlhiaU_jn-uJ4MjDc3_f6vDiLP0A36dUsNcs7NaPUu-SSGZ0WuXTnDHVlCkqh3yPdG-GSYYl84u7YiEeMtAg3vXDQtgRvsMik"
-                />
+                {isAuthenticated ? (
+                    <>
+                        {/* Đã đăng nhập: Hiện link + notification + avatar */}
+                        <a className="nav-link" href="#courses">Khóa học của tôi</a>
+                        <button className="icon-btn">
+                            <span className="material-icons-round">notifications</span>
+                            <span className="badge"></span>
+                        </button>
+
+                        {/* Avatar + Dropdown */}
+                        <div className="user-menu" ref={dropdownRef}>
+                            <button
+                                className="user-menu-trigger"
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                aria-label="Menu người dùng"
+                            >
+                                {user?.avatarUrl ? (
+                                    <img
+                                        alt="User avatar"
+                                        className="avatar"
+                                        src={user.avatarUrl}
+                                    />
+                                ) : (
+                                    <div className="avatar avatar-initials">
+                                        {getInitials(user?.fullName)}
+                                    </div>
+                                )}
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {isDropdownOpen && (
+                                <div className="user-dropdown">
+                                    <div className="user-dropdown-header">
+                                        <div className="user-dropdown-name">{user?.fullName || 'Người dùng'}</div>
+                                        <div className="user-dropdown-email">{user?.email}</div>
+                                    </div>
+                                    <div className="user-dropdown-divider"></div>
+                                    <Link
+                                        to="/profile"
+                                        className="user-dropdown-item"
+                                        onClick={() => setIsDropdownOpen(false)}
+                                    >
+                                        <span className="material-icons-round">person</span>
+                                        Hồ sơ cá nhân
+                                    </Link>
+                                    <button
+                                        className="user-dropdown-item user-dropdown-logout"
+                                        onClick={handleLogout}
+                                    >
+                                        <span className="material-icons-round">logout</span>
+                                        Đăng xuất
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {/* Chưa đăng nhập: Hiện nút Đăng nhập & Đăng ký */}
+                        <Link to="/login" className="header-login-btn">
+                            <span className="material-icons-round" style={{ fontSize: 18 }}>login</span>
+                            Đăng nhập
+                        </Link>
+                        <Link to="/register" className="header-register-btn">
+                            Đăng ký
+                        </Link>
+                    </>
+                )}
             </div>
         </header>
     );

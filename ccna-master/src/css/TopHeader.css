@@ -145,3 +145,170 @@
   object-fit: cover;
   border: 2px solid var(--border-color);
 }
+
+/* --- Auth Buttons (chưa đăng nhập) --- */
+.header-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue-primary);
+  background: transparent;
+  border: 1.5px solid var(--blue-primary);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.header-login-btn:hover {
+  background: var(--blue-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
+}
+
+.header-register-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
+}
+
+.header-register-btn:hover {
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+/* --- User Menu (đã đăng nhập) --- */
+.user-menu {
+  position: relative;
+}
+
+.user-menu-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.user-menu-trigger:hover {
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* --- Dropdown --- */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 240px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  z-index: 100;
+  overflow: hidden;
+  animation: dropdown-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.user-dropdown-header {
+  padding: 14px 16px;
+}
+
+.user-dropdown-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-900);
+  margin-bottom: 2px;
+}
+
+.user-dropdown-email {
+  font-size: 12px;
+  color: var(--slate-500);
+  word-break: break-all;
+}
+
+.user-dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 0;
+}
+
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--slate-600);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+
+.user-dropdown-item:hover {
+  background: var(--slate-50);
+  color: var(--slate-900);
+}
+
+.user-dropdown-item .material-icons-round {
+  font-size: 18px;
+  color: var(--slate-400);
+}
+
+.user-dropdown-item:hover .material-icons-round {
+  color: var(--blue-primary);
+}
+
+.user-dropdown-logout {
+  color: #dc2626;
+  border-top: 1px solid var(--border-color);
+}
+
+.user-dropdown-logout .material-icons-round {
+  color: #dc2626 !important;
+}
+
+.user-dropdown-logout:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
