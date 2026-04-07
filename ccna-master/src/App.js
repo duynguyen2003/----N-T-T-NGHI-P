@@ -15,7 +15,9 @@ import './css/Exam.css';
 import './css/Doc.css';
 import './css/Profile.css';
 import './css/Footer.css';
-import './css/Auth.css'; // CSS cho trang Đăng ký / Đăng nhập
+import './css/Auth/Auth.css'; // CSS cho trang Đăng ký / Đăng nhập
+import './css/Tools/SubnetCalculator.css'; // CSS cho trang Subnet Calculator
+import './css/Tools/VLSM_Calculator.css'; // CSS cho trang VLSM Calculator
 
 // Import Layout (Chứa Header và Footer)
 import Layout from './components/Content/Layout';
@@ -30,9 +32,13 @@ import Resources from './components/Content/Doc.js';
 import Profile from './components/Content/Profile.js';
 
 // Import Auth Pages
-import Login from './components/Content/Login.js';
-import Register from './components/Content/Register.js';
-import ProtectedRoute from './components/Content/ProtectedRoute.js';
+import Login from './components/Auth/Login.js';
+import Register from './components/Auth/Register.js';
+import ProtectedRoute from './components/Auth/ProtectedRoute.js';
+
+// Import Tools Pages
+import SubnetCalculator from './components/Tools/SubnetCalculator.js';
+import VLSMCalculator from './components/Tools/VLSM_Calculator.js';
 
 function App() {
   return (
@@ -52,6 +58,8 @@ function App() {
           <Route path="/exam" element={<ProtectedRoute><Exam /></ProtectedRoute>} />
           <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/tools/subnet" element={<ProtectedRoute><SubnetCalculator /></ProtectedRoute>} />
+          <Route path="/tools/vlsm" element={<ProtectedRoute><VLSMCalculator /></ProtectedRoute>} />
 
           {/* Nếu người dùng nhập đường dẫn sai, tự động chuyển về trang chủ */}
           <Route path="*" element={<Navigate to="/" replace />} />

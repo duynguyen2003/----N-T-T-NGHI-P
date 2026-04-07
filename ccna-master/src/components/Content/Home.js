@@ -42,10 +42,10 @@ const features = [
     to: "/tools/subnet",
   },
   {
-    materialIcon: "functions",
-    title: "Tính toán Wildcard Mask",
-    desc: "Chuyển đổi Subnet Mask sang Wildcard Mask cho ACL và OSPF.",
-    to: "/tools/wildcard",
+    materialIcon: "account_tree",
+    title: "VLSM Calculator",
+    desc: "Phân bổ mạng con theo VLSM, tối ưu không gian địa chỉ IP.",
+    to: "/tools/vlsm",
   },
   {
     materialIcon: "terminal",
