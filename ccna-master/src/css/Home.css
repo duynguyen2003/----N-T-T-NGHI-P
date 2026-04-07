@@ -650,4 +650,26 @@
   font-size: 13px;
   color: var(--text-muted);
   line-height: 1.5;
+  flex: 1;
+}
+
+.feat-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2563eb;
+  background: #eff6ff;
+  border-radius: 8px;
+  transition: all 0.25s;
+  align-self: flex-start;
+}
+
+.feat-card:hover .feat-explore-btn {
+  background: #2563eb;
+  color: #fff;
+  transform: translateX(4px);
 }

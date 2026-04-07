@@ -118,6 +118,10 @@ const FeatureCard = ({ materialIcon, title, desc, to }) => (
     </div>
     <h3 className="feat-title">{title}</h3>
     <p className="feat-desc">{desc}</p>
+    <span className="feat-explore-btn">
+      Khám phá
+      <span className="material-icons-round" style={{ fontSize: 16 }}>arrow_forward</span>
+    </span>
   </Link>
 );
 
