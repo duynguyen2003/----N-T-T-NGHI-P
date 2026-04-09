@@ -258,7 +258,7 @@ const VLSMCalculator = () => {
           <span className="material-icons-round">account_tree</span>
         </div>
         <h1 className="vlsm-header-title">VLSM Calculator</h1>
-        <p className="vlsm-header-desc">Variable Length Subnet Masking Tool</p>
+        <p className="vlsm-header-desc">Công cụ tính toán mạng con VLSM</p>
       </header>
 
       {/* ─── Collapsible Guide Toggle ─── */}

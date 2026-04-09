@@ -226,6 +226,18 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // ============================================================
+// API 3: ĐĂNG XUẤT
+// Đường dẫn: POST /api/auth/logout
+// Nhiệm vụ: Xử lý yêu cầu đăng xuất từ Frontend
+// ============================================================
+app.post('/api/auth/logout', (req, res) => {
+    // Với JWT lấy từ client, thông thường client sẽ tự xóa token.
+    // Việc gọi qua backend thường để phục vụ blacklisting token (nếu cần),
+    // nhưng hiện tại chỉ cần trả về thành công để Frontend xử lý tiếp.
+    res.json({ success: true, message: 'Đăng xuất thành công' });
+});
+
+// ============================================================
 // API PHỤ: KIỂM TRA SERVER CÒN SỐNG KHÔNG
 // Đường dẫn: GET /api/health
 // ============================================================

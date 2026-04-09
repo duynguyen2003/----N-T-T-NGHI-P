@@ -1,14 +1,22 @@
 /* Exam.css */
 :root {
-  --primary: #2563eb;       /* Màu xanh chủ đạo */
+  --primary: #2563eb;
+  /* Màu xanh chủ đạo */
   --primary-light: #eff6ff;
-  --success: #16a34a;       /* Màu xanh lá (đúng) */
-  --danger: #dc2626;        /* Màu đỏ (sai/cảnh báo) */
-  --bg-page: #f8fafc;       /* Màu nền trang */
-  --bg-card: #ffffff;       /* Màu nền thẻ */
-  --text-main: #1e293b;     /* Màu chữ chính */
-  --text-sub: #64748b;      /* Màu chữ phụ */
-  --border: #e2e8f0;        /* Màu viền */
+  --success: #16a34a;
+  /* Màu xanh lá (đúng) */
+  --danger: #dc2626;
+  /* Màu đỏ (sai/cảnh báo) */
+  --bg-page: #f8fafc;
+  /* Màu nền trang */
+  --bg-card: #ffffff;
+  /* Màu nền thẻ */
+  --text-main: #1e293b;
+  /* Màu chữ chính */
+  --text-sub: #64748b;
+  /* Màu chữ phụ */
+  --border: #e2e8f0;
+  /* Màu viền */
 }
 
 /* Layout chung */
@@ -29,7 +37,7 @@
   background: var(--bg-card);
   padding: 1rem 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -79,7 +87,8 @@
 
 @media (min-width: 1024px) {
   .exam-layout {
-    grid-template-columns: 3fr 1fr; /* Trái 3 phần, Phải 1 phần */
+    grid-template-columns: 3fr 1fr;
+    /* Trái 3 phần, Phải 1 phần */
   }
 }
 
@@ -88,7 +97,7 @@
   background: var(--bg-card);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   min-height: 500px;
   display: flex;
   flex-direction: column;
@@ -182,7 +191,7 @@
   font-weight: 600;
   cursor: pointer;
   border: none;
-  font-size: 1rem;
+  font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -214,7 +223,7 @@
   background: var(--bg-card);
   padding: 1.5rem;
   border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 6rem;
 }
@@ -261,17 +270,31 @@
   gap: 0.5rem;
 }
 
-.box-sample { width: 12px; height: 12px; border-radius: 2px; }
-.box-answered { background: var(--primary); }
-.box-unanswered { background: #f1f5f9; border: 1px solid #cbd5e1; }
-.box-active { border: 2px solid var(--primary); }
+.box-sample {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.box-answered {
+  background: var(--primary);
+}
+
+.box-unanswered {
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+}
+
+.box-active {
+  border: 2px solid var(--primary);
+}
 
 /* Màn hình kết quả */
 .result-card {
   background: var(--bg-card);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   max-width: 800px;
   margin: 0 auto;
 }
@@ -296,8 +319,17 @@
   margin: 0 auto 1.5rem;
 }
 
-.score-pass { border-color: #dcfce7; background: #f0fdf4; color: var(--success); }
-.score-fail { border-color: #fee2e2; background: #fef2f2; color: var(--danger); }
+.score-pass {
+  border-color: #dcfce7;
+  background: #f0fdf4;
+  color: var(--success);
+}
+
+.score-fail {
+  border-color: #fee2e2;
+  background: #fef2f2;
+  color: var(--danger);
+}
 
 .review-list {
   padding: 2rem;
@@ -312,10 +344,24 @@
   border-radius: 8px;
 }
 
-.review-item.correct { border-left: 4px solid var(--success); background: #f0fdf4; }
-.review-item.wrong { border-left: 4px solid var(--danger); background: #fef2f2; }
+.review-item.correct {
+  border-left: 4px solid var(--success);
+  background: #f0fdf4;
+}
+
+.review-item.wrong {
+  border-left: 4px solid var(--danger);
+  background: #fef2f2;
+}
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
 }
