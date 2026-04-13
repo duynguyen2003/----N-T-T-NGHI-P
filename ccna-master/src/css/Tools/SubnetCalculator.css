@@ -54,11 +54,10 @@
   height: 56px;
   margin: 0 auto 16px;
   border-radius: 16px;
-  background-color: var(--hover-bg);
+  background: var(--hover-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-color);
 }
 
 .subnet-header-icon .material-icons-round {

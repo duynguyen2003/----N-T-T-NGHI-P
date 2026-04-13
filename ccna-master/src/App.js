@@ -18,6 +18,8 @@ import './css/Footer.css';
 import './css/Auth/Auth.css'; // CSS cho trang Đăng ký / Đăng nhập
 import './css/Tools/SubnetCalculator.css'; // CSS cho trang Subnet Calculator
 import './css/Tools/VLSM_Calculator.css'; // CSS cho trang VLSM Calculator
+import './css/Tools/PortLookup.css'; // CSS cho trang Port Lookup
+import './css/Tools/CiscoCliLookup.css'; // CSS cho trang Cisco CLI Lookup
 
 // Import Layout (Chứa Header và Footer)
 import Layout from './components/Content/Layout';
@@ -39,6 +41,8 @@ import ProtectedRoute from './components/Auth/ProtectedRoute.js';
 // Import Tools Pages
 import SubnetCalculator from './components/Tools/SubnetCalculator.js';
 import VLSMCalculator from './components/Tools/VLSM_Calculator.js';
+import PortLookup from './components/Tools/PortLookup.js';
+import CiscoCliLookup from './components/Tools/CiscoCliLookup.js';
 
 function App() {
   return (
@@ -60,6 +64,8 @@ function App() {
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/tools/subnet" element={<ProtectedRoute><SubnetCalculator /></ProtectedRoute>} />
           <Route path="/tools/vlsm" element={<ProtectedRoute><VLSMCalculator /></ProtectedRoute>} />
+          <Route path="/tools/ports" element={<ProtectedRoute><PortLookup /></ProtectedRoute>} />
+          <Route path="/tools/cli" element={<ProtectedRoute><CiscoCliLookup /></ProtectedRoute>} />
 
           {/* Nếu người dùng nhập đường dẫn sai, tự động chuyển về trang chủ */}
           <Route path="*" element={<Navigate to="/" replace />} />

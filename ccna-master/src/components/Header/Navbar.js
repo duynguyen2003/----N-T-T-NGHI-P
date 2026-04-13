@@ -35,12 +35,6 @@ const Navbar = () => {
           <span className="tag-name">Tài liệu</span>
         </Link>
       </nav>
-      <div className="sidebar-bottom">
-        <Link className={`sidebar-link ${isActive('/profile') ? 'active' : ''}`} to="/profile">
-          <span className="material-icons-round">person_outline</span>
-          <span className="tag-name">Hồ sơ</span>
-        </Link>
-      </div>
     </aside>
   );
 };

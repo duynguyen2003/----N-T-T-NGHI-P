@@ -92,12 +92,7 @@
     line-height: 1.2;
 }
 
-.sidebar-bottom {
-    margin-top: auto;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-}
+
 
 /* --- Mobile Drawer Helpers (Removed) --- */
 
@@ -154,10 +149,7 @@
         align-items: center;
     }
 
-    .sidebar-bottom {
-        margin-top: 0;
-        width: auto;
-    }
+
 
     .sidebar-link {
         width: auto;

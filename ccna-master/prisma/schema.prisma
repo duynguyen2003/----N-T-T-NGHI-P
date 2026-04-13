@@ -14,9 +14,7 @@ datasource db {
 // ==========================================
 enum Role {
   STUDENT
-  SUPER_ADMIN
-  CONTENT_MANAGER
-  EXAM_MANAGER
+  ADMIN
 }
 
 enum Difficulty {
@@ -89,11 +87,26 @@ model Course {
   deletedAt   DateTime? @map("deleted_at")
 
   modules     Module[]
+  topics      CourseTopic[]
+  labs        Lab[]
+  exams       Exam[]
   progress    UserProgress[]
   resources   Resource[]
 
   @@map("courses")
 }
+
+model CourseTopic {
+  id         Int      @id @default(autoincrement())
+  courseId   String   @map("course_id") @db.VarChar(10)
+  title      String   @db.VarChar(100) // Ví dụ: "IPv4 & IPv6"
+  orderIndex Int      @default(0) @map("order_index")
+
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("course_topics")
+}
+
 
 model Module {
   id          String    @id @db.VarChar(10) // vđ: m1
@@ -106,6 +119,8 @@ model Module {
 
   course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons     Lesson[]
+  labs        Lab[]
+  exams       Exam[]
   progress    UserProgress[]
 
   @@map("modules")
@@ -140,9 +155,13 @@ model Lab {
   tools        Json?      // Danh sách công cụ (Packet Tracer...)
   fileUrl      String?    @map("file_url") @db.VarChar(500)
   guideContent String?    @map("guide_content") @db.Text
+  courseId     String?    @map("course_id") @db.VarChar(10)
+  moduleId     String?    @map("module_id") @db.VarChar(10)
   createdAt    DateTime   @default(now()) @map("created_at")
   deletedAt    DateTime?  @map("deleted_at")
 
+  course       Course?    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module       Module?    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   progress     UserProgress[]
 
   @@map("labs")
@@ -160,9 +179,13 @@ model Exam {
   durationMinutes Int       @map("duration_minutes")
   passingScore    Int       @default(70) @map("passing_score")
   difficulty      String?   @db.VarChar(20)
+  courseId        String?   @map("course_id") @db.VarChar(10)
+  moduleId        String?   @map("module_id") @db.VarChar(10)
   createdAt       DateTime  @default(now()) @map("created_at")
   deletedAt       DateTime? @map("deleted_at")
 
+  course          Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  module          Module?   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   questions       ExamQuestion[]
   results         ExamResult[]
 
