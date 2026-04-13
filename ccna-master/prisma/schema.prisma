@@ -2,7 +2,8 @@
 // THIẾT LẬP KẾT NỐI (DATASOURCE & GENERATOR)
 // ==========================================
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -331,4 +332,22 @@ model Tool {
   createdAt   DateTime  @default(now()) @map("created_at")
 
   @@map("tools") // Tên bảng sẽ hiển thị trong DBeaver
+}
+
+// Khối mới thêm: NGÂN HÀNG CÂU HỎI & KỊCH BẢN (DOMAIN-SPECIFIC FEATURES)
+model QuestionBank {
+  id              Int       @id @default(autoincrement())
+  title           String    @db.VarChar(200)
+  type            String    @db.VarChar(50)  // Ví dụ: "MULTIPLE_CHOICE", "CLI_SIMULATION", "AI_PROMPT"
+  content         String    @db.Text         // Nội dung câu hỏi / kịch bản CLI
+  topologyImgUrl  String?   @map("topology_img_url") @db.VarChar(500) // Hình ảnh sơ đồ mạng (tuỳ chọn)
+  configData      Json?     // Cấu hình mạng mẫu (dành cho CLI simulation)
+  aiPromptContext String?   @map("ai_prompt_context") @db.Text // Context hoặc prompt cho trợ lý AI
+  options         Json?     // Đáp án hoặc data mở rộng
+  correctAnswer   String?   @map("correct_answer") @db.Text // Đáp án / lệnh đúng
+  difficulty      Difficulty @default(MEDIUM)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("question_bank")
 }

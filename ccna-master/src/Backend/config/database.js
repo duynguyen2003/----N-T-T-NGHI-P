@@ -1,11 +1,3 @@
-/**
- * ============================================================
- * FILE: config/database.js
- * PURPOSE: Database configuration & initialization (Prisma + PostgreSQL)
- * PERFORMANCE: Singleton pattern - reuse connection
- * ============================================================
- */
-
 const { PrismaClient } = require('@prisma/client');
 const { Pool } = require('pg');
 const { PrismaPg } = require('@prisma/adapter-pg');
@@ -25,26 +17,12 @@ const initializeDatabase = () => {
   }
 
   try {
-    // Create connection pool
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL || 
         'postgresql://postgres:123456@localhost:5432/netmastery_db',
-      // Performance optimizations
-      max: 20,                    // Max pool size
-      idleTimeoutMillis: 30000,   // Close idle connections after 30s
-      connectionTimeoutMillis: 5000 // Timeout after 5s
     });
-
-    // Create Prisma adapter
     const adapter = new PrismaPg(pool);
-    
-    // Initialize Prisma client
-    prismaInstance = new PrismaClient({ 
-      adapter,
-      log: process.env.NODE_ENV === 'development' 
-        ? ['warn', 'error'] 
-        : ['error']
-    });
+    prismaInstance = new PrismaClient({ adapter, log: ['error'] });
 
     console.log('✅ Database connected successfully');
     return prismaInstance;

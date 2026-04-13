@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { api } from '../services/Api';
 
 // Tạo Context
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 // Custom hook để sử dụng Auth dễ dàng
 export const useAuth = () => {

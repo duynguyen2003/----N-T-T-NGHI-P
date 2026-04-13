@@ -2,7 +2,7 @@
 
 // --- CẤU HÌNH ---
 // Nếu chạy Backend (Node.js) thì dùng link này:
-const API_URL = "http://localhost:5500/api";
+const API_URL = "http://localhost:5000/api";
 
 // Hàm delay giả lập mạng (dùng cho Mock Data)
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

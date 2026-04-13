@@ -44,33 +44,41 @@ import VLSMCalculator from './components/Tools/VLSM_Calculator.js';
 import PortLookup from './components/Tools/PortLookup.js';
 import CiscoCliLookup from './components/Tools/CiscoCliLookup.js';
 
+
+
 function App() {
   return (
     <Router>
-      {/* Layout bọc bên ngoài để Navbar và Footer luôn hiển thị */}
-      <Layout>
-        <Routes>
-          {/* Trang công khai - ai cũng vào được */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+      <Routes>
+        {/* =========================================
+            USER/STUDENT ROUTES (With Layout)
+            ========================================= */}
+        <Route path="*" element={
+          <Layout>
+            <Routes>
+              {/* Trang công khai */}
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
 
-          {/* Trang bảo vệ - phải đăng nhập mới vào được */}
-          <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
-          <Route path="/lesson" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
-          <Route path="/labs" element={<ProtectedRoute><Labs /></ProtectedRoute>} />
-          <Route path="/exam" element={<ProtectedRoute><Exam /></ProtectedRoute>} />
-          <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-          <Route path="/tools/subnet" element={<ProtectedRoute><SubnetCalculator /></ProtectedRoute>} />
-          <Route path="/tools/vlsm" element={<ProtectedRoute><VLSMCalculator /></ProtectedRoute>} />
-          <Route path="/tools/ports" element={<ProtectedRoute><PortLookup /></ProtectedRoute>} />
-          <Route path="/tools/cli" element={<ProtectedRoute><CiscoCliLookup /></ProtectedRoute>} />
+              {/* Trang bảo vệ */}
+              <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
+              <Route path="/lesson" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
+              <Route path="/labs" element={<ProtectedRoute><Labs /></ProtectedRoute>} />
+              <Route path="/exam" element={<ProtectedRoute><Exam /></ProtectedRoute>} />
+              <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/tools/subnet" element={<ProtectedRoute><SubnetCalculator /></ProtectedRoute>} />
+              <Route path="/tools/vlsm" element={<ProtectedRoute><VLSMCalculator /></ProtectedRoute>} />
+              <Route path="/tools/ports" element={<ProtectedRoute><PortLookup /></ProtectedRoute>} />
+              <Route path="/tools/cli" element={<ProtectedRoute><CiscoCliLookup /></ProtectedRoute>} />
 
-          {/* Nếu người dùng nhập đường dẫn sai, tự động chuyển về trang chủ */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Layout>
+        } />
+      </Routes>
     </Router>
   );
 }
