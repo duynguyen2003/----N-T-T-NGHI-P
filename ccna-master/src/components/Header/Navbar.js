@@ -26,7 +26,10 @@ const Navbar = () => {
           <span className="material-icons-round">terminal</span>
           <span className="tag-name">Thực hành</span>
         </Link>
-        <Link className={`sidebar-link ${isActive('/exam') ? 'active' : ''}`} to="/exam">
+        <Link 
+          className={`sidebar-link ${location.pathname.startsWith('/exam') ? 'active' : ''}`} 
+          to="/exam/testing-center"
+        >
           <span className="material-icons-round">quiz</span>
           <span className="tag-name">Kiểm tra</span>
         </Link>

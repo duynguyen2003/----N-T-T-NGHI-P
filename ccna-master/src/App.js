@@ -12,6 +12,7 @@ import './css/Roadmap.css';
 import './css/Lesson.css';
 import './css/Labs.css';
 import './css/Exam.css';
+import './css/ExamFlow.css'; // Phân hệ Kiểm tra & Đánh giá
 import './css/Doc.css';
 import './css/Profile.css';
 import './css/Footer.css';
@@ -65,7 +66,7 @@ function App() {
               <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
               <Route path="/lesson" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
               <Route path="/labs" element={<ProtectedRoute><Labs /></ProtectedRoute>} />
-              <Route path="/exam" element={<ProtectedRoute><Exam /></ProtectedRoute>} />
+              <Route path="/exam/*" element={<ProtectedRoute><Exam /></ProtectedRoute>} />
               <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/tools/subnet" element={<ProtectedRoute><SubnetCalculator /></ProtectedRoute>} />
