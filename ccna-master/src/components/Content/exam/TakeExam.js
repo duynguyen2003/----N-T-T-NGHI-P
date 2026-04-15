@@ -46,8 +46,9 @@ const MOCK_QUESTIONS = [
 ];
 
 // ─── Timer Hook ────────────────────────────────────────────────
-const useTimer = (initialSeconds) => {
-  const [timeLeft, setTimeLeft] = useState(initialSeconds);
+// ─── Timer Hook ────────────────────────────────────────────────
+const useTimer = (totalSeconds, initialLeft) => {
+  const [timeLeft, setTimeLeft] = useState(initialLeft !== undefined ? initialLeft : totalSeconds);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -62,7 +63,6 @@ const useTimer = (initialSeconds) => {
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   };
 
-  const totalSeconds = initialSeconds;
   const elapsed = totalSeconds - timeLeft;
   const isWarning = timeLeft < 300; // Cảnh báo khi còn dưới 5 phút
 
@@ -84,31 +84,86 @@ const calculateScore = (answers) => {
 const TakeExam = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
-  const [currentQ, setCurrentQ] = useState(0);
-  const [userAnswers, setUserAnswers] = useState({});  // { questionId: 'A' | 'B' | 'C' | 'D' }
-  const [flagged, setFlagged] = useState(new Set());
-  const [showConfirm, setShowConfirm] = useState(false);
 
   const EXAM_DURATION = 90 * 60; // 90 phút tính bằng giây
-  const { timeLeft, elapsed, isWarning, formatted } = useTimer(EXAM_DURATION);
+  const STORAGE_KEY = `ccna_exam_session_${examId}`;
+
+  // 1. Khôi phục state từ localStorage
+  const getSavedSession = () => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  };
+
+  const savedSession = getSavedSession();
+  const initialQ = savedSession?.currentQ ?? 0;
+  const initialAnswers = savedSession?.userAnswers || {};
+  const initialFlags = savedSession?.flagged ? new Set(savedSession.flagged) : new Set();
+  const initialTime = savedSession?.timeLeft ?? EXAM_DURATION;
+
+  const [currentQ, setCurrentQ] = useState(initialQ);
+  const [userAnswers, setUserAnswers] = useState(initialAnswers);
+  const [flagged, setFlagged] = useState(initialFlags);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const { timeLeft, elapsed, isWarning, formatted } = useTimer(EXAM_DURATION, initialTime);
+
+  // Lưu state vào localStorage mỗi khi có thay đổi
+  useEffect(() => {
+    const sessionData = {
+      currentQ,
+      userAnswers,
+      flagged: Array.from(flagged),
+      timeLeft,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
+  }, [currentQ, userAnswers, flagged, timeLeft, STORAGE_KEY]);
 
   const question = MOCK_QUESTIONS[currentQ];
   const totalQ = MOCK_QUESTIONS.length;
 
-  const selectAnswer = (key) => {
+  const selectAnswer = useCallback((key) => {
     setUserAnswers(prev => ({ ...prev, [question.id]: key }));
-  };
+  }, [question.id]);
 
-  const toggleFlag = () => {
+  const toggleFlag = useCallback(() => {
     setFlagged(prev => {
       const next = new Set(prev);
       if (next.has(question.id)) next.delete(question.id);
       else next.add(question.id);
       return next;
     });
-  };
+  }, [question.id]);
+
+  // 2. Lắng nghe Phím tắt Keyboard (Shortcuts)
+  useEffect(() => {
+    if (showConfirm) return; // Vô hiệu hóa phím tắt khi hiện popup xác nhận
+
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowRight' && currentQ < totalQ - 1) {
+        setCurrentQ(q => q + 1);
+      } else if (e.key === 'ArrowLeft' && currentQ > 0) {
+        setCurrentQ(q => q - 1);
+      } else if (['a', 'b', 'c', 'd'].includes(e.key.toLowerCase())) {
+        const keyMap = { 'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D' };
+        const selectedKey = keyMap[e.key.toLowerCase()];
+        const optExists = question.options.some(opt => opt.key === selectedKey);
+        if (optExists) selectAnswer(selectedKey);
+      } else if (e.key.toLowerCase() === 'f') {
+        toggleFlag();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentQ, totalQ, question.options, selectAnswer, toggleFlag, showConfirm]);
 
   const handleSubmit = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEY); // Xóa session khi đã nộp bài thành công
     const result = calculateScore(userAnswers);
     const elapsedMin = Math.floor(elapsed / 60);
     const elapsedSec = elapsed % 60;

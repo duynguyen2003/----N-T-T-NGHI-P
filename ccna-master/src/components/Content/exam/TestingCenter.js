@@ -43,32 +43,67 @@ const MOCK_EXAMS = [
   { id: 'mock-03', title: 'Mock Exam 03', badge: 'HARD', badgeClass: 'badge-hard', icon: '🛡️', meta: ['120 mins', '100 questions', 'Focus: Security Fundamentals'] },
 ];
 
+const MOCK_HISTORY_DATA = {
+  'mock-01': [
+    { id: 'att-101', attempt: 1, date: '10/04/2026 - 14:30', score: 650, pass: false, timeUsed: '85:10' },
+    { id: 'att-102', attempt: 2, date: '12/04/2026 - 09:15', score: 850, pass: true, timeUsed: '72:45' },
+  ],
+  'mock-02': [
+    { id: 'att-201', attempt: 1, date: '13/04/2026 - 10:00', score: 920, pass: true, timeUsed: '45:00' },
+  ]
+};
+
 // ─── Component ────────────────────────────────────────────────
 const TestingCenter = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('practice'); // 'practice' | 'mock'
   const [expandedModule, setExpandedModule] = useState('m1');
 
+  // Modal State
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [selectedExamId, setSelectedExamId] = useState(null);
+
   const handleStartExam = (examId) => {
     navigate(`/exam/take/${examId}`);
   };
 
+  const openHistory = (examId) => {
+    setSelectedExamId(examId);
+    setHistoryModalOpen(true);
+  };
+
+  const closeHistory = () => {
+    setHistoryModalOpen(false);
+    setSelectedExamId(null);
+  };
+
+  const handleViewDetails = (attempt) => {
+    // Navigate to Result page with simulated data
+    navigate(`/exam/result/${selectedExamId}`, { 
+      state: {
+        score: attempt.score,
+        correct: Math.floor(attempt.score / 10), // mock clear answers logic
+        wrong: 100 - Math.floor(attempt.score / 10),
+        total: 100,
+        pass: attempt.pass,
+        timeUsed: attempt.timeUsed,
+        examTitle: MOCK_EXAMS.find(e => e.id === selectedExamId)?.title,
+      } 
+    });
+  };
+
+  const selectedExamData = MOCK_EXAMS.find(e => e.id === selectedExamId);
+  const currentHistoryList = selectedExamId ? (MOCK_HISTORY_DATA[selectedExamId] || []) : [];
+
   return (
     <div className="tc-page">
       <div className="tc-container">
-
-        {/* Breadcrumb */}
-        <div className="tc-breadcrumb">Academy &rsaquo; <span>Testing Center</span></div>
 
         {/* Hero */}
         <div className="tc-hero">
           <div>
             <h1 className="tc-hero-title">Trung tâm Kiểm tra &amp; Đánh giá</h1>
             <p className="tc-hero-desc">Phòng lab mô phỏng kỳ thi CCNA chuẩn quốc tế với hệ thống đánh giá chi tiết.</p>
-          </div>
-          <div className="tc-rank-badge">
-            <span className="tc-rank-badge__label">Global Rank</span>
-            <span className="tc-rank-badge__value">#1,240</span>
           </div>
         </div>
 
@@ -163,7 +198,9 @@ const TestingCenter = () => {
                   <button className="tc-btn-start" onClick={() => handleStartExam(exam.id)}>
                     Bắt đầu thi
                   </button>
-                  <button className="tc-btn-history">XEM LẠI LỊCH SỬ THI</button>
+                  <button className="tc-btn-history" onClick={() => openHistory(exam.id)}>
+                    XEM LẠI LỊCH SỬ THI
+                  </button>
                 </div>
               </div>
             ))}
@@ -173,6 +210,59 @@ const TestingCenter = () => {
               <span style={{ fontSize: '2rem', color: '#94a3b8' }}>⊕</span>
               <h4>More exams coming soon</h4>
               <p>We update our question bank every 2 weeks to match current CCNA standards.</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Modal Lịch Sử Thi ── */}
+        {historyModalOpen && (
+          <div className="tc-modal-overlay" onClick={closeHistory}>
+            <div className="tc-modal" onClick={e => e.stopPropagation()}>
+              <div className="tc-modal-header">
+                <h2>Lịch sử thi: {selectedExamData?.title}</h2>
+                <button className="tc-modal-close" onClick={closeHistory}>&times;</button>
+              </div>
+              <div className="tc-modal-body">
+                {currentHistoryList.length > 0 ? (
+                  <div className="tc-history-list">
+                    {/* Sắp xếp mới nhất lên đầu */}
+                    {[...currentHistoryList].reverse().map((attempt) => (
+                      <div key={attempt.id} className="tc-history-item">
+                        <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                          <div className="tc-history-main">
+                            <span className="tc-history-title">Lần thi {attempt.attempt}</span>
+                            <div className="tc-history-meta">
+                              <span>📅 {attempt.date}</span>
+                              <span>⏱ {attempt.timeUsed}</span>
+                            </div>
+                          </div>
+                          
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+                            <div className="tc-history-score-wrapper">
+                              <div className="tc-history-score">{attempt.score}/1000</div>
+                              <span className={`tc-history-badge ${attempt.pass ? 'pass' : 'fail'}`}>
+                                {attempt.pass ? 'PASS' : 'FAIL'}
+                              </span>
+                            </div>
+                            <button className="tc-history-btn" onClick={() => handleViewDetails(attempt)}>
+                              Chi tiết &rarr;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="tc-empty-state">
+                    <div className="tc-empty-state-icon">📝</div>
+                    <h3>Chưa có dữ liệu</h3>
+                    <p>Bạn chưa thực hiện bài thi này lần nào. Hãy bắt đầu ngay nhé!</p>
+                    <button className="tc-btn-start" style={{ marginTop: '1rem', width: 'auto', padding: '0.6rem 1.5rem' }} onClick={() => { closeHistory(); handleStartExam(selectedExamId); }}>
+                      Bắt đầu thi
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
