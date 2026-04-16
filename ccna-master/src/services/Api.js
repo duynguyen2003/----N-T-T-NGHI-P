@@ -109,6 +109,31 @@ const MOCK_LABS = [
     imageUrl:
       "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80",
     tools: ["Packet Tracer"],
+    fileUrl: "#",
+    topology: "PC1 ──── [SW1] ──── PC2",
+    objective: "Cấu hình hostname, password và VLAN management trên Switch Cisco.",
+    steps: [
+      {
+        title: "Vào chế độ privileged EXEC",
+        commands: ["Switch> enable", "Switch# "],
+        note: "Dấu # cho biết bạn đã vào privileged mode thành công.",
+      },
+      {
+        title: "Cấu hình hostname",
+        commands: ["Switch# configure terminal", "Switch(config)# hostname SW1", "SW1(config)# "],
+        note: "Hostname giúp nhận diện thiết bị trong môi trường mạng doanh nghiệp.",
+      },
+      {
+        title: "Đặt enable password",
+        commands: ["SW1(config)# enable secret Cisco@123", "SW1(config)# "],
+        note: "Dùng 'enable secret' thay vì 'enable password' để mã hóa mạnh hơn.",
+      },
+      {
+        title: "Lưu cấu hình",
+        commands: ["SW1# copy running-config startup-config", "Destination filename [startup-config]? ", "[Enter]"],
+        note: "Luôn lưu cấu hình sau mỗi thay đổi quan trọng.",
+      },
+    ],
   },
   {
     id: "2",
@@ -119,6 +144,45 @@ const MOCK_LABS = [
     imageUrl:
       "https://images.unsplash.com/photo-1544197150-b99a580bbcbf?auto=format&fit=crop&w=800&q=80",
     tools: ["EVE-NG"],
+    fileUrl: "#",
+    topology: "PC-Sales ─[Fa0/1]─ [SW1] ─[Trunk]─ [SW2] ─[Fa0/2]─ PC-IT",
+    objective: "Cấu hình VLAN 10 (Sales) và VLAN 20 (IT), thiết lập Trunk port giữa 2 Switch.",
+    steps: [
+      {
+        title: "Tạo VLAN trên SW1",
+        commands: [
+          "SW1(config)# vlan 10",
+          "SW1(config-vlan)# name SALES",
+          "SW1(config-vlan)# vlan 20",
+          "SW1(config-vlan)# name IT",
+          "SW1(config-vlan)# exit",
+        ],
+        note: "Mỗi VLAN tạo ra một broadcast domain riêng biệt.",
+      },
+      {
+        title: "Gán port vào VLAN",
+        commands: [
+          "SW1(config)# interface FastEthernet 0/1",
+          "SW1(config-if)# switchport mode access",
+          "SW1(config-if)# switchport access vlan 10",
+        ],
+        note: "Access port chỉ thuộc về một VLAN duy nhất.",
+      },
+      {
+        title: "Cấu hình Trunk port",
+        commands: [
+          "SW1(config)# interface GigabitEthernet 0/1",
+          "SW1(config-if)# switchport mode trunk",
+          "SW1(config-if)# switchport trunk allowed vlan 10,20",
+        ],
+        note: "Trunk port cho phép nhiều VLAN đi qua cùng một đường dây vật lý.",
+      },
+      {
+        title: "Kiểm tra cấu hình",
+        commands: ["SW1# show vlan brief", "SW1# show interfaces trunk"],
+        note: "Xác minh các VLAN và trunk đã được cấu hình đúng.",
+      },
+    ],
   },
   {
     id: "3",
@@ -129,6 +193,39 @@ const MOCK_LABS = [
     imageUrl:
       "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
     tools: ["GNS3"],
+    fileUrl: "#",
+    topology: "[R1:192.168.1.1] ──── [R2:192.168.1.2] ──── [R3:192.168.1.3]",
+    objective: "Cấu hình OSPF Area 0 trên 3 Router, kiểm tra neighbor adjacency và bảng định tuyến.",
+    steps: [
+      {
+        title: "Bật OSPF trên R1",
+        commands: [
+          "R1(config)# router ospf 1",
+          "R1(config-router)# router-id 1.1.1.1",
+          "R1(config-router)# network 192.168.1.0 0.0.0.255 area 0",
+          "R1(config-router)# network 10.0.0.0 0.0.0.255 area 0",
+        ],
+        note: "Process ID (1) chỉ có ý nghĩa local, không cần khớp với router khác.",
+      },
+      {
+        title: "Cấu hình tương tự trên R2 và R3",
+        commands: [
+          "R2(config)# router ospf 1",
+          "R2(config-router)# router-id 2.2.2.2",
+          "R2(config-router)# network 192.168.1.0 0.0.0.255 area 0",
+        ],
+        note: "Router-ID phải là duy nhất trong toàn bộ OSPF domain.",
+      },
+      {
+        title: "Kiểm tra OSPF neighbors",
+        commands: [
+          "R1# show ip ospf neighbor",
+          "R1# show ip route ospf",
+          "R1# show ip ospf interface brief",
+        ],
+        note: "Neighbor state phải là FULL để trao đổi routing information thành công.",
+      },
+    ],
   },
   {
     id: "4",
@@ -139,8 +236,39 @@ const MOCK_LABS = [
     imageUrl:
       "https://images.unsplash.com/photo-1563206767-5b1d97299337?auto=format&fit=crop&w=800&q=80",
     tools: ["Packet Tracer"],
+    fileUrl: "#",
+    topology: "PC-Admin(192.168.1.0/24) ─── [R1] ─── Server(10.0.0.0/24)",
+    objective: "Tạo Standard ACL chặn mạng 192.168.2.0/24 truy cập Server, cho phép mạng Admin.",
+    steps: [
+      {
+        title: "Tạo Standard ACL",
+        commands: [
+          "R1(config)# ip access-list standard BLOCK_GUEST",
+          "R1(config-std-nacl)# deny 192.168.2.0 0.0.0.255",
+          "R1(config-std-nacl)# permit any",
+        ],
+        note: "Standard ACL chỉ lọc dựa trên Source IP. Nên đặt gần đích (destination) nhất.",
+      },
+      {
+        title: "Áp dụng ACL vào interface",
+        commands: [
+          "R1(config)# interface GigabitEthernet 0/1",
+          "R1(config-if)# ip access-group BLOCK_GUEST out",
+        ],
+        note: "'out' nghĩa là lọc traffic đi ra khỏi interface đó.",
+      },
+      {
+        title: "Kiểm tra ACL",
+        commands: [
+          "R1# show ip access-lists",
+          "R1# show running-config | include access",
+        ],
+        note: "Cột 'matches' cho biết số gói tin đã bị match bởi ACL rule.",
+      },
+    ],
   },
 ];
+
 
 const MOCK_PROFILE = {
   totalProgress: 45,

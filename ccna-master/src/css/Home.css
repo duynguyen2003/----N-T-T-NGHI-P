@@ -435,10 +435,34 @@
   margin: 0 auto;
 }
 
-.course-grid {
+.course-grid-container {
+  position: relative;
   max-width: 1280px;
-  margin: 0 auto;
+  margin: 50px auto 0 auto;
   padding: 0 16px;
+}
+
+.course-grid-line {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .course-grid-line {
+    display: block;
+    position: absolute;
+    top: 20px;
+    /* center of the numbers */
+    left: 40px;
+    right: 40px;
+    height: 1px;
+    background-color: #e2e8f0;
+    z-index: 1;
+  }
+}
+
+.course-grid {
+  position: relative;
+  z-index: 2;
   display: grid;
   grid-template-columns: 1fr;
   gap: 32px;
@@ -446,104 +470,135 @@
 
 @media (min-width: 768px) {
   .course-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .course-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
 .course-card {
+  position: relative;
   background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+  padding: 40px 24px 24px 24px;
   transition: transform 0.3s;
-  border-top: 4px solid transparent;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color, #f1f5f9);
 }
 
 .course-card:hover {
   transform: translateY(-8px);
 }
 
-.itn {
-  border-top-color: var(--blue-500);
+.course-card.inactive {
+  opacity: 0.9;
 }
 
-.srwe {
-  border-top-color: #6366f1;
-}
-
-.ensa {
-  border-top-color: #a855f7;
-}
-
-.icon-box {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+.course-number {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  font-weight: 700;
+  font-size: 16px;
+  border: 4px solid white;
+  z-index: 3;
 }
 
-.itn .icon-box {
-  background-color: #dbeafe;
+.course-number.active {
+  background-color: var(--hover-bg);
+  color: var(--text-color);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+.course-number.inactive {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 24px;
   color: #2563eb;
 }
 
-.srwe .icon-box {
-  background-color: #e0e7ff;
-  color: #4f46e5;
-}
-
-.ensa .icon-box {
-  background-color: #f3e8ff;
-  color: #9333ea;
-}
-
 .course-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.course-card.active .course-title {
   color: var(--navy-900);
-  margin-bottom: 8px;
+}
+
+.course-card.inactive .course-title {
+  color: #94a3b8;
 }
 
 .course-desc {
   font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  flex-grow: 1;
+}
+
+.course-card.active .course-desc {
   color: var(--slate-600);
-  margin-bottom: 24px;
 }
 
-.course-list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 24px 0;
-  font-size: 14px;
-  color: var(--slate-500);
+.course-card.inactive .course-desc {
+  color: #cbd5e1;
 }
 
-.course-list li {
+/* Progress Section */
+.course-progress-section {
+  margin-top: auto;
   display: flex;
-  align-items: center;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.dot {
-  width: 6px;
+.progress-bar-bg {
+  width: 100%;
   height: 6px;
-  border-radius: 50%;
-  margin-right: 8px;
+  background-color: #f1f5f9;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
-.itn .dot {
-  background-color: var(--blue-400);
+.progress-bar-fill {
+  height: 100%;
+  background-color: #2563eb;
+  border-radius: 3px;
 }
 
-.srwe .dot {
-  background-color: #818cf8;
+.progress-text {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #2563eb;
+  margin: 0;
+  letter-spacing: 0.5px;
 }
 
-.ensa .dot {
-  background-color: #c084fc;
+.progress-text.inactive {
+  color: #94a3b8;
 }
 
 /* Features Section */

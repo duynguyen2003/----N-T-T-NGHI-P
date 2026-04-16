@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, ChevronLeft, ChevronRight, Globe, Layers, Cpu } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Code2, Router, Shield, TerminalSquare } from 'lucide-react';
 import { A1, A2 } from '../../image';
-
+import { useAuth } from '../../context/AuthContext';
 
 /* ===============================
    STATIC DATA
@@ -12,25 +12,36 @@ const bannerImages = [A1, A2];
 
 const courses = [
   {
-    icon: Globe,
-    className: "itn",
-    title: "1. ITN - Introduction to Networks",
-    desc: "Xây dựng nền tảng về IP, Ethernet và cấu hình thiết bị.",
-    topics: ["IPv4 & IPv6", "Ethernet Switching", "Network Security Basics"],
+    id: 1,
+    icon: Code2,
+    title: "Network Fundamentals",
+    desc: "Mô hình OSI, TCP/IP, IP Addressing, Cabling & Hardware.",
+    progress: 100,
+    statusText: "HOÀN THÀNH 100%",
   },
   {
-    icon: Layers,
-    className: "srwe",
-    title: "2. SRWE - Switching, Routing, Wireless",
-    desc: "Chuyên sâu chuyển mạch, định tuyến và WLAN.",
-    topics: ["VLAN & Inter-VLAN", "STP & EtherChannel", "WLAN Config"],
+    id: 2,
+    icon: Router,
+    title: "Routing & Switching",
+    desc: "VLAN, Trunking, STP, Static Routing, OSPF, EtherChannel.",
+    progress: 45,
+    statusText: "ĐANG HỌC 45%",
   },
   {
-    icon: Cpu,
-    className: "ensa",
-    title: "3. ENSA - Enterprise & Automation",
-    desc: "Routing nâng cao, ACL, NAT và Automation.",
-    topics: ["OSPFv2", "ACL & NAT", "SDN & Automation"],
+    id: 3,
+    icon: Shield,
+    title: "IP Services & Security",
+    desc: "ACLs, NAT, DHCP, SNMP, Security Fundamentals.",
+    progress: 0,
+    statusText: "CHƯA BẮT ĐẦU",
+  },
+  {
+    id: 4,
+    icon: TerminalSquare,
+    title: "Automation & Cloud",
+    desc: "Python basics, API, JSON, SDN Architecture, Cloud models.",
+    progress: 0,
+    statusText: "CHƯA BẮT ĐẦU",
   },
 ];
 
@@ -180,6 +191,7 @@ const StatsSection = () => {
  ================================= */
 
 export const Home = () => {
+  const { isAuthenticated } = useAuth();
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
@@ -254,27 +266,42 @@ export const Home = () => {
           <p className="section-desc">Đi từ nền tảng đến sẵn sàng thi CCNA 200-301.</p>
         </div>
 
-        <div className="course-grid">
-          {courses.map((course, i) => {
-            const Icon = course.icon;
-            return (
-              <div key={i} className={`course-card ${course.className}`}>
-                <div className="icon-box">
-                  <Icon size={24} />
-                </div>
-                <h3 className="course-title">{course.title}</h3>
-                <p className="course-desc">{course.desc}</p>
-                <ul className="course-list">
-                  {course.topics.map((topic, idx) => (
-                    <li key={idx}>
-                      <span className="dot"></span>
-                      {topic}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
+        <div className="course-grid-container">
+          <div className="course-grid-line"></div>
+          <div className="course-grid">
+            {courses.map((course) => {
+              const Icon = course.icon;
+              const isStarted = course.progress > 0 || course.statusText === "HOÀN THÀNH 100%";
+              const showAsActive = !isAuthenticated || isStarted;
+              const numberClass = showAsActive ? "active" : "inactive";
+              const cardClass = showAsActive ? "course-card active" : "course-card inactive";
+
+              return (
+                <Link to="/roadmap" key={course.id} className={cardClass} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div className={`course-number ${numberClass}`}>{course.id}</div>
+                  <div className="icon-box">
+                    <Icon size={32} strokeWidth={1.5} />
+                  </div>
+                  <h3 className="course-title">{course.title}</h3>
+                  <p className="course-desc">{course.desc}</p>
+
+                  {isAuthenticated && (
+                    <div className="course-progress-section">
+                      <div className="progress-bar-bg">
+                        <div
+                          className="progress-bar-fill"
+                          style={{ width: `${course.progress}%`, backgroundColor: course.progress > 0 ? '#2563eb' : 'transparent' }}
+                        ></div>
+                      </div>
+                      <p className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`}>
+                        {course.statusText}
+                      </p>
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </section>
 
