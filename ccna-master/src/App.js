@@ -17,6 +17,7 @@ import './css/Doc.css';
 import './css/Profile.css';
 import './css/Footer.css';
 import './css/Auth/Auth.css'; // CSS cho trang Đăng ký / Đăng nhập
+import './css/CourseDetail.css'; // CSS cho trang Chi tiết Khóa học
 import './css/Tools/SubnetCalculator.css'; // CSS cho trang Subnet Calculator
 import './css/Tools/VLSM_Calculator.css'; // CSS cho trang VLSM Calculator
 import './css/Tools/PortLookup.css'; // CSS cho trang Port Lookup
@@ -33,6 +34,7 @@ import Labs from './components/Content/Labs.js';
 import Exam from './components/Content/Exam.js';
 import Resources from './components/Content/Doc.js';
 import Profile from './components/Content/Profile.js';
+import CourseDetail from './components/Content/CourseDetail.js';
 
 // Import Auth Pages
 import Login from './components/Auth/Login.js';
@@ -64,6 +66,7 @@ function App() {
 
               {/* Trang bảo vệ */}
               <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
+              <Route path="/course/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
               <Route path="/lesson" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
               <Route path="/labs" element={<ProtectedRoute><Labs /></ProtectedRoute>} />
               <Route path="/exam/*" element={<ProtectedRoute><Exam /></ProtectedRoute>} />

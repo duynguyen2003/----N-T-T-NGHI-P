@@ -1,0 +1,377 @@
+/* =========================================
+   COURSE DETAIL — Udemy-style layout
+   ========================================= */
+
+/* Page wrapper */
+.cdp-page {
+  background: #f8fafc;
+  min-height: 100vh;
+  paddingBottom: 4rem;
+}
+
+/* Top hero bar (dark background like Udemy) */
+.cdp-hero-bar {
+  background: #1e293b;
+  color: white;
+  padding: 2.5rem 0;
+}
+
+.cdp-hero-bar .cdp-container {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+}
+
+.cdp-hero-left {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Breadcrumb tag */
+.cdp-breadcrumb-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.cdp-breadcrumb-tag:hover { color: #60a5fa; }
+
+.cdp-hero-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 0.875rem;
+  line-height: 1.25;
+}
+
+.cdp-hero-subtitle {
+  font-size: 1rem;
+  color: #cbd5e1;
+  margin: 0 0 1.5rem;
+  line-height: 1.65;
+}
+
+/* Meta chips */
+.cdp-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.cdp-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+.cdp-meta-chip .material-icons-round { font-size: 16px; color: #60a5fa; }
+
+/* ---- Container ---- */
+.cdp-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  position: relative;
+}
+
+/* ---- 2-column body ---- */
+.cdp-body {
+  padding: 2.5rem 0 4rem;
+}
+
+.cdp-layout {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+}
+
+.cdp-main {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Sidebar (right sticky card) ---- */
+.cdp-sidebar {
+  width: 340px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 80px; /* below header */
+}
+
+.cdp-enroll-card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* Thumbnail */
+.cdp-thumb-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%;
+  overflow: hidden;
+  background: #0f172a;
+  cursor: pointer;
+}
+.cdp-thumb-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+.cdp-thumb-wrap:hover .cdp-thumb-img { opacity: 0.5; }
+
+.cdp-thumb-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: white;
+}
+.cdp-thumb-play .material-icons-round { font-size: 52px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+.cdp-thumb-play span:last-child { font-size: 0.75rem; opacity: 0.8; }
+
+/* Enroll body */
+.cdp-enroll-body {
+  padding: 1.5rem;
+}
+
+.cdp-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.cdp-price-free {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.cdp-price-original {
+  font-size: 0.95rem;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+.cdp-price-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #dcfce7;
+  color: #15803d;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.cdp-enroll-btn {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  border: none;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  color: white;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
+}
+.cdp-enroll-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+.cdp-access-note {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 1.25rem;
+}
+
+.cdp-includes-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+.cdp-includes-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.cdp-includes-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #334155;
+}
+.cdp-includes-list li .material-icons-round { font-size: 18px; color: #2563eb; }
+
+/* Instructor mini */
+.cdp-instructor-mini {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1rem;
+}
+.cdp-inst-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.cdp-inst-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.cdp-inst-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.cdp-inst-name { font-weight: 700; font-size: 0.9rem; color: #0f172a; }
+.cdp-inst-title { font-size: 0.78rem; color: #64748b; }
+
+/* ---- Sections on main ---- */
+.cdp-section {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.cdp-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+  margin: 0 0 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.cdp-section-title .material-icons-round { font-size: 16px; color: #2563eb; }
+
+/* Competencies grid */
+.cdp-competencies-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+}
+
+.cdp-comp-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  color: #334155;
+  line-height: 1.55;
+}
+.cdp-comp-item .material-icons-round { font-size: 18px; color: #2563eb; flex-shrink: 0; margin-top: 2px; }
+
+/* Curriculum */
+.cdp-curriculum-meta {
+  font-size: 0.82rem;
+  color: #64748b;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.cdp-module-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  margin-bottom: 0.625rem;
+  transition: border-color 0.2s;
+}
+.cdp-module-row:hover { border-color: #93c5fd; }
+
+.cdp-module-row-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.cdp-module-row-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+.cdp-module-row-info { flex: 1; }
+.cdp-module-row-title {
+  font-weight: 600;
+  font-size: 0.925rem;
+  color: #1e293b;
+  margin: 0 0 2px;
+}
+.cdp-module-row-desc { font-size: 0.78rem; color: #64748b; margin: 0; }
+
+.cdp-module-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+.cdp-module-row-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+.cdp-lesson-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+@media (max-width: 900px) {
+  .cdp-layout { flex-direction: column; }
+  .cdp-sidebar { width: 100%; position: static; }
+  .cdp-competencies-grid { grid-template-columns: 1fr; }
+  .cdp-hero-title { font-size: 1.5rem; }
+}

@@ -36,7 +36,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Logging middleware
 app.use(requestLogger);
-app.use(adminActionLogger);
 
 /**
  * ============================================================

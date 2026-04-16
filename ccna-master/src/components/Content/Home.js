@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Code2, Router, Shield, TerminalSquare } from 'lucide-react';
 import { A1, A2 } from '../../image';
 import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/Api';
 
 /* ===============================
    STATIC DATA
@@ -10,40 +11,20 @@ import { useAuth } from '../../context/AuthContext';
 
 const bannerImages = [A1, A2];
 
-const courses = [
-  {
-    id: 1,
-    icon: Code2,
-    title: "Network Fundamentals",
-    desc: "Mô hình OSI, TCP/IP, IP Addressing, Cabling & Hardware.",
-    progress: 100,
-    statusText: "HOÀN THÀNH 100%",
-  },
-  {
-    id: 2,
-    icon: Router,
-    title: "Routing & Switching",
-    desc: "VLAN, Trunking, STP, Static Routing, OSPF, EtherChannel.",
-    progress: 45,
-    statusText: "ĐANG HỌC 45%",
-  },
-  {
-    id: 3,
-    icon: Shield,
-    title: "IP Services & Security",
-    desc: "ACLs, NAT, DHCP, SNMP, Security Fundamentals.",
-    progress: 0,
-    statusText: "CHƯA BẮT ĐẦU",
-  },
-  {
-    id: 4,
-    icon: TerminalSquare,
-    title: "Automation & Cloud",
-    desc: "Python basics, API, JSON, SDN Architecture, Cloud models.",
-    progress: 0,
-    statusText: "CHƯA BẮT ĐẦU",
-  },
-];
+// Icon mapping theo code khóa học
+const COURSE_ICONS = {
+  ITN: Code2,
+  SRWE: Router,
+  ENSA: Shield,
+};
+const FALLBACK_ICON = TerminalSquare;
+
+// Tạo statusText từ progress
+const getStatusText = (progress) => {
+  if (progress === 100) return 'HOÀN THÀNH 100%';
+  if (progress > 0) return `ĐANG HỌC ${progress}%`;
+  return 'CHƯA BẮT ĐẦU';
+};
 
 const features = [
   {
@@ -192,14 +173,40 @@ const StatsSection = () => {
 
 export const Home = () => {
   const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
+  const [courses, setCourses] = useState([]);
 
+  // Tự động chuyển banner
   useEffect(() => {
     const timer = setInterval(
       () => setCurrent((prev) => (prev + 1) % bannerImages.length),
       5000
     );
     return () => clearInterval(timer);
+  }, []);
+
+  // Lấy dữ liệu khóa học thực từ API (cùng nguồn với Roadmap)
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const data = await api.getCourses();
+        // Map sang định dạng Home cần
+        const mapped = data.map((c, idx) => ({
+          id: idx + 1,
+          courseId: c.id,          // ID thực để navigate
+          icon: COURSE_ICONS[c.code] || FALLBACK_ICON,
+          title: c.title,
+          desc: c.description,
+          progress: c.progress,
+          statusText: getStatusText(c.progress),
+        }));
+        setCourses(mapped);
+      } catch (err) {
+        console.error('Home: không thể tải dữ liệu khóa học', err);
+      }
+    };
+    fetchCourses();
   }, []);
 
   const next = () =>
@@ -271,13 +278,22 @@ export const Home = () => {
           <div className="course-grid">
             {courses.map((course) => {
               const Icon = course.icon;
-              const isStarted = course.progress > 0 || course.statusText === "HOÀN THÀNH 100%";
+              const isStarted = course.progress > 0;
               const showAsActive = !isAuthenticated || isStarted;
-              const numberClass = showAsActive ? "active" : "inactive";
-              const cardClass = showAsActive ? "course-card active" : "course-card inactive";
+              const numberClass = showAsActive ? 'active' : 'inactive';
+              const cardClass = showAsActive ? 'course-card active' : 'course-card inactive';
 
               return (
-                <Link to="/roadmap" key={course.id} className={cardClass} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div
+                  key={course.id}
+                  className={cardClass}
+                  style={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
+                  onClick={() => isAuthenticated
+                    ? navigate(`/course/${course.courseId}?from=home`)
+                    : navigate('/login')
+                  }
+                  id={`home-course-card-${course.courseId}`}
+                >
                   <div className={`course-number ${numberClass}`}>{course.id}</div>
                   <div className="icon-box">
                     <Icon size={32} strokeWidth={1.5} />
@@ -291,14 +307,14 @@ export const Home = () => {
                         <div
                           className="progress-bar-fill"
                           style={{ width: `${course.progress}%`, backgroundColor: course.progress > 0 ? '#2563eb' : 'transparent' }}
-                        ></div>
+                        />
                       </div>
                       <p className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`}>
                         {course.statusText}
                       </p>
                     </div>
                   )}
-                </Link>
+                </div>
               );
             })}
           </div>

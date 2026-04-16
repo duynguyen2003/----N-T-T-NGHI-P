@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ReactPlayer from 'react-player';
 import {
    ChevronLeft, ChevronRight, Menu, FileText,
-   AlertCircle, Download, CheckCircle, MessageSquare, Play
+   AlertCircle, Download, CheckCircle, MessageSquare, Play, ArrowLeft
 } from 'lucide-react';
 
 const MOBILE_BREAKPOINT = 1024;
@@ -62,6 +63,10 @@ const defaultProgressState = () => ({
 });
 
 const Lesson = () => {
+   const navigate = useNavigate();
+   const [searchParams] = useSearchParams();
+   const courseId = searchParams.get('course');
+
    const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
    const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= MOBILE_BREAKPOINT);
    const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
@@ -261,7 +266,23 @@ const Lesson = () => {
                   >
                      <Menu size={20} />
                   </button>
-                  <h2 className="lc-topbar-title">{selectedLesson.section} {selectedLesson.title}</h2>
+                  {/* Breadcrumb */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', color: '#64748b' }}>
+                     {courseId && (
+                        <>
+                           <button
+                              type="button"
+                              id="lesson-back-to-course"
+                              onClick={() => navigate(`/course/${courseId}?from=lesson`)}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', padding: 0 }}
+                           >
+                              <ArrowLeft size={14} /> Khóa học
+                           </button>
+                           <span style={{ color: '#cbd5e1' }}>/</span>
+                        </>
+                     )}
+                     <span style={{ fontWeight: 500, color: '#0f172a' }}>{selectedLesson.section} — {selectedLesson.title}</span>
+                  </div>
                </div>
                <div className="lc-topbar-right">
                   <button
