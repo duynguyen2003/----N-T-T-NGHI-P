@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Code2, Router, Shield, TerminalSquare } from 'lucide-react';
 import { A1, A2 } from '../../image';
+import course1 from '../../image/course1.jpg';
+import course2 from '../../image/course2.jpg';
+import course3 from '../../image/course3.jpg';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/Api';
 
@@ -10,6 +13,7 @@ import { api } from '../../services/Api';
 ================================= */
 
 const bannerImages = [A1, A2];
+const courseBackgrounds = [course1, course2, course3];
 
 // Icon mapping theo code khóa học
 const COURSE_ICONS = {
@@ -18,6 +22,12 @@ const COURSE_ICONS = {
   ENSA: Shield,
 };
 const FALLBACK_ICON = TerminalSquare;
+
+const NEXT_LESSON_BY_COURSE = {
+  c1: 'Bài học tiếp theo: Subnetting cơ bản',
+  c2: 'Bài học tiếp theo: Cấu hình OSPF cơ bản',
+  c3: 'Bài học tiếp theo: Giới thiệu WAN doanh nghiệp',
+};
 
 // Tạo statusText từ progress
 const getStatusText = (progress) => {
@@ -176,6 +186,7 @@ export const Home = () => {
   const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
   const [courses, setCourses] = useState([]);
+  const resumeCourse = courses.find((c) => c.progress > 0 && c.progress < 100) || null;
 
   // Tự động chuyển banner
   useEffect(() => {
@@ -200,6 +211,7 @@ export const Home = () => {
           desc: c.description,
           progress: c.progress,
           statusText: getStatusText(c.progress),
+          backgroundImage: courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
         }));
         setCourses(mapped);
       } catch (err) {
@@ -216,6 +228,21 @@ export const Home = () => {
     setCurrent((prev) =>
       (prev - 1 + bannerImages.length) % bannerImages.length
     );
+
+  const handleResumeLearning = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    if (resumeCourse) {
+      navigate(`/lesson?course=${resumeCourse.courseId}`);
+    }
+  };
+
+  const resumeNextLessonText = resumeCourse
+    ? (NEXT_LESSON_BY_COURSE[resumeCourse.courseId] || 'Bài học tiếp theo: Tiếp tục lộ trình hiện tại')
+    : '';
+  const ResumeIcon = resumeCourse?.icon || FALLBACK_ICON;
 
   return (
     <div className="home-wrapper">
@@ -237,7 +264,7 @@ export const Home = () => {
             >
               <div className="banner-text-content">
                 <h1 className="banner-title">
-                  Chinh phục <span className="text-highlight">CCNA 200-301</span>
+                  Chinh phục CCNA 200-301 cùng chúng tôi
                 </h1>
                 <p className="banner-subtitle">Bắt đầu hành trình trở thành Network Engineer.</p>
                 <Link to="/roadmap" className="btn-primary-compact">
@@ -266,6 +293,44 @@ export const Home = () => {
       {/* ================= Stats ================= */}
       <StatsSection />
 
+      {/* ================= Continue Learning ================= */}
+      {isAuthenticated && resumeCourse && (
+        <section className="continue-learning">
+          <div className="continue-learning-inner">
+            <div className="continue-learning-icon-wrap">
+              <div className="continue-learning-icon-box" aria-hidden="true">
+                <ResumeIcon size={26} strokeWidth={1.8} />
+              </div>
+            </div>
+
+            <div className="continue-learning-content">
+              <h2 className="continue-learning-title">{resumeCourse.title}</h2>
+              <p className="continue-learning-next-lesson">{resumeNextLessonText}</p>
+              <div className="continue-learning-progress-wrap">
+                <div className="continue-learning-progress-track">
+                  <div
+                    className="continue-learning-progress-fill"
+                    style={{ width: `${resumeCourse.progress}%` }}
+                  />
+                </div>
+                <p className="continue-learning-progress-label">Đang học {resumeCourse.progress}%</p>
+              </div>
+            </div>
+
+            <div className="continue-learning-actions">
+              <button
+                type="button"
+                className="continue-learning-btn primary"
+                onClick={handleResumeLearning}
+              >
+                Tiếp tục bài học
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* ================= Curriculum ================= */}
       <section className="curriculum">
         <div className="section-header">
@@ -286,11 +351,16 @@ export const Home = () => {
               return (
                 <div
                   key={course.id}
-                  className={cardClass}
-                  style={{ cursor: 'pointer', textDecoration: 'none', color: 'inherit' }}
+                  className={`${cardClass} with-bg`}
+                  style={{
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    '--course-bg-image': `url(${course.backgroundImage})`,
+                  }}
                   onClick={() => isAuthenticated
                     ? navigate(`/course/${course.courseId}?from=home`)
-                    : navigate('/login')
+                    : navigate(`/course/${course.courseId}?from=home`)
                   }
                   id={`home-course-card-${course.courseId}`}
                 >
@@ -314,6 +384,22 @@ export const Home = () => {
                       </p>
                     </div>
                   )}
+
+                  <button
+                    type="button"
+                    className={`course-detail-btn ${showAsActive ? 'active' : 'inactive'}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isAuthenticated) {
+                        navigate(`/course/${course.courseId}?from=home`);
+                      } else {
+                        navigate(`/course/${course.courseId}?from=home`);
+                      }
+                    }}
+                  >
+                    Xem chi tiết
+                    <ArrowRight size={16} />
+                  </button>
                 </div>
               );
             })}
@@ -334,6 +420,7 @@ export const Home = () => {
           ))}
         </div>
       </section>
+
     </div>
   );
 };

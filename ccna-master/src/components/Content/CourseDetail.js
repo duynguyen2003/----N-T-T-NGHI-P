@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Play, CheckCircle, Lock, ChevronRight } from 'lucide-react';
 import { api } from '../../services/Api';
+import { useAuth } from '../../context/AuthContext';
 import '../../css/CourseDetail.css';
 
 const COURSE_GRADIENTS = {
@@ -20,6 +21,7 @@ const MODULE_STATUS = {
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const from = searchParams.get('from') || 'roadmap';
 
@@ -67,6 +69,13 @@ const CourseDetail = () => {
   const isStarted = course.progress > 0;
   const totalLessons = course.modules?.reduce((sum, m) => sum + (m.lessonCount || 0), 0) || 0;
   const instInitial = (course.instructor?.name || 'G').charAt(0).toUpperCase();
+  const handleStartLearning = () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    navigate(`/lesson?course=${courseId}`);
+  };
 
   return (
     <div className="cdp-page">
@@ -156,14 +165,15 @@ const CourseDetail = () => {
                 {course.modules?.map((module, idx) => {
                   const st = MODULE_STATUS[module.status] || MODULE_STATUS.locked;
                   const isLocked = module.status === 'locked';
+                  const isNavigable = isAuthenticated && !isLocked;
                   const isCompleted = module.status === 'completed';
 
                   return (
                     <div key={module.id} className="cdp-module-row" id={`module-row-${module.id}`}>
                       <div
                         className="cdp-module-row-header"
-                        style={{ opacity: isLocked ? 0.6 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-                        onClick={() => !isLocked && navigate(`/lesson?course=${courseId}`)}
+                        style={{ opacity: isLocked ? 0.6 : 1, cursor: isNavigable ? 'pointer' : 'not-allowed' }}
+                        onClick={() => isNavigable && navigate(`/lesson?course=${courseId}`)}
                       >
                         {/* Number / status icon */}
                         <div
@@ -195,7 +205,7 @@ const CourseDetail = () => {
                           >
                             {st.label}
                           </span>
-                          {!isLocked && <ChevronRight size={15} color="#94a3b8" />}
+                          {isNavigable && <ChevronRight size={15} color="#94a3b8" />}
                         </div>
                       </div>
                     </div>
@@ -212,7 +222,7 @@ const CourseDetail = () => {
                 {/* Thumbnail */}
                 <div
                   className="cdp-thumb-wrap"
-                  onClick={() => navigate(`/lesson?course=${courseId}`)}
+                  onClick={handleStartLearning}
                 >
                   {course.thumbnailUrl ? (
                     <img className="cdp-thumb-img" src={course.thumbnailUrl} alt={course.title} />
@@ -229,17 +239,17 @@ const CourseDetail = () => {
                 <div className="cdp-enroll-body">
                   <div className="cdp-price-row">
                     <span className="cdp-price-free">Miễn phí</span>
-                    <span className="cdp-price-original">6,888,000đ</span>
-                    <span className="cdp-price-badge">100% OFF</span>
                   </div>
 
                   <button
                     id="cdp-enroll-btn"
                     className="cdp-enroll-btn"
                     style={{ background: colors.gradient }}
-                    onClick={() => navigate(`/lesson?course=${courseId}`)}
+                    onClick={handleStartLearning}
                   >
-                    {isStarted ? (
+                    {!isAuthenticated ? (
+                      <>Đăng nhập để học <span className="material-icons-round" style={{ fontSize: 18 }}>arrow_forward</span></>
+                    ) : isStarted ? (
                       <><Play size={16} fill="white" /> Tiếp tục học</>
                     ) : (
                       <>Ghi danh miễn phí <span className="material-icons-round" style={{ fontSize: 18 }}>arrow_forward</span></>
@@ -274,22 +284,6 @@ const CourseDetail = () => {
                         ))}
                       </ul>
                     </>
-                  )}
-
-                  {/* Instructor */}
-                  {course.instructor && (
-                    <div className="cdp-instructor-mini">
-                      <p className="cdp-inst-label">GIẢNG VIÊN</p>
-                      <div className="cdp-inst-row">
-                        <div className="cdp-inst-avatar" style={{ background: colors.gradient }}>
-                          {instInitial}
-                        </div>
-                        <div>
-                          <p className="cdp-inst-name">{course.instructor.name}</p>
-                          <p className="cdp-inst-title">{course.instructor.title}</p>
-                        </div>
-                      </div>
-                    </div>
                   )}
 
                 </div>

@@ -11,6 +11,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { api } from '../../services/Api.js';
+import '../../css/Roadmap.css';
 
 // Màu gradient cho từng khóa học
 const COURSE_GRADIENTS = {
@@ -47,46 +48,45 @@ export const Roadmap = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '6rem 0', textAlign: 'center' }}>
-        <Loader2 size={32} className="spin" color="#2563eb" style={{ margin: '0 auto 1rem', display: 'block' }} />
-        <p style={{ color: '#64748b' }}>Đang tải lộ trình...</p>
+      <div className="roadmap-wrapper" style={{ paddingTop: '6rem', paddingBottom: '6rem' }}>
+        <div style={{ textAlign: 'center' }}>
+          <Loader2 size={32} className="spin" color="#2563eb" style={{ margin: '0 auto 1rem', display: 'block' }} />
+          <p style={{ color: '#64748b' }}>Đang tải lộ trình...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
-        <AlertCircle size={40} color="#ef4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
-        <p style={{ color: '#ef4444' }}>{error}</p>
+      <div className="roadmap-wrapper" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
+        <div style={{ textAlign: 'center' }}>
+          <AlertCircle size={40} color="#ef4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
+          <p style={{ color: '#ef4444' }}>{error}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: '3rem 0', background: 'var(--slate-50)', minHeight: '100vh' }}>
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 1.5rem' }}>
+    <div className="roadmap-wrapper">
+      <div className="roadmap-container">
 
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: '#dbeafe', color: '#1d4ed8', borderRadius: '9999px',
-            padding: '0.35rem 1rem', fontSize: '0.8rem', fontWeight: 600,
-            marginBottom: '1rem', letterSpacing: '0.5px',
-          }}>
+        <div className="roadmap-header-wrapper">
+          <div className="roadmap-header-badge">
             <BookOpen size={13} /> LỘ TRÌNH HỌC TẬP
           </div>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.75rem' }}>
+          <h1 className="roadmap-header-title">
             Lộ trình CCNA 200-301
           </h1>
-          <p style={{ color: '#475569', fontSize: '1.05rem', maxWidth: 540, margin: '0 auto' }}>
+          <p className="roadmap-header-desc">
             Chinh phục chứng chỉ quốc tế với 3 khóa học chuyên sâu, từ nền tảng đến nâng cao.
           </p>
         </div>
 
         {/* Connection line between courses */}
-        <div style={{ position: 'relative' }}>
+        <div className="roadmap-connector-wrapper">
 
           {courses.map((course, index) => {
             const colors = COURSE_GRADIENTS[course.code] || DEFAULT_GRADIENT;
@@ -100,109 +100,89 @@ export const Roadmap = () => {
 
                 {/* Connector arrow between cards */}
                 {index < courses.length - 1 && (
-                  <div style={{
-                    position: 'absolute', bottom: '-1.5rem', left: '50%',
-                    transform: 'translateX(-50%)',
-                    zIndex: 1, display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', gap: '2px',
-                  }}>
-                    <div style={{ width: 2, height: 20, background: '#cbd5e1' }} />
-                    <ChevronRight size={16} color="#94a3b8" style={{ transform: 'rotate(90deg)' }} />
-                    <div style={{ width: 2, height: 6, background: '#cbd5e1' }} />
+                  <div className="roadmap-connector">
+                    <div className="roadmap-connector-line" />
+                    <ChevronRight size={16} color="#94a3b8" className="roadmap-connector-arrow" />
+                    <div className="roadmap-connector-line-bottom" />
                   </div>
                 )}
 
                 {/* Course Card */}
                 <div
                   id={`course-card-${course.id}`}
-                  className="card"
+                  className="roadmap-card"
                   style={{
-                    borderRadius: '1.25rem',
-                    overflow: 'hidden',
-                    border: '1.5px solid #e2e8f0',
-                    transition: 'all 0.25s ease',
-                    cursor: 'default',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'translateY(-3px)';
-                    e.currentTarget.style.boxShadow = '0 12px 30px rgba(0,0,0,0.12)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = '';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+                    '--gradient-bg': colors.gradient,
+                    '--gradient-text': colors.text,
+                    '--gradient-light': colors.light,
                   }}
                 >
                   {/* Gradient top bar */}
-                  <div style={{ height: 5, background: colors.gradient }} />
+                  <div className="roadmap-card-gradient" style={{ background: colors.gradient }} />
 
-                  <div style={{ padding: '1.75rem 2rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+                  <div className="roadmap-card-content">
 
                     {/* Code icon */}
-                    <div style={{
-                      width: 64, height: 64, borderRadius: 16, flexShrink: 0,
-                      background: colors.gradient, display: 'flex',
-                      alignItems: 'center', justifyContent: 'center',
-                      color: 'white', fontWeight: 800, fontSize: '0.85rem',
-                      letterSpacing: '0.5px', boxShadow: `0 6px 18px ${colors.text}40`,
-                    }}>
+                    <div
+                      className="roadmap-card-code"
+                      style={{
+                        background: colors.gradient,
+                        boxShadow: `0 6px 18px ${colors.text}40`,
+                      }}
+                    >
                       {course.code}
                     </div>
 
                     {/* Info */}
-                    <div style={{ flex: 1, minWidth: 200 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                        <h2 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                    <div className="roadmap-card-info">
+                      <div className="roadmap-card-header">
+                        <h2 className="roadmap-card-title">
                           {course.title}
                         </h2>
                         {isCompleted && (
-                          <span style={{
-                            fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px',
-                            borderRadius: '9999px', background: '#dcfce7', color: '#15803d',
-                          }}>✓ Hoàn thành</span>
+                          <span className="roadmap-card-badge roadmap-card-badge-completed">✓ Hoàn thành</span>
                         )}
                         {isStarted && !isCompleted && (
-                          <span style={{
-                            fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px',
-                            borderRadius: '9999px', background: '#dbeafe', color: '#1d4ed8',
-                          }}>Đang học</span>
+                          <span className="roadmap-card-badge roadmap-card-badge-active">Đang học</span>
                         )}
                       </div>
-                      <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0 0 0.875rem', lineHeight: 1.5 }}>
+                      <p className="roadmap-card-desc">
                         {course.description}
                       </p>
 
                       {/* Module status indicators */}
-                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <div className="roadmap-card-modules">
                         {course.modules?.map((mod) => (
-                          <div key={mod.id} title={mod.title} style={{
-                            width: 8, height: 8, borderRadius: '50%',
-                            background: mod.status === 'completed' ? '#22c55e'
-                              : mod.status === 'active' ? '#2563eb' : '#cbd5e1',
-                          }} />
+                          <div
+                            key={mod.id}
+                            title={mod.title}
+                            className={`roadmap-card-module-dot ${mod.status === 'completed' ? 'completed' : mod.status === 'active' ? 'active' : 'inactive'}`}
+                          />
                         ))}
-                        <span style={{ fontSize: '0.75rem', color: '#94a3b8', marginLeft: '0.25rem' }}>
+                        <span className="roadmap-card-module-count">
                           {completedModules}/{moduleCount} modules
                         </span>
                       </div>
                     </div>
 
                     {/* Progress + CTA */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.875rem', minWidth: 160 }}>
+                    <div className="roadmap-card-progress-wrapper">
                       {/* Progress */}
-                      <div style={{ width: '100%' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 600, color: '#64748b', marginBottom: '0.4rem' }}>
+                      <div className="roadmap-card-progress">
+                        <div className="roadmap-card-progress-label">
                           <span>Tiến độ</span>
-                          <span style={{ color: isCompleted ? '#16a34a' : colors.text }}>{course.progress}%</span>
+                          <span className="roadmap-card-progress-value" style={{ color: isCompleted ? '#16a34a' : colors.text }}>
+                            {course.progress}%
+                          </span>
                         </div>
-                        <div style={{ background: '#e2e8f0', borderRadius: '9999px', height: 7, overflow: 'hidden' }}>
-                          <div style={{
-                            width: `${course.progress}%`,
-                            height: '100%',
-                            borderRadius: '9999px',
-                            background: isCompleted ? '#22c55e' : colors.gradient,
-                            transition: 'width 0.6s ease',
-                          }} />
+                        <div className="roadmap-card-progress-bar">
+                          <div
+                            className="roadmap-card-progress-fill"
+                            style={{
+                              width: `${course.progress}%`,
+                              background: isCompleted ? '#22c55e' : colors.gradient,
+                            }}
+                          />
                         </div>
                       </div>
 
@@ -210,14 +190,10 @@ export const Roadmap = () => {
                       <button
                         id={`btn-course-${course.id}`}
                         onClick={() => handleViewCourse(course.id)}
+                        className="roadmap-card-btn"
                         style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                          padding: '0.65rem 1.25rem', borderRadius: '0.75rem',
-                          fontWeight: 700, fontSize: '0.875rem', cursor: 'pointer',
-                          border: 'none', color: 'white', background: colors.gradient,
+                          background: colors.gradient,
                           boxShadow: `0 4px 14px ${colors.text}35`,
-                          transition: 'all 0.2s',
-                          whiteSpace: 'nowrap',
                         }}
                         onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = `0 8px 20px ${colors.text}45`; }}
                         onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 4px 14px ${colors.text}35`; }}
@@ -239,7 +215,7 @@ export const Roadmap = () => {
         </div>
 
         {/* Footer note */}
-        <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.8rem', marginTop: '2.5rem' }}>
+        <p className="roadmap-footer-note">
           * Mỗi khóa học mở khi bạn hoàn thành khóa học trước đó.
         </p>
 

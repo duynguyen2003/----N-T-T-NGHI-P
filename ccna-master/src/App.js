@@ -66,7 +66,7 @@ function App() {
 
               {/* Trang bảo vệ */}
               <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
-              <Route path="/course/:courseId" element={<ProtectedRoute><CourseDetail /></ProtectedRoute>} />
+              <Route path="/course/:courseId" element={<CourseDetail />} />
               <Route path="/lesson" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
               <Route path="/labs" element={<ProtectedRoute><Labs /></ProtectedRoute>} />
               <Route path="/exam/*" element={<ProtectedRoute><Exam /></ProtectedRoute>} />

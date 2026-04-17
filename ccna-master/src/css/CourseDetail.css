@@ -6,13 +6,11 @@
 .cdp-page {
   background: #f8fafc;
   min-height: 100vh;
-  paddingBottom: 4rem;
+  padding-Bottom: 4rem;
 }
 
 /* Top hero bar (dark background like Udemy) */
 .cdp-hero-bar {
-  background: #1e293b;
-  color: white;
   padding: 2.5rem 0;
 }
 
@@ -47,15 +45,16 @@
 
 .cdp-hero-title {
   font-size: 2rem;
-  font-weight: 800;
-  color: white;
+  font-weight: 700;
+  color:var(--text-color);
+
   margin: 0 0 0.875rem;
   line-height: 1.25;
 }
 
 .cdp-hero-subtitle {
   font-size: 1rem;
-  color: #cbd5e1;
+   color: var(--text-color);
   margin: 0 0 1.5rem;
   line-height: 1.65;
 }
@@ -73,7 +72,8 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.82rem;
-  color: #94a3b8;
+    color: var(--text-color);
+
 }
 .cdp-meta-chip .material-icons-round { font-size: 16px; color: #60a5fa; }
 
@@ -157,27 +157,19 @@
 
 .cdp-price-row {
   display: flex;
-  align-items: baseline;
+  justify-content: center;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
 .cdp-price-free {
-  font-size: 1.75rem;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 400;
   color: #0f172a;
 }
 .cdp-price-original {
   font-size: 0.95rem;
   color: #94a3b8;
   text-decoration: line-through;
-}
-.cdp-price-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: #dcfce7;
-  color: #15803d;
-  padding: 2px 8px;
-  border-radius: 9999px;
 }
 
 .cdp-enroll-btn {
@@ -230,41 +222,6 @@
   color: #334155;
 }
 .cdp-includes-list li .material-icons-round { font-size: 18px; color: #2563eb; }
-
-/* Instructor mini */
-.cdp-instructor-mini {
-  border-top: 1px solid #f1f5f9;
-  padding-top: 1rem;
-}
-.cdp-inst-label {
-  font-size: 0.72rem;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #94a3b8;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-.cdp-inst-row {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.cdp-inst-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb, #60a5fa);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-.cdp-inst-name { font-weight: 700; font-size: 0.9rem; color: #0f172a; }
-.cdp-inst-title { font-size: 0.78rem; color: #64748b; }
-
 /* ---- Sections on main ---- */
 .cdp-section {
   background: white;
