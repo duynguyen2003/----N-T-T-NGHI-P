@@ -22,4 +22,24 @@ router.post('/labs', upload.single('filePka'), learningController.createLab);
 router.put('/labs/:id', upload.single('filePka'), learningController.updateLab);
 router.delete('/labs/:id', learningController.deleteLab);
 
+// Module (Chương) management
+router.get('/courses/:courseId/modules', learningController.getModulesByCourse);
+router.post('/courses/:courseId/modules', learningController.createModule);
+router.delete('/modules/:id', learningController.deleteModule);
+
+// Lesson (Bài học) management
+router.get('/modules/:moduleId/lessons', learningController.getLessonsByModule);
+router.post('/modules/:moduleId/lessons', learningController.createLesson);
+router.delete('/lessons/:id', learningController.deleteLesson);
+
+// CourseTopic (Chủ đề) management
+router.get('/courses/:courseId/topics', learningController.getTopicsByCourse);
+router.post('/courses/:courseId/topics', learningController.createTopic);
+router.delete('/topics/:id', learningController.deleteTopic);
+
+// Resource (Tài liệu) management
+router.get('/resources', learningController.getResources);
+router.post('/resources', upload.single('file'), learningController.createResource);
+router.delete('/resources/:id', learningController.deleteResource);
+
 module.exports = router;

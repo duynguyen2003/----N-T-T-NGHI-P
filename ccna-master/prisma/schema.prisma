@@ -79,13 +79,16 @@ model RefreshToken {
 // ==========================================
 
 model Course {
-  id          String    @id @db.VarChar(10) // vđ: c1, c2
-  code        String    @db.VarChar(10)     // vđ: ITN, SRWE
-  title       String    @db.VarChar(200)
-  description String?   @db.Text
-  orderIndex  Int       @map("order_index")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  deletedAt   DateTime? @map("deleted_at")
+  id            String    @id @db.VarChar(10) // vđ: c1, c2
+  code          String    @db.VarChar(10)     // vđ: ITN, SRWE
+  title         String    @db.VarChar(200)
+  description   String?   @db.Text
+  thumbnailUrl  String?   @map("thumbnail_url") @db.VarChar(500)
+  level         String    @default("BEGINNER") @db.VarChar(50)
+  status        String    @default("DRAFT") @db.VarChar(50)
+  orderIndex    Int       @default(0) @map("order_index")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  deletedAt     DateTime? @map("deleted_at")
 
   modules     Module[]
   topics      CourseTopic[]

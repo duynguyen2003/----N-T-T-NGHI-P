@@ -34,6 +34,9 @@ import Users from './components/Admin/Views/Users';
 import Courses from './components/Admin/Views/Courses';
 import Exams from './components/Admin/Views/Exams';
 import Labs from './components/Admin/Views/Labs';
+import AdminCourseDetail from './components/Admin/Views/CourseDetail';
+import AdminTools from './components/Admin/Views/Tools';
+import AdminResources from './components/Admin/Views/Resources';
 
 // Import các Trang nội dung (Content Pages)
 import Home from './components/Content/Home.js';
@@ -73,8 +76,11 @@ function App() {
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="users" element={<Users />} />
                 <Route path="courses" element={<Courses />} />
+                <Route path="courses/:courseId" element={<AdminCourseDetail />} />
                 <Route path="exams" element={<Exams />} />
                 <Route path="labs" element={<Labs />} />
+                <Route path="tools" element={<AdminTools />} />
+                <Route path="resources" element={<AdminResources />} />
               </Routes>
             </AdminLayout>
           </AdminProtectedRoute>

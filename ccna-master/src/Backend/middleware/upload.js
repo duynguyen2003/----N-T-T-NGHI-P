@@ -8,6 +8,8 @@ const storage = multer.diskStorage({
       cb(null, 'uploads/thumbnails/');
     } else if (file.fieldname === 'filePka') {
       cb(null, 'uploads/labs/');
+    } else if (file.fieldname === 'file') {
+      cb(null, 'uploads/resources/');
     } else {
       cb(null, 'uploads/');
     }

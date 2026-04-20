@@ -66,10 +66,14 @@ const Login = () => {
       
       showToast(`Xin chào, ${data.user.fullName}!`, 'success');
       
-      // Chuyển hướng vào trang Lộ trình học CCNA
+      // Chuyển hướng vào trang Admin hoặc Lộ trình học tùy vai trò
       setTimeout(() => {
-        const redirectPath = location.state?.from || '/roadmap';
-        navigate(redirectPath);
+        if (data.user.role === 'ADMIN') {
+          navigate('/admin');
+        } else {
+          const redirectPath = location.state?.from || '/roadmap';
+          navigate(redirectPath);
+        }
       }, 800);
     } catch (error) {
       setGlobalError(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
