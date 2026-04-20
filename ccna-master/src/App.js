@@ -26,11 +26,20 @@ import './css/Tools/CiscoCliLookup.css'; // CSS cho trang Cisco CLI Lookup
 // Import Layout (Chứa Header và Footer)
 import Layout from './components/Content/Layout';
 
+// Import Admin Layout & Pages
+import AdminLayout from './components/Admin/Layout/AdminLayout';
+import AdminProtectedRoute from './components/Admin/AdminProtectedRoute';
+import Dashboard from './components/Admin/Views/Dashboard';
+import Users from './components/Admin/Views/Users';
+import Courses from './components/Admin/Views/Courses';
+import Exams from './components/Admin/Views/Exams';
+import Labs from './components/Admin/Views/Labs';
+
 // Import các Trang nội dung (Content Pages)
 import Home from './components/Content/Home.js';
 import Roadmap from './components/Content/Roadmap.js';
 import Lesson from './components/Content/Lesson.js';
-import Labs from './components/Content/Labs.js';
+import LabsView from './components/Content/Labs.js';
 import Exam from './components/Content/Exam.js';
 import Resources from './components/Content/Doc.js';
 import Profile from './components/Content/Profile.js';
@@ -54,6 +63,24 @@ function App() {
     <Router>
       <Routes>
         {/* =========================================
+            ADMIN ROUTES (Isolated Layout)
+            ========================================= */}
+        <Route path="/admin/*" element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <Routes>
+                <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="users" element={<Users />} />
+                <Route path="courses" element={<Courses />} />
+                <Route path="exams" element={<Exams />} />
+                <Route path="labs" element={<Labs />} />
+              </Routes>
+            </AdminLayout>
+          </AdminProtectedRoute>
+        } />
+
+        {/* =========================================
             USER/STUDENT ROUTES (With Layout)
             ========================================= */}
         <Route path="*" element={
@@ -65,11 +92,11 @@ function App() {
               <Route path="/register" element={<Register />} />
 
               {/* Trang bảo vệ */}
-              <Route path="/roadmap" element={<ProtectedRoute><Roadmap /></ProtectedRoute>} />
+              <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/course/:courseId" element={<CourseDetail />} />
-              <Route path="/lesson" element={<ProtectedRoute><Lesson /></ProtectedRoute>} />
-              <Route path="/labs" element={<ProtectedRoute><Labs /></ProtectedRoute>} />
-              <Route path="/exam/*" element={<ProtectedRoute><Exam /></ProtectedRoute>} />
+              <Route path="/lesson" element={<Lesson />} />
+              <Route path="/labs" element={<LabsView />} />
+              <Route path="/exam/*" element={<Exam />} />
               <Route path="/resources" element={<ProtectedRoute><Resources /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/tools/subnet" element={<ProtectedRoute><SubnetCalculator /></ProtectedRoute>} />

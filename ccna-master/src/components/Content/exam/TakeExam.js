@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../../../css/ExamFlow.css';
+import { useAuth } from '../../../context/AuthContext';
 
 // ─── Mock Questions ────────────────────────────────────────────
 const MOCK_QUESTIONS = [
@@ -84,6 +85,7 @@ const calculateScore = (answers) => {
 const TakeExam = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
+  const { isAuthenticated, loading } = useAuth();
 
   const EXAM_DURATION = 90 * 60; // 90 phút tính bằng giây
   const STORAGE_KEY = `ccna_exam_session_${examId}`;
@@ -192,6 +194,39 @@ const TakeExam = () => {
     if (userAnswers[q.id]) return 'take-exam__q-dot take-exam__q-dot--answered';
     return 'take-exam__q-dot take-exam__q-dot--unanswered';
   };
+
+  if (loading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="take-exam-page" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ maxWidth: 560, width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '1.5rem', textAlign: 'center' }}>
+          <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#0f172a' }}>Guest không được phép làm bài thi</h2>
+          <p style={{ marginTop: 0, marginBottom: '1rem', color: '#64748b' }}>
+            Bạn có thể xem thông tin tại Trung tâm Kiểm tra, nhưng cần đăng nhập để bắt đầu bài thi.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className="btn btn-prev"
+              onClick={() => navigate('/exam/testing-center', { replace: true })}
+            >
+              Quay lại trung tâm
+            </button>
+            <button
+              type="button"
+              className="btn btn-submit"
+              onClick={() => navigate('/login')}
+            >
+              Đăng nhập để làm bài
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="take-exam-page">

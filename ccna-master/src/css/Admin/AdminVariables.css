@@ -1,9 +1,32 @@
-/* Admin Theme Variables */
+/* css/Admin/AdminVariables.css */
+
 :root {
-  --admin-primary: #3b82f6;
-  --admin-secondary: #10b981;
-  --admin-bg: #f3f4f6;
-  --admin-sidebar-bg: #1f2937;
-  --admin-text: #111827;
-  --admin-text-light: #6b7280;
+  /* Colors */
+  --admin-bg-dark: #0B0B0C;
+  --admin-sidebar-bg: #131415;
+  --admin-sidebar-hover: #ffffff10;
+  --admin-sidebar-active: #2a85ff;
+  --admin-sidebar-active-bg: rgba(42, 133, 255, 0.1);
+  --admin-topbar-bg: #131415;
+  
+  --admin-text-primary: #f5f5f5;
+  --admin-text-secondary: #a0a0a0;
+  --admin-text-muted: #666666;
+
+  --admin-border-color: #2a2a2a;
+  
+  /* Primary Actions */
+  --admin-primary: #2a85ff;
+  --admin-primary-hover: #1e6bd6;
+  --admin-danger: #ea4335;
+  --admin-success: #34a853;
+  --admin-warning: #fbbc04;
+
+  /* Sizing */
+  --admin-sidebar-width: 250px;
+  --admin-topbar-height: 60px;
+  
+  /* Others */
+  --admin-border-radius: 8px;
+  --admin-transition: 0.2s ease-in-out;
 }

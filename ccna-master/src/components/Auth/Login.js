@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api } from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const { showToast, ToastComponent } = useToast();
 
@@ -67,7 +68,8 @@ const Login = () => {
       
       // Chuyển hướng vào trang Lộ trình học CCNA
       setTimeout(() => {
-        navigate('/roadmap');
+        const redirectPath = location.state?.from || '/roadmap';
+        navigate(redirectPath);
       }, 800);
     } catch (error) {
       setGlobalError(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');

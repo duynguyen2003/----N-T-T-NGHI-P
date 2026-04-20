@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '../../Toast';
 import '../../../css/ExamFlow.css';
 
 // ─── Mock Data ────────────────────────────────────────────────
@@ -56,6 +58,9 @@ const MOCK_HISTORY_DATA = {
 // ─── Component ────────────────────────────────────────────────
 const TestingCenter = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { showToast, ToastComponent } = useToast();
+  const isGuest = !isAuthenticated;
   const [activeTab, setActiveTab] = useState('practice'); // 'practice' | 'mock'
   const [expandedModule, setExpandedModule] = useState('m1');
 
@@ -64,6 +69,11 @@ const TestingCenter = () => {
   const [selectedExamId, setSelectedExamId] = useState(null);
 
   const handleStartExam = (examId) => {
+    if (isGuest) {
+      showToast('Vui lòng đăng nhập để bắt đầu làm bài thi.', 'info');
+      navigate('/login', { state: { from: `/exam/take/${examId}` } });
+      return;
+    }
     navigate(`/exam/take/${examId}`);
   };
 
@@ -97,6 +107,7 @@ const TestingCenter = () => {
 
   return (
     <div className="tc-page">
+      {ToastComponent}
       <div className="tc-container">
 
         {/* Hero */}
@@ -167,7 +178,12 @@ const TestingCenter = () => {
                             <strong style={{ color: '#94a3b8' }}>{quiz.scoreSub}</strong>
                           </div>
                         )}
-                        <button className="tc-btn-start" style={{ width: 'auto', padding: '0.5rem 1.25rem' }} onClick={() => handleStartExam(quiz.id)}>
+                        <button
+                          className="tc-btn-start"
+                          style={{ width: 'auto', padding: '0.5rem 1.25rem' }}
+                          onClick={() => handleStartExam(quiz.id)}
+                          title={isGuest ? 'Đăng nhập để làm bài' : ''}
+                        >
                           Làm bài
                         </button>
                       </div>
@@ -195,12 +211,18 @@ const TestingCenter = () => {
                   ))}
                 </ul>
                 <div className="tc-mock-card__actions">
-                  <button className="tc-btn-start" onClick={() => handleStartExam(exam.id)}>
+                  <button
+                    className="tc-btn-start"
+                    onClick={() => handleStartExam(exam.id)}
+                    title={isGuest ? 'Đăng nhập để bắt đầu thi' : ''}
+                  >
                     Bắt đầu thi
                   </button>
-                  <button className="tc-btn-history" onClick={() => openHistory(exam.id)}>
-                    XEM LẠI LỊCH SỬ THI
-                  </button>
+                  {!isGuest && (
+                    <button className="tc-btn-history" onClick={() => openHistory(exam.id)}>
+                      XEM LẠI LỊCH SỬ THI
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -257,7 +279,12 @@ const TestingCenter = () => {
                     <div className="tc-empty-state-icon">📝</div>
                     <h3>Chưa có dữ liệu</h3>
                     <p>Bạn chưa thực hiện bài thi này lần nào. Hãy bắt đầu ngay nhé!</p>
-                    <button className="tc-btn-start" style={{ marginTop: '1rem', width: 'auto', padding: '0.6rem 1.5rem' }} onClick={() => { closeHistory(); handleStartExam(selectedExamId); }}>
+                    <button
+                      className="tc-btn-start"
+                      style={{ marginTop: '1rem', width: 'auto', padding: '0.6rem 1.5rem' }}
+                      onClick={() => { closeHistory(); handleStartExam(selectedExamId); }}
+                      title={isGuest ? 'Đăng nhập để bắt đầu thi' : ''}
+                    >
                       Bắt đầu thi
                     </button>
                   </div>
