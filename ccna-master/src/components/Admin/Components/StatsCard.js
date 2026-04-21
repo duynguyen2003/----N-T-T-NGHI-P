@@ -1,16 +1,23 @@
 import React from 'react';
-import '../../../css/Admin/AdminViews.css';
 
-const StatsCard = ({ title, value, icon: Icon, trend }) => {
+const colorMap = {
+  0: 'blue',
+  1: 'green',
+  2: 'orange',
+  3: 'purple'
+};
+
+const StatsCard = ({ title, value, icon: Icon, index = 0 }) => {
+  const color = colorMap[index % 4] || 'blue';
+
   return (
     <div className="admin-stats-card">
-      <div className="admin-stats-icon">
-        {Icon && <Icon size={24} />}
-      </div>
       <div className="admin-stats-info">
         <h3>{title}</h3>
         <p>{value}</p>
-        {trend && <span className="admin-trend">{trend}</span>}
+      </div>
+      <div className={`admin-stats-icon ${color}`}>
+        <Icon size={24} />
       </div>
     </div>
   );

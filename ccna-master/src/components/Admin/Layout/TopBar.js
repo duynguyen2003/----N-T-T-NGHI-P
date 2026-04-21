@@ -1,9 +1,9 @@
 import React, { useContext } from 'react';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 import { AuthContext } from '../../../context/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const TopBar = () => {
+const TopBar = ({ onToggleSidebar }) => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -13,25 +13,37 @@ const TopBar = () => {
     navigate('/');
   };
 
+  const pageTitles = {
+    dashboard: 'Overview',
+    users: 'Users Management',
+    courses: 'Courses Management',
+    exams: 'Exams Management',
+    labs: 'Labs Management',
+    resources: 'Resources Management',
+    tools: 'Tools Management'
+  };
+
   const getPageTitle = () => {
     const path = location.pathname.split('/').pop();
-    return path.charAt(0).toUpperCase() + path.slice(1);
+    return pageTitles[path] || path.charAt(0).toUpperCase() + path.slice(1);
   };
 
   return (
     <div className="admin-topbar">
-      <div className="topbar-breadcrumb">
-        <span>Admin Panel / {getPageTitle()}</span>
+      <div className="topbar-left">
+        <button className="topbar-menu-btn" onClick={onToggleSidebar}>
+          <Menu size={22} />
+        </button>
+        <span className="topbar-breadcrumb">{getPageTitle()}</span>
       </div>
       <div className="topbar-actions">
-        <div className="admin-profile">
-          <User size={20} />
-          <span>{user?.fullName || 'Administrator'}</span>
-        </div>
         <button className="admin-logout-btn" onClick={handleLogout}>
-          <LogOut size={18} />
+          <LogOut size={16} />
           <span>Logout</span>
         </button>
+        <div className="admin-topbar-avatar">
+          {user?.fullName?.charAt(0)?.toUpperCase() || 'A'}
+        </div>
       </div>
     </div>
   );
