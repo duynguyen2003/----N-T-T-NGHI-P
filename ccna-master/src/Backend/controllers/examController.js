@@ -3,8 +3,8 @@ const prisma = getPrisma();
 
 module.exports.getExams = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
     const [exams, total] = await Promise.all([
@@ -15,7 +15,8 @@ module.exports.getExams = async (req, res, next) => {
         orderBy: { createdAt: 'desc' },
         include: {
           _count: { select: { questions: true, results: true } },
-          course: { select: { title: true, code: true } }
+          course: { select: { title: true, code: true } },
+          module: { select: { id: true, title: true } }
         }
       }),
       prisma.exam.count({ where: { deletedAt: null } })
@@ -32,30 +33,41 @@ module.exports.getExams = async (req, res, next) => {
 
 module.exports.createExam = async (req, res, next) => {
   try {
-    const { title, examCode, totalQuestions, durationMinutes, passingScore, difficulty, courseId, moduleId, questions } = req.body;
+    const {
+      title,
+      examCode,
+      totalQuestions,
+      durationMinutes,
+      passingScore,
+      difficulty,
+      courseId,
+      moduleId,
+      questions
+    } = req.body;
 
     if (!title || !totalQuestions || !durationMinutes) {
-      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ: Tên, Số câu hỏi, Thời gian' });
+      return res.status(400).json({
+        message: 'Vui lòng nhập đầy đủ: Tên, Số câu hỏi, Thời gian'
+      });
     }
 
-    // Nested write: Exam + ExamQuestions
     const exam = await prisma.exam.create({
       data: {
         title,
         examCode: examCode || null,
-        totalQuestions: parseInt(totalQuestions),
-        durationMinutes: parseInt(durationMinutes),
-        passingScore: parseInt(passingScore) || 70,
+        totalQuestions: parseInt(totalQuestions, 10),
+        durationMinutes: parseInt(durationMinutes, 10),
+        passingScore: parseInt(passingScore, 10) || 70,
         difficulty: difficulty || null,
         courseId: courseId || null,
         moduleId: moduleId || null,
         questions: {
-          create: (questions || []).map((q, idx) => ({
-            question: q.question,
-            options: q.options,           // Json array: ["A", "B", "C", "D"]
-            correctAnswer: parseInt(q.correctAnswer),  // Index: 0,1,2,3
-            explanation: q.explanation || null,
-            orderIndex: idx + 1
+          create: (questions || []).map((questionItem, index) => ({
+            question: questionItem.question,
+            options: questionItem.options,
+            correctAnswer: parseInt(questionItem.correctAnswer, 10),
+            explanation: questionItem.explanation || null,
+            orderIndex: index + 1
           }))
         }
       },
@@ -73,19 +85,31 @@ module.exports.createExam = async (req, res, next) => {
 module.exports.updateExam = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, examCode, totalQuestions, durationMinutes, passingScore, difficulty, courseId } = req.body;
+    const {
+      title,
+      examCode,
+      totalQuestions,
+      durationMinutes,
+      passingScore,
+      difficulty,
+      courseId,
+      moduleId
+    } = req.body;
+
     const exam = await prisma.exam.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id, 10) },
       data: {
         title,
         examCode,
-        totalQuestions: totalQuestions ? parseInt(totalQuestions) : undefined,
-        durationMinutes: durationMinutes ? parseInt(durationMinutes) : undefined,
-        passingScore: passingScore ? parseInt(passingScore) : undefined,
+        totalQuestions: totalQuestions ? parseInt(totalQuestions, 10) : undefined,
+        durationMinutes: durationMinutes ? parseInt(durationMinutes, 10) : undefined,
+        passingScore: passingScore ? parseInt(passingScore, 10) : undefined,
         difficulty,
-        courseId: courseId || null
+        courseId: courseId || null,
+        moduleId: moduleId || null
       }
     });
+
     res.json({ message: 'Cập nhật bài thi thành công', exam });
   } catch (error) {
     next(error);
@@ -96,7 +120,7 @@ module.exports.deleteExam = async (req, res, next) => {
   try {
     const { id } = req.params;
     await prisma.exam.update({
-      where: { id: parseInt(id) },
+      where: { id: parseInt(id, 10) },
       data: { deletedAt: new Date() }
     });
     res.json({ message: 'Xóa bài thi thành công' });
