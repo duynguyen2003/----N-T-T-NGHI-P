@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+﻿import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
   Plus,
   Trash2,
@@ -15,7 +15,11 @@ import {
   ListChecks,
   AlignLeft,
   Upload,
-  ShieldCheck,
+  LayoutGrid,
+  List,
+  CalendarDays,
+  ChevronsUpDown,
+  CircleHelp,
   EyeOff,
   Shuffle
 } from 'lucide-react';
@@ -55,6 +59,21 @@ const getDifficultyLabel = (difficulty) => {
   return mapping[difficulty] || 'Chưa đặt';
 };
 
+const normalizeQuestionFromApi = (questionItem) => {
+  const rawOptions = Array.isArray(questionItem?.options) ? questionItem.options : [];
+  const normalizedOptions = OPTION_LABELS.map((_, optionIndex) => `${rawOptions[optionIndex] || ''}`);
+  const normalizedCorrectAnswer = Number.isInteger(Number(questionItem?.correctAnswer))
+    ? Number(questionItem.correctAnswer)
+    : 0;
+
+  return {
+    question: `${questionItem?.question || ''}`,
+    options: normalizedOptions,
+    correctAnswer: Math.min(Math.max(normalizedCorrectAnswer, 0), 3),
+    explanation: `${questionItem?.explanation || ''}`
+  };
+};
+
 const Exams = () => {
   const { token } = useContext(AuthContext);
   const [exams, setExams] = useState([]);
@@ -76,6 +95,7 @@ const Exams = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
   const [hideResult, setHideResult] = useState(false);
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
     fetchExams();
@@ -150,7 +170,7 @@ const Exams = () => {
     setSelectedExam(exam);
     setIsEditMode(true);
     setError('');
-    setQuestions([]);
+    syncQuestions([]);
     resetQuestionDraft();
     setShowAdvanced(false);
     setShuffleQuestions(false);
@@ -166,9 +186,31 @@ const Exams = () => {
       moduleId: exam.moduleId || ''
     });
     setIsModalOpen(true);
-    if (exam.courseId) {
-      await fetchModules(exam.courseId);
-    } else {
+    try {
+      const examDetailRes = await adminApi.getExamById(token, exam.id);
+      const examDetail = examDetailRes.exam || exam;
+      const mappedQuestions = (examDetail.questions || []).map((questionItem) => normalizeQuestionFromApi(questionItem));
+
+      setSelectedExam(examDetail);
+      setFormData({
+        title: examDetail.title || '',
+        examCode: examDetail.examCode || '',
+        totalQuestions: mappedQuestions.length,
+        durationMinutes: examDetail.durationMinutes || 60,
+        passingScore: examDetail.passingScore || 70,
+        difficulty: examDetail.difficulty || '',
+        courseId: examDetail.courseId || '',
+        moduleId: examDetail.moduleId || ''
+      });
+      syncQuestions(mappedQuestions);
+
+      if (examDetail.courseId) {
+        await fetchModules(examDetail.courseId);
+      } else {
+        setModules([]);
+      }
+    } catch (err) {
+      setError(err.message || 'Không thể tải chi tiết bài thi.');
       setModules([]);
     }
   };
@@ -251,21 +293,21 @@ const Exams = () => {
       setError('');
       if (!formData.title.trim()) throw new Error('Vui lòng nhập tên bài thi.');
       if (!formData.durationMinutes) throw new Error('Vui lòng nhập thời gian thi.');
+      if (questions.length === 0) throw new Error('Cần ít nhất 1 câu hỏi cho bài thi.');
 
       if (isEditMode && selectedExam) {
         await adminApi.updateExam(token, selectedExam.id, {
           title: formData.title.trim(),
           examCode: formData.examCode.trim() || null,
-          totalQuestions: formData.totalQuestions,
+          totalQuestions: questions.length,
           durationMinutes: formData.durationMinutes,
           passingScore: formData.passingScore,
           difficulty: formData.difficulty || null,
           courseId: formData.courseId || null,
-          moduleId: formData.moduleId || null
+          moduleId: formData.moduleId || null,
+          questions
         });
       } else {
-        if (questions.length === 0) throw new Error('Cần ít nhất 1 câu hỏi để tạo bài thi.');
-
         await adminApi.createExam(token, {
           title: formData.title.trim(),
           examCode: formData.examCode.trim() || null,
@@ -334,8 +376,26 @@ const Exams = () => {
     handleSubmitExam();
   };
 
+  const formatExamDate = (value) => {
+    if (!value) return '--/--/----';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '--/--/----';
+    return date.toLocaleDateString('vi-VN');
+  };
+
   return (
     <div className="exam-hub-page">
+      <div className="exam-hub-header">
+        <div>
+          <h2>Hệ thống Kỳ thi</h2>
+          <p>Tạo đề thi, quản lý câu hỏi và theo dõi kết quả học viên.</p>
+        </div>
+
+        <button className="exam-hub-create-btn" onClick={openCreateModal}>
+          <Plus size={18} /> Tạo kỳ thi mới
+        </button>
+      </div>
+
       <div className="exam-hub-stats-grid">
         <div className="exam-hub-stat-card">
           <div className="exam-hub-stat-icon">
@@ -347,7 +407,7 @@ const Exams = () => {
           </div>
         </div>
 
-        <div className="exam-hub-stat-card">
+        <div className="exam-hub-stat-card is-open">
           <div className="exam-hub-stat-icon success">
             <CheckCircle2 size={20} />
           </div>
@@ -358,7 +418,7 @@ const Exams = () => {
         </div>
 
         <div className="exam-hub-stat-card">
-          <div className="exam-hub-stat-icon">
+          <div className="exam-hub-stat-icon warning">
             <Users size={20} />
           </div>
           <div>
@@ -368,7 +428,7 @@ const Exams = () => {
         </div>
 
         <div className="exam-hub-stat-card">
-          <div className="exam-hub-stat-icon">
+          <div className="exam-hub-stat-icon purple">
             <Target size={20} />
           </div>
           <div>
@@ -378,108 +438,201 @@ const Exams = () => {
         </div>
       </div>
 
-      <div className="exam-hub-shell">
-        <div className="exam-hub-header">
-          <div>
-            <h2>Hệ thống Kỳ thi</h2>
-            <p>Tạo đề thi, quản lý câu hỏi và theo dõi kết quả học viên.</p>
-          </div>
-
-          <button className="exam-hub-create-btn" onClick={openCreateModal}>
-            <Plus size={18} /> Tạo đề thi mới
-          </button>
-        </div>
-
+      <div className="exam-hub-toolbar-shell">
         <div className="exam-hub-toolbar">
           <div className="exam-hub-search-wrap">
             <Search size={18} />
             <input
               type="text"
-              placeholder="Tìm kiếm đề thi..."
+              placeholder="Tìm kiếm tên kỳ thi..."
               value={searchKeyword}
               onChange={(event) => setSearchKeyword(event.target.value)}
             />
           </div>
 
-          <select
-            className="exam-hub-select"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="OPEN">Đang mở</option>
-            <option value="DRAFT">Nháp</option>
-          </select>
-        </div>
+          <div className="exam-hub-toolbar-right">
+            <label className="exam-hub-select-wrap">
+              <span>Trạng thái:</span>
+              <select
+                className="exam-hub-select"
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
+                <option value="ALL">Tất cả</option>
+                <option value="OPEN">Đang mở</option>
+                <option value="DRAFT">Nháp</option>
+              </select>
+              <ChevronsUpDown size={14} />
+            </label>
 
-        {loading ? (
-          <div className="exam-hub-empty">Đang tải danh sách đề thi...</div>
-        ) : filteredExams.length === 0 ? (
-          <div className="exam-hub-empty">Không có đề thi phù hợp bộ lọc.</div>
-        ) : (
-          <div className="exam-hub-grid">
+            <div className="exam-hub-view-toggle">
+              <button
+                type="button"
+                className={viewMode === 'grid' ? 'active' : ''}
+                onClick={() => setViewMode('grid')}
+                aria-label="Chế độ lưới"
+              >
+                <LayoutGrid size={20} />
+              </button>
+              <button
+                type="button"
+                className={viewMode === 'list' ? 'active' : ''}
+                onClick={() => setViewMode('list')}
+                aria-label="Chế độ danh sách"
+              >
+                <List size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="exam-hub-empty">Đang tải danh sách đề thi...</div>
+      ) : filteredExams.length === 0 ? (
+        <div className="exam-hub-empty">Không có đề thi phù hợp bộ lọc.</div>
+      ) : viewMode === 'grid' ? (
+        <div className="exam-hub-grid">
+          {filteredExams.map((exam) => {
+            const status = getStatusFromExam(exam);
+
+            return (
+              <article key={exam.id} className="exam-hub-card">
+                <div className="exam-hub-card-top">
+                  <h3>{exam.title}</h3>
+                  <span className={`exam-hub-status ${status === 'OPEN' ? 'open' : 'draft'}`}>
+                    {status === 'OPEN' ? 'Đang mở' : 'Nháp'}
+                  </span>
+                </div>
+
+                <p className="exam-hub-meta">
+                  Mã đề: <strong>{exam.examCode || '---'}</strong>
+                  {' | '}
+                  Khóa học: <strong>{exam.course?.code || 'Không gán'}</strong>
+                </p>
+
+                <div className="exam-hub-mini-stats">
+                  <div>
+                    <CircleHelp size={14} />
+                    <strong>{exam.totalQuestions}</strong>
+                    <span>Câu hỏi</span>
+                  </div>
+                  <div>
+                    <Clock3 size={14} />
+                    <strong>{exam.durationMinutes}p</strong>
+                    <span>Thời gian</span>
+                  </div>
+                  <div>
+                    <Target size={14} />
+                    <strong>{exam.passingScore}%</strong>
+                    <span>Điểm đạt</span>
+                  </div>
+                  <div>
+                    <Users size={14} />
+                    <strong>{exam?._count?.results || 0}</strong>
+                    <span>Dự thi</span>
+                  </div>
+                </div>
+
+                <div className="exam-hub-bottom">
+                  <span className="exam-hub-difficulty">{getDifficultyLabel(exam.difficulty)}</span>
+                  <div className="exam-hub-actions">
+                    <button type="button" onClick={() => openViewModal(exam)}>
+                      <Eye size={14} /> Xem
+                    </button>
+                    <button type="button" onClick={() => openEditModal(exam)}>
+                      <PencilLine size={14} /> Sửa
+                    </button>
+                    <button type="button" className="danger" onClick={() => handleDelete(exam.id)}>
+                      <Trash2 size={14} /> Xóa
+                    </button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="exam-hub-list-shell">
+          <div className="exam-hub-list-head">
+            <span>THÔNG TIN KỲ THI</span>
+            <span>KHÓA HỌC</span>
+            <span>CHI TIẾT</span>
+            <span>TRẠNG THÁI</span>
+            <span>THAO TÁC</span>
+          </div>
+
+          <div className="exam-hub-list-body">
             {filteredExams.map((exam) => {
               const status = getStatusFromExam(exam);
 
               return (
-                <article key={exam.id} className="exam-hub-card">
-                  <div className="exam-hub-card-top">
-                    <h3>{exam.title}</h3>
-                    <span className={`exam-hub-status ${status === 'OPEN' ? 'open' : 'draft'}`}>
-                      {status === 'OPEN' ? 'Đang mở' : 'Nháp'}
-                    </span>
+                <article key={exam.id} className="exam-hub-list-row">
+                  <div className="exam-hub-col exam-hub-col-info">
+                    <div className="exam-hub-exam-icon">
+                      <FileText size={24} />
+                    </div>
+                    <div className="exam-hub-exam-main">
+                      <h3>{exam.title}</h3>
+                      <div className="exam-hub-exam-sub">
+                        <span className="exam-hub-chip">ID: {exam.examCode || '---'}</span>
+                        <span className="exam-hub-date">
+                          <CalendarDays size={14} />
+                          {formatExamDate(exam.createdAt)}
+                        </span>
+                      </div>
+                    </div>
                   </div>
 
-                  <p className="exam-hub-meta">
-                    Mã đề: <strong>{exam.examCode || '---'}</strong>
-                    {' | '}
-                    Khóa học: <strong>{exam.course?.code || 'Không gán'}</strong>
-                  </p>
+                  <div className="exam-hub-col exam-hub-col-course">
+                    <span className="exam-hub-course-pill">{exam.course?.code || 'N/A'}</span>
+                  </div>
 
-                  <div className="exam-hub-mini-stats">
+                  <div className="exam-hub-col exam-hub-col-detail">
                     <div>
-                      <FileText size={14} />
-                      <strong>{exam.totalQuestions}</strong>
-                      <span>Câu hỏi</span>
-                    </div>
-                    <div>
-                      <Clock3 size={14} />
-                      <strong>{exam.durationMinutes}p</strong>
-                      <span>Thời gian</span>
+                      <CircleHelp size={14} />
+                      <span>{exam.totalQuestions} câu hỏi</span>
                     </div>
                     <div>
                       <Target size={14} />
-                      <strong>{exam.passingScore}%</strong>
-                      <span>Điểm đạt</span>
+                      <span>{exam.passingScore}% đạt</span>
+                    </div>
+                    <div>
+                      <Clock3 size={14} />
+                      <span>{exam.durationMinutes} phút</span>
                     </div>
                     <div>
                       <Users size={14} />
-                      <strong>{exam?._count?.results || 0}</strong>
-                      <span>Dự thi</span>
+                      <span>{exam?._count?.results || 0} dự thi</span>
                     </div>
                   </div>
 
-                  <div className="exam-hub-bottom">
-                    <span className="exam-hub-difficulty">{getDifficultyLabel(exam.difficulty)}</span>
-                    <div className="exam-hub-actions">
-                      <button type="button" onClick={() => openViewModal(exam)}>
-                        <Eye size={14} /> Xem
-                      </button>
-                      <button type="button" onClick={() => openEditModal(exam)}>
-                        <PencilLine size={14} /> Sửa
-                      </button>
-                      <button type="button" className="danger" onClick={() => handleDelete(exam.id)}>
-                        <Trash2 size={14} /> Xóa
-                      </button>
-                    </div>
+                  <div className="exam-hub-col exam-hub-col-status">
+                    <span className={`exam-hub-status ${status === 'OPEN' ? 'open' : 'draft'}`}>
+                      {status === 'OPEN' ? 'Đang mở' : 'Nháp'}
+                    </span>
+                    <small>{getDifficultyLabel(exam.difficulty)}</small>
+                  </div>
+
+                  <div className="exam-hub-col exam-hub-col-actions">
+                    <button type="button" className="icon view" onClick={() => openViewModal(exam)} aria-label="Xem kỳ thi">
+                      <Eye size={18} />
+                    </button>
+                    <button type="button" className="icon edit" onClick={() => openEditModal(exam)} aria-label="Sửa kỳ thi">
+                      <PencilLine size={18} />
+                    </button>
+                    <button type="button" className="icon delete" onClick={() => handleDelete(exam.id)} aria-label="Xóa kỳ thi">
+                      <Trash2 size={18} />
+                    </button>
                   </div>
                 </article>
               );
             })}
           </div>
-        )}
-      </div>
 
+          <p className="exam-hub-footnote">Dữ liệu được cập nhật thời gian thực từ hệ thống.</p>
+        </div>
+      )}
       <AdminModal className="efb-modal"
         title={isEditMode ? 'Chỉnh sửa bài thi' : 'Tạo bài thi mới'}
         description="Thiết lập cấu trúc và nội dung cho kỳ thi."
@@ -493,7 +646,7 @@ const Exams = () => {
       >
         <div className="efb-shell">
 
-          {/* ── Section 1: Thông tin cơ bản ── */}
+          {/* â”€â”€ Section 1: ThÃ´ng tin cÆ¡ báº£n â”€â”€ */}
           <section className="efb-card">
             <div className="efb-card-header">
               <div className="efb-card-badge efb-bg-purple">
@@ -516,7 +669,7 @@ const Exams = () => {
               </label>
 
               <label className="efb-field efb-flex-12">
-                <span>Chuyên mục</span>
+                <span>Chuyên môn</span>
                 <select
                   className="efb-input"
                   value={formData.courseId}
@@ -541,15 +694,14 @@ const Exams = () => {
             </div>
           </section>
 
-          {/* ── Section 2: Thêm câu hỏi ── */}
-          {!isEditMode && (
-            <section className="efb-card efb-card-blue">
+          {/* â”€â”€ Section 2: ThÃªm cÃ¢u há»i â”€â”€ */}
+          <section className="efb-card efb-card-blue">
               <div className="efb-card-header">
                 <div className="efb-card-badge efb-bg-blue">
                   <Zap size={15} />
                 </div>
-                <span>Thêm Câu Hỏi Nhanh</span>
-                <span className="efb-header-right">TIỆN ÍCH THÔNG MINH</span>
+                <span>{isEditMode ? 'Chỉnh Sửa Câu Hỏi' : 'Thêm Câu Hỏi Nhanh'}</span>
+                {!isEditMode && <span className="efb-header-right">TIẾN NHANH THÔNG MINH</span>}
               </div>
 
               {/* Question type cards */}
@@ -610,7 +762,7 @@ const Exams = () => {
 
                 <div className="efb-draft-footer">
                   <label className="efb-field efb-flex-1">
-                    <span>Đáp án đúng</span>
+                    <span>Đáp án Đúng</span>
                     <select
                       className="efb-input"
                       value={questionDraft.correctAnswer}
@@ -689,9 +841,8 @@ const Exams = () => {
                 </div>
               )}
             </section>
-          )}
 
-          {/* ── Section 3: Cài đặt nâng cao ── */}
+          {/* â”€â”€ Section 3: CÃ i Ä‘áº·t nÃ¢ng cao â”€â”€ */}
           <section className="efb-card efb-card-orange">
             <div className="efb-card-header">
               <div className="efb-card-badge efb-bg-orange">
@@ -731,7 +882,7 @@ const Exams = () => {
                   <div className="efb-toggle-icon"><Shuffle size={16} /></div>
                   <div>
                     <strong>Trộn câu hỏi</strong>
-                    <span>Thứ tự câu hỏi ngẫu nhiên cho mỗi học sinh</span>
+                    <span>Xáo trộn câu hỏi ngẫu nhiên cho mỗi học sinh</span>
                   </div>
                 </div>
                 <button
@@ -792,3 +943,5 @@ const Exams = () => {
 };
 
 export default Exams;
+
+

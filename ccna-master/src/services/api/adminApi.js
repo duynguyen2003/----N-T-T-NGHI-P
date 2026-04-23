@@ -184,6 +184,12 @@ export const adminApi = {
     if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách Exams');
     return data;
   },
+  getExamById: async (token, id) => {
+    const response = await fetch(`${API_URL}/exams/detail/${id}`, { headers: getHeaders(token) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Lỗi lấy chi tiết Exam');
+    return data;
+  },
   createExam: async (token, payload) => {
     const response = await fetch(`${API_URL}/exams`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
@@ -296,3 +302,4 @@ export const adminApi = {
     return data;
   }
 };
+

@@ -10,6 +10,7 @@ router.get('/', examController.getExams);
 
 // Admin Restrictions for modifications
 router.use(checkRole(['ADMIN']));
+router.get('/detail/:id', examController.getExamById);
 router.post('/', examController.createExam);
 router.put('/:id', examController.updateExam);
 router.delete('/:id', examController.deleteExam);

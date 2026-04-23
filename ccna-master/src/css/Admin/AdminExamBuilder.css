@@ -442,6 +442,18 @@
   gap: 12px;
 }
 
+
+.admin-modal-container.efb-modal {
+  max-height: calc(100vh - 50px);
+}
+
+.admin-modal-container.efb-modal .admin-modal-body {
+  flex: 1;
+  min-height: 0;
+  max-height: none !important;
+  overflow-y: auto;
+}
+
 /* ── Card ── */
 .efb-card {
   border: 1px solid #e5e7eb;
