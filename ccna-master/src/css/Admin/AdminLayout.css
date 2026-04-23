@@ -1,4 +1,4 @@
-/* css/Admin/AdminLayout.css — NetMastery Corporate Layout */
+/* css/Admin/AdminLayout.css â€” NetMastery Corporate Layout */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /* Main Layout */
@@ -26,35 +26,56 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  background-color: var(--admin-card-bg);
 }
 
 /* Sidebar Logo */
 .admin-sidebar-header {
-  height: var(--admin-topbar-height);
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  gap: 10px;
+  gap: 12px;
+  padding: 18px 20px 14px;
+  margin-bottom: 8px;
 }
 
-.admin-logo-icon {
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+.admin-brand-icon {
+  width: 36px;
+  height: 36px;
+  background-color: var(--admin-sidebar-active-bg);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 16px;
+  color: #fff;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.35);
 }
 
-.admin-sidebar-header h2 {
+.admin-brand-icon .material-icons-round {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.admin-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-brand-title {
+  line-height: 1.5rem;
   font-size: 18px;
   font-weight: 700;
-  color: #ffffff;
-  margin: 0;
+  color: var(--admin-primary);
+  letter-spacing: 0.01em;
+}
+
+.admin-brand-subtitle {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--admin-text-secondary);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 
@@ -66,6 +87,7 @@
   gap: 2px;
   overflow-y: auto;
   flex: 1;
+  line-height: 2rem;
 }
 
 .admin-nav-item {
@@ -81,15 +103,25 @@
   font-size: 14px;
 }
 
+.admin-nav-item span {
+  color: var(--admin-text-secondary);
+  transition: var(--admin-transition);
+}
+
 .admin-nav-item:hover {
-  background-color: var(--admin-sidebar-hover);
-  color: #e2e8f0;
+  background-color: rgb(239 246 255 / 0.5);
+  color:var(--admin-sidebar-active-bg); 
 }
 
 .admin-nav-item.active {
-  background-color: var(--admin-sidebar-active-bg);
-  color: var(--admin-sidebar-active);
+  background-color: rgb(239 246 255 / 0.5);
+  color:var(--admin-sidebar-active-bg); 
   font-weight: 600;
+}
+
+.admin-nav-item:hover span,
+.admin-nav-item.active span {
+  color: var(--admin-primary);
 }
 
 /* ========== SIDEBAR COLLAPSED STATE ========== */
@@ -104,10 +136,10 @@
   min-width: 76px;
 }
 .sidebar-collapsed:not(.sidebar-hover) .admin-sidebar-header {
-  padding: 0;
+  padding: 18px 0 14px;
   justify-content: center;
 }
-.sidebar-collapsed:not(.sidebar-hover) .admin-sidebar-header h2 {
+.sidebar-collapsed:not(.sidebar-hover) .admin-brand-text {
   display: none;
   opacity: 0;
 }

@@ -1,22 +1,23 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, BookOpen, FileText, Activity, Wrench, FolderOpen } from 'lucide-react';
-import { AuthContext } from '../../../context/AuthContext';
 
 const Sidebar = () => {
-  const { user } = useContext(AuthContext);
-
   return (
     <div className="admin-sidebar">
       {/* Logo */}
       <div className="admin-sidebar-header">
-        <div className="admin-logo-icon">N</div>
-        <h2>NetMastery</h2>
+        <div className="admin-brand-icon">
+          <span className="material-icons-round">router</span>
+        </div>
+        <div className="admin-brand-text">
+          <span className="admin-brand-title">NetMastery</span>
+          <span className="admin-brand-subtitle">HỌC MẠNG ĐỂ ĐI LÀM</span>
+        </div>
       </div>
 
-
       {/* Navigation */}
-      <nav className="admin-sidebar-nav">
+      <nav className="admin-sidebar-nav" >
         <NavLink to="/admin/dashboard" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={19} />
           <span>Dashboard</span>

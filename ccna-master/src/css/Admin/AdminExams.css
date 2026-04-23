@@ -16,7 +16,7 @@
 
 .exam-hub-header h2 {
   margin: 0;
-  font-size: 42px;
+  font-size: 30px;
   line-height: 1.08;
   letter-spacing: -0.025em;
   color: #081f47;
@@ -32,14 +32,14 @@
   border: none;
   background: #1145d7;
   color: #ffffff;
-  height: 58px;
-  border-radius: 16px;
-  padding: 0 28px;
+  height: 50px;
+  border-radius: 13px;
+  padding: 0 20px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
   box-shadow: 0 10px 24px rgba(17, 69, 215, 0.2);
@@ -100,7 +100,7 @@
 
 .exam-hub-stat-card strong {
   display: block;
-  font-size: 34px;
+  font-size: 25px;
   line-height: 1.1;
   font-weight: 700;
   color: #0b1f43;

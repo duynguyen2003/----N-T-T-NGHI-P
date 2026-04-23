@@ -387,12 +387,12 @@ const Exams = () => {
     <div className="exam-hub-page">
       <div className="exam-hub-header">
         <div>
-          <h2>Hệ thống Kỳ thi</h2>
-          <p>Tạo đề thi, quản lý câu hỏi và theo dõi kết quả học viên.</p>
+          <h2>Quản lý Bài thi</h2>
+          <p>Tạo đề trắc nghiệm, quản lý câu hỏi và chấm điểm tự động.</p>
         </div>
 
         <button className="exam-hub-create-btn" onClick={openCreateModal}>
-          <Plus size={18} /> Tạo kỳ thi mới
+          <Plus size={17} /> Tạo bài thi mới
         </button>
       </div>
 
