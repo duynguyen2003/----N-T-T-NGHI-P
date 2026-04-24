@@ -88,18 +88,21 @@ function App() {
           </AdminProtectedRoute>
         } />
 
+
+
         {/* =========================================
             USER/STUDENT ROUTES (With Layout)
             ========================================= */}
         <Route path="*" element={
           <Layout>
             <Routes>
-              {/* Trang công khai */}
               <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+              {/* AUTH AS MODALS */}
+              <Route path="/login" element={<><Home /><Login /></>} />
+              <Route path="/register" element={<><Home /><Register /></>} />
+              <Route path="/forgot-password" element={<><Home /><ForgotPassword /></>} />
+              <Route path="/reset-password/:token" element={<><Home /><ResetPassword /></>} />
 
               {/* Trang bảo vệ */}
               <Route path="/roadmap" element={<Roadmap />} />

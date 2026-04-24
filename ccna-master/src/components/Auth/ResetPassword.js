@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../../services/Api';
 import { useToast } from '../Toast';
+import AuthLayout from './AuthLayout';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -99,141 +100,133 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="auth-page">
-      {ToastComponent}
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-logo">
-            <span className="material-icons-round">password</span>
-          </div>
-          <h1 className="auth-title">Đặt lại mật khẩu</h1>
-          <p className="auth-subtitle">
-            Tạo mật khẩu mới để tiếp tục sử dụng tài khoản của bạn.
-          </p>
+    <AuthLayout toast={ToastComponent}>
+      <div className="auth-header">
+        <h1 className="auth-title">Đặt lại mật khẩu</h1>
+        <p className="auth-subtitle">
+          Tạo mật khẩu mới để bảo mật tài khoản của bạn.
+        </p>
+      </div>
+
+      {isCheckingToken && (
+        <div className="auth-info-box">
+          <span className="material-icons-round">hourglass_top</span>
+          <div>Đang kiểm tra liên kết...</div>
         </div>
+      )}
 
-        {isCheckingToken && (
-          <div className="auth-info-box">
-            <span className="material-icons-round">hourglass_top</span>
-            <div>Đang kiểm tra liên kết đặt lại mật khẩu...</div>
+      {!isCheckingToken && globalError && (
+        <div className="form-global-error">
+          <span className="material-icons-round">error_outline</span>
+          {globalError}
+        </div>
+      )}
+
+      {isSuccess ? (
+        <div className="auth-success-box">
+          <span className="material-icons-round">check_circle</span>
+          <div>
+            <strong>Đặt lại mật khẩu thành công</strong>
+            <p>Bạn sẽ được chuyển hướng đến trang đăng nhập sau giây lát.</p>
           </div>
-        )}
-
-        {!isCheckingToken && globalError && (
-          <div className="form-global-error">
-            <span className="material-icons-round">error_outline</span>
-            {globalError}
-          </div>
-        )}
-
-        {isSuccess ? (
-          <div className="auth-success-box">
-            <span className="material-icons-round">check_circle</span>
-            <div>
-              <strong>Đổi mật khẩu thành công</strong>
-              <p>Bạn sẽ được chuyển về trang đăng nhập sau giây lát.</p>
+        </div>
+      ) : isTokenValid ? (
+        <form className="auth-form" onSubmit={handleSubmit} noValidate>
+          <div className="form-group">
+            <label className="form-label" htmlFor="reset-password-new">Mật khẩu mới</label>
+            <div className="form-input-wrapper">
+              <input
+                id="reset-password-new"
+                className={`form-input ${errors.password ? 'input-error' : ''}`}
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Tối thiểu 6 ký tự"
+                value={formData.password}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
+              <span className="form-input-icon material-icons-round">lock</span>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((prev) => !prev)}
+                tabIndex={-1}
+              >
+                <span className="material-icons-round">
+                  {showPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
             </div>
-          </div>
-        ) : isTokenValid ? (
-          <form className="auth-form" onSubmit={handleSubmit} noValidate>
-            <div className="form-group">
-              <label className="form-label" htmlFor="reset-password-new">Mật khẩu mới</label>
-              <div className="form-input-wrapper">
-                <input
-                  id="reset-password-new"
-                  className={`form-input ${errors.password ? 'input-error' : ''}`}
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  placeholder="Tối thiểu 6 ký tự"
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-                <span className="form-input-icon material-icons-round">lock</span>
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  tabIndex={-1}
-                >
-                  <span className="material-icons-round">
-                    {showPassword ? 'visibility_off' : 'visibility'}
-                  </span>
-                </button>
+            {errors.password && (
+              <div className="form-error">
+                <span className="material-icons-round">error</span>
+                {errors.password}
               </div>
-              {errors.password && (
-                <div className="form-error">
-                  <span className="material-icons-round">error</span>
-                  {errors.password}
-                </div>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="reset-password-confirm">Nhập lại mật khẩu</label>
-              <div className="form-input-wrapper">
-                <input
-                  id="reset-password-confirm"
-                  className={`form-input ${errors.confirmPassword ? 'input-error' : ''}`}
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  placeholder="Nhập lại mật khẩu mới"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                />
-                <span className="form-input-icon material-icons-round">lock</span>
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowConfirmPassword((prev) => !prev)}
-                  tabIndex={-1}
-                >
-                  <span className="material-icons-round">
-                    {showConfirmPassword ? 'visibility_off' : 'visibility'}
-                  </span>
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <div className="form-error">
-                  <span className="material-icons-round">error</span>
-                  {errors.confirmPassword}
-                </div>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              className="auth-submit"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <div className="spinner"></div>
-                  Đang cập nhật...
-                </>
-              ) : (
-                <>
-                  <span className="material-icons-round" style={{ fontSize: 20 }}>check</span>
-                  Cập nhật mật khẩu
-                </>
-              )}
-            </button>
-          </form>
-        ) : !isCheckingToken ? (
-          <div className="auth-success-actions">
-            <Link to="/forgot-password" className="auth-link">Tạo yêu cầu mới</Link>
-            <Link to="/login" className="auth-link">Quay lại đăng nhập</Link>
+            )}
           </div>
-        ) : null}
 
+          <div className="form-group">
+            <label className="form-label" htmlFor="reset-password-confirm">Xác nhận mật khẩu</label>
+            <div className="form-input-wrapper">
+              <input
+                id="reset-password-confirm"
+                className={`form-input ${errors.confirmPassword ? 'input-error' : ''}`}
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                placeholder="Nhập lại mật khẩu"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
+              <span className="form-input-icon material-icons-round">lock</span>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                tabIndex={-1}
+              >
+                <span className="material-icons-round">
+                  {showConfirmPassword ? 'visibility_off' : 'visibility'}
+                </span>
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <div className="form-error">
+                <span className="material-icons-round">error</span>
+                {errors.confirmPassword}
+              </div>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="auth-submit"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <div className="spinner"></div>
+            ) : (
+              <>
+                ĐẶT LẠI MẬT KHẨU <span className="material-icons-round" style={{ fontSize: 18 }}>check</span>
+              </>
+            )}
+          </button>
+        </form>
+      ) : !isCheckingToken ? (
+        <div className="auth-footer">
+          <Link to="/forgot-password" style={{ display: 'block', marginBottom: '10px' }} className="auth-link">Yêu cầu liên kết mới</Link>
+          <Link to="/login" className="auth-link">Quay lại đăng nhập</Link>
+        </div>
+      ) : null}
+
+      {!isSuccess && isTokenValid && (
         <div className="auth-footer">
           <p>
-            Muốn đăng nhập luôn? <Link to="/login" className="auth-link">Mở trang đăng nhập</Link>
+            Bỗng nhiên nhớ ra? <Link to="/login" className="auth-link">Đăng nhập.</Link>
           </p>
         </div>
-      </div>
-    </div>
+      )}
+    </AuthLayout>
   );
 };
 

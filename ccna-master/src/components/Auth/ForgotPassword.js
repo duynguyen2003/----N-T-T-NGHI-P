@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/Api';
 import { useToast } from '../Toast';
+import AuthLayout from './AuthLayout';
 
 const ForgotPassword = () => {
   const { showToast, ToastComponent } = useToast();
@@ -45,41 +46,46 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="auth-page">
-      {ToastComponent}
-      <div className="auth-card">
-        <div className="auth-header">
-          <div className="auth-logo">
-            <span className="material-icons-round">lock_reset</span>
-          </div>
-          <h1 className="auth-title">Quên mật khẩu</h1>
-          <p className="auth-subtitle">
-            Nhập email đã đăng ký để tạo yêu cầu đặt lại mật khẩu.
-          </p>
+    <AuthLayout toast={ToastComponent}>
+      <div className="auth-header">
+        <h1 className="auth-title">Quên mật khẩu</h1>
+        <p className="auth-subtitle">
+          Nhập email đã đăng ký để nhận liên kết đặt lại mật khẩu.
+        </p>
+      </div>
+
+      {globalError && (
+        <div className="form-global-error">
+          <span className="material-icons-round">error_outline</span>
+          {globalError}
         </div>
+      )}
 
-        {globalError && (
-          <div className="form-global-error">
-            <span className="material-icons-round">error_outline</span>
-            {globalError}
-          </div>
-        )}
-
-        {result && (
-          <div className="auth-success-box">
-            <span className="material-icons-round">mark_email_read</span>
-            <div>
-              <strong>Yêu cầu đã được tạo</strong>
-              <p>{result.message}</p>
-              {result.resetUrl && (
-                <a className="auth-debug-link" href={result.resetUrl}>
-                  Mở link đặt lại mật khẩu
-                </a>
-              )}
+      {result && (
+        <div className="auth-success-box">
+          <span className="material-icons-round">mark_email_read</span>
+          <div>
+            <strong style={{ display: 'block', marginBottom: '4px' }}>Yêu cầu đã được gửi</strong>
+            <p style={{ margin: 0, fontSize: '13px' }}>{result.message}</p>
+            {result.resetUrl && (
+              <a
+                href={result.resetUrl}
+                className="auth-link"
+                style={{ display: 'inline-block', marginTop: '10px', fontSize: '13px' }}
+              >
+                Mở link đặt lại mật khẩu
+              </a>
+            )}
+            <div style={{ marginTop: '20px' }}>
+              <Link to="/login" className="auth-submit" style={{ textDecoration: 'none' }}>
+                QUAY LẠI ĐĂNG NHẬP
+              </Link>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
+      {!result && (
         <form className="auth-form" onSubmit={handleSubmit} noValidate>
           <div className="form-group">
             <label className="form-label" htmlFor="forgot-password-email">Địa chỉ Email</label>
@@ -89,7 +95,7 @@ const ForgotPassword = () => {
                 className={`form-input ${error ? 'input-error' : ''}`}
                 type="email"
                 name="email"
-                placeholder="email@example.com"
+                placeholder="nhap-email@example.com"
                 value={email}
                 onChange={(event) => {
                   setEmail(event.target.value);
@@ -111,7 +117,7 @@ const ForgotPassword = () => {
           <div className="auth-info-box">
             <span className="material-icons-round">info</span>
             <div>
-              Link đặt lại mật khẩu sẽ có hiệu lực trong 30 phút.
+              Liên kết đặt lại mật khẩu sẽ có hiệu lực trong 30 phút.
             </div>
           </div>
 
@@ -121,26 +127,22 @@ const ForgotPassword = () => {
             disabled={isLoading}
           >
             {isLoading ? (
-              <>
-                <div className="spinner"></div>
-                Đang xử lý...
-              </>
+              <div className="spinner"></div>
             ) : (
               <>
-                <span className="material-icons-round" style={{ fontSize: 20 }}>send</span>
-                Gửi yêu cầu
+                GỬI YÊU CẦU <span className="material-icons-round" style={{ fontSize: 18 }}>send</span>
               </>
             )}
           </button>
         </form>
+      )}
 
-        <div className="auth-footer">
-          <p>
-            Đã nhớ mật khẩu? <Link to="/login" className="auth-link">Quay lại đăng nhập</Link>
-          </p>
-        </div>
+      <div className="auth-footer">
+        <p>
+          Đã nhớ mật khẩu? <Link to="/login" className="auth-link">Đăng nhập.</Link>
+        </p>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
 
