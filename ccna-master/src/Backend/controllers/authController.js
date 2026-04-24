@@ -6,10 +6,31 @@
  */
 
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { getPrisma } = require('../config/database');
 
 const prisma = getPrisma();
+const RESET_TOKEN_TTL_MINUTES = 30;
+
+const buildResetPasswordUrl = (token) => {
+  const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+  return frontendUrl.includes('#')
+    ? `${frontendUrl}/reset-password/${token}`
+    : `${frontendUrl}/#/reset-password/${token}`;
+};
+
+const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+const createResetTokenPair = () => {
+  const rawToken = crypto.randomBytes(32).toString('hex');
+  return {
+    rawToken,
+    tokenHash: hashResetToken(rawToken)
+  };
+};
+
+const genericForgotPasswordMessage = 'Nếu email tồn tại trong hệ thống, chúng tôi đã tạo yêu cầu đặt lại mật khẩu.';
 
 /**
  * @desc    Register a new user
@@ -18,7 +39,8 @@ const prisma = getPrisma();
  */
 module.exports.register = async (req, res, next) => {
   try {
-    const { fullName, email, password } = req.body;
+    const { fullName, password } = req.body;
+    const email = `${req.body?.email || ''}`.trim().toLowerCase();
 
     // 1. Basic validation
     if (!email || !password) {
@@ -26,8 +48,13 @@ module.exports.register = async (req, res, next) => {
     }
 
     // 2. Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      }
     });
 
     if (existingUser) {
@@ -68,7 +95,8 @@ module.exports.register = async (req, res, next) => {
  */
 module.exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = `${req.body?.email || ''}`.trim().toLowerCase();
 
     // 1. Basic validation
     if (!email || !password) {
@@ -76,8 +104,13 @@ module.exports.login = async (req, res, next) => {
     }
 
     // 2. Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email }
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      }
     });
 
     if (!user) {
@@ -113,6 +146,157 @@ module.exports.login = async (req, res, next) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Create a forgot-password request
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
+module.exports.forgotPassword = async (req, res, next) => {
+  try {
+    const email = `${req.body?.email || ''}`.trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ message: 'Vui lòng nhập email.' });
+    }
+
+    const user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    if (!user || !user.isActive) {
+      return res.json({ message: genericForgotPasswordMessage });
+    }
+
+    const { rawToken, tokenHash } = createResetTokenPair();
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
+
+    await prisma.$transaction([
+      prisma.passwordResetToken.deleteMany({
+        where: {
+          userId: user.id,
+          usedAt: null
+        }
+      }),
+      prisma.passwordResetToken.create({
+        data: {
+          userId: user.id,
+          tokenHash,
+          expiresAt
+        }
+      })
+    ]);
+
+    const resetUrl = buildResetPasswordUrl(rawToken);
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[forgot-password] Reset link for ${user.email}: ${resetUrl}`);
+    }
+
+    return res.json({
+      message: genericForgotPasswordMessage,
+      ...(process.env.NODE_ENV !== 'production' ? { resetUrl } : {})
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Validate a reset-password token
+ * @route   GET /api/auth/reset-password/:token/validate
+ * @access  Public
+ */
+module.exports.validateResetPasswordToken = async (req, res, next) => {
+  try {
+    const token = `${req.params?.token || ''}`.trim();
+
+    if (!token) {
+      return res.status(400).json({ message: 'Liên kết đặt lại mật khẩu không hợp lệ.' });
+    }
+
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { tokenHash: hashResetToken(token) }
+    });
+
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
+    }
+
+    return res.json({
+      valid: true,
+      expiresAt: resetToken.expiresAt
+    });
+  } catch (error) {
+    console.error('Validate reset token error:', error);
+    next(error);
+  }
+};
+
+/**
+ * @desc    Reset password using a reset token
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ */
+module.exports.resetPassword = async (req, res, next) => {
+  try {
+    const token = `${req.body?.token || ''}`.trim();
+    const password = `${req.body?.password || ''}`;
+
+    if (!token || !password) {
+      return res.status(400).json({ message: 'Vui lòng cung cấp token và mật khẩu mới.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+    }
+
+    const resetToken = await prisma.passwordResetToken.findUnique({
+      where: { tokenHash: hashResetToken(token) },
+      include: { user: true }
+    });
+
+    if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
+      return res.status(400).json({ message: 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { passwordHash }
+      }),
+      prisma.passwordResetToken.update({
+        where: { id: resetToken.id },
+        data: { usedAt: new Date() }
+      }),
+      prisma.passwordResetToken.deleteMany({
+        where: {
+          userId: resetToken.userId,
+          id: { not: resetToken.id }
+        }
+      }),
+      prisma.refreshToken.deleteMany({
+        where: { userId: resetToken.userId }
+      })
+    ]);
+
+    return res.json({
+      message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
     next(error);
   }
 };

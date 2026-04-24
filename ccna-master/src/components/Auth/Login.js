@@ -165,6 +165,10 @@ const Login = () => {
             )}
           </div>
 
+          <div className="auth-form-meta">
+            <Link to="/forgot-password" className="auth-inline-link">Quên mật khẩu?</Link>
+          </div>
+
           {/* Submit */}
           <button
             type="submit"

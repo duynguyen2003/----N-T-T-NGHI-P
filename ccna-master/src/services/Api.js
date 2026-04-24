@@ -345,6 +345,47 @@ export const api = {
   },
 
   // Đăng xuất
+  forgotPassword: async (email) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Khong the tao yeu cau dat lai mat khau');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  validateResetPasswordToken: async (token) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/reset-password/${token}/validate`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Lien ket dat lai mat khau khong hop le');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  resetPassword: async (token, password) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || 'Khong the dat lai mat khau');
+      return data;
+    } catch (error) {
+      throw error;
+    }
+  },
+
   logout: async (token) => {
     try {
       await fetch(`${API_URL}/auth/logout`, {

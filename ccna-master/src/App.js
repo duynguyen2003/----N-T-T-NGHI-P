@@ -50,7 +50,9 @@ import CourseDetail from './components/Content/CourseDetail.js';
 
 // Import Auth Pages
 import Login from './components/Auth/Login.js';
+import ForgotPassword from './components/Auth/ForgotPassword.js';
 import Register from './components/Auth/Register.js';
+import ResetPassword from './components/Auth/ResetPassword.js';
 import ProtectedRoute from './components/Auth/ProtectedRoute.js';
 
 // Import Tools Pages
@@ -95,7 +97,9 @@ function App() {
               {/* Trang công khai */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
 
               {/* Trang bảo vệ */}
               <Route path="/roadmap" element={<Roadmap />} />
