@@ -5,7 +5,7 @@ const getHeaders = (token, isFormData = false) => {
     'Authorization': `Bearer ${token}`
   };
   if (!isFormData) {
-    headers['Content-Type'] = 'application/json';
+    headers['Content-Type'] = 'application/json;charset=utf-8';
   }
   return headers;
 };
@@ -26,8 +26,15 @@ export const adminApi = {
   },
 
   // --- USERS ---
-  getUsers: async (token, page = 1, search = '') => {
-    const response = await fetch(`${API_URL}/admin/users?page=${page}&search=${search}`, { headers: getHeaders(token) });
+  getUsers: async (token, page = 1, search = '', options = {}) => {
+    const params = new URLSearchParams({
+      page: String(page),
+      search: search || ''
+    });
+    if (options.limit) params.set('limit', String(options.limit));
+    if (options.role && options.role !== 'ALL') params.set('role', options.role);
+    if (options.status && options.status !== 'ALL') params.set('status', options.status);
+    const response = await fetch(`${API_URL}/admin/users?${params.toString()}`, { headers: getHeaders(token) });
     const data = await response.json();
     if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách người dùng');
     return data;
@@ -302,4 +309,3 @@ export const adminApi = {
     return data;
   }
 };
-

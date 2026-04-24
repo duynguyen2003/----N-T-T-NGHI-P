@@ -7,10 +7,18 @@ module.exports.getAll = async (req, res, next) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || '';
+    const role = req.query.role;
+    const status = req.query.status;
     const skip = (page - 1) * limit;
+
+    const roleFilter = ['ADMIN', 'STUDENT'].includes(role) ? role : undefined;
+    const statusFilter =
+      status === 'active' ? true : status === 'inactive' ? false : undefined;
 
     const whereParams = {
       deletedAt: null,
+      ...(roleFilter ? { role: roleFilter } : {}),
+      ...(typeof statusFilter === 'boolean' ? { isActive: statusFilter } : {}),
       ...(search ? {
         OR: [
           { fullName: { contains: search, mode: 'insensitive' } },
