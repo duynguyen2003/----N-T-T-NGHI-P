@@ -1,12 +1,16 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import {
   Search,
   Plus,
   Shield,
+  SlidersHorizontal,
   UserX,
   UserCheck,
   Trash2,
   MoreHorizontal,
+  Check,
+  ChevronDown,
+  ChevronUp,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -28,6 +32,18 @@ const statusLabel = {
   inactive: 'Đã khóa'
 };
 
+const roleOptions = [
+  { value: 'ALL', label: 'T\u1ea5t c\u1ea3 vai tr\u00f2', tone: 'all' },
+  { value: 'ADMIN', label: 'Admin', tone: 'admin' },
+  { value: 'STUDENT', label: 'Student', tone: 'student' }
+];
+
+const statusOptions = [
+  { value: 'ALL', label: 'T\u1ea5t c\u1ea3 tr\u1ea1ng th\u00e1i', tone: 'all' },
+  { value: 'active', label: 'Ho\u1ea1t \u0111\u1ed9ng', tone: 'active' },
+  { value: 'inactive', label: '\u0110\u00e3 kh\u00f3a', tone: 'inactive' }
+];
+
 const Users = () => {
   const { token } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
@@ -41,6 +57,8 @@ const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', role: 'STUDENT' });
   const [error, setError] = useState('');
+  const [openFilter, setOpenFilter] = useState(null);
+  const filterMenuRef = useRef(null);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -50,6 +68,17 @@ const Users = () => {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, roleFilter, statusFilter, currentPage]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (filterMenuRef.current && !filterMenuRef.current.contains(event.target)) {
+        setOpenFilter(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -220,11 +249,65 @@ const Users = () => {
       .sort((a, b) => a - b);
   }, [pagination]);
 
+  const renderFilterDropdown = ({ id, label, value, onChange, options, icon: Icon, menuTitle }) => {
+    const selectedOption = options.find((option) => option.value === value) || options[0];
+    const isOpen = openFilter === id;
+
+    return (
+      <div className="admin-users-filter-group">
+        <div className="admin-users-filter" ref={isOpen ? filterMenuRef : null}>
+          <button
+            type="button"
+            className={`admin-users-filter-button ${isOpen ? 'is-open' : ''}`}
+            onClick={() => setOpenFilter((prev) => (prev === id ? null : id))}
+            aria-haspopup="listbox"
+            aria-expanded={isOpen}
+            aria-label={label}
+          >
+            <span className="admin-users-filter-button-main">
+              <Icon size={16} className="admin-users-filter-button-icon" />
+              <span>{selectedOption.label}</span>
+            </span>
+            {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          {isOpen && (
+            <div className="admin-users-filter-menu" role="listbox" aria-label={label}>
+              <div className="admin-users-filter-menu-title">{menuTitle}</div>
+              <div className="admin-users-filter-options">
+                {options.map((option) => {
+                  const isSelected = option.value === value;
+
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`admin-users-filter-option ${isSelected ? 'is-selected' : ''}`}
+                      onClick={() => {
+                        onChange(option.value);
+                        setOpenFilter(null);
+                      }}
+                    >
+                      <span className={`admin-users-filter-dot ${option.tone}`} />
+                      <span className="admin-users-filter-option-label">{option.label}</span>
+                      {isSelected && <Check size={18} className="admin-users-filter-option-check" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="users-wrapper">
       <div className="admin-table-header" style={{ padding: '0 0 20px 0', border: 'none' }}>
         <h3>Quản lý người dùng</h3>
         <div className="admin-users-toolbar">
+          <div className="admin-users-toolbar-controls">
           <div className="admin-users-search-wrap">
             <Search size={16} className="admin-users-search-icon" />
             <input
@@ -237,29 +320,30 @@ const Users = () => {
             />
           </div>
 
-          <select
-            className="admin-search-input admin-users-filter"
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-          >
-            <option value="ALL">Tất cả vai trò</option>
-            <option value="ADMIN">Admin</option>
-            <option value="STUDENT">Student</option>
-          </select>
+          {renderFilterDropdown({
+            id: 'role',
+            label: 'L\u1eccC THEO',
+            value: roleFilter,
+            onChange: setRoleFilter,
+            options: roleOptions,
+            icon: Shield,
+            menuTitle: 'L\u1ef0A CH\u1eccN VAI TR\u00d2'
+          })}
 
-          <select
-            className="admin-search-input admin-users-filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="ALL">Tất cả trạng thái</option>
-            <option value="active">Hoạt động</option>
-            <option value="inactive">Đã khóa</option>
-          </select>
+          {renderFilterDropdown({
+            id: 'status',
+            label: 'L\u1eccC THEO',
+            value: statusFilter,
+            onChange: setStatusFilter,
+            options: statusOptions,
+            icon: SlidersHorizontal,
+            menuTitle: 'L\u1ef0A CH\u1eccN TR\u1ea0NG TH\u00c1I'
+          })}
 
           <button className="admin-btn-primary" onClick={() => setIsModalOpen(true)}>
             <Plus size={18} /> Thêm mới
           </button>
+          </div>
         </div>
       </div>
 

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useContext, useMemo } from 'react';
+﻿import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import {
   Plus,
   Trash2,
@@ -59,6 +59,12 @@ const getDifficultyLabel = (difficulty) => {
   return mapping[difficulty] || 'Chưa đặt';
 };
 
+const STATUS_FILTER_OPTIONS = [
+  { value: 'ALL', label: 'Tất cả' },
+  { value: 'OPEN', label: 'Đang mở' },
+  { value: 'DRAFT', label: 'Nháp' }
+];
+
 const normalizeQuestionFromApi = (questionItem) => {
   const rawOptions = Array.isArray(questionItem?.options) ? questionItem.options : [];
   const normalizedOptions = OPTION_LABELS.map((_, optionIndex) => `${rawOptions[optionIndex] || ''}`);
@@ -96,11 +102,24 @@ const Exams = () => {
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
   const [hideResult, setHideResult] = useState(false);
   const [viewMode, setViewMode] = useState('list');
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+  const statusFilterRef = useRef(null);
 
   useEffect(() => {
     fetchExams();
     fetchCourses();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (statusFilterRef.current && !statusFilterRef.current.contains(event.target)) {
+        setIsStatusFilterOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchExams = async () => {
@@ -361,6 +380,8 @@ const Exams = () => {
     });
   }, [exams, searchKeyword, statusFilter]);
 
+  const currentStatusFilter = STATUS_FILTER_OPTIONS.find((option) => option.value === statusFilter) || STATUS_FILTER_OPTIONS[0];
+
   const examStats = useMemo(() => {
     const total = exams.length;
     const openCount = exams.filter((exam) => getStatusFromExam(exam) === 'OPEN').length;
@@ -451,19 +472,45 @@ const Exams = () => {
           </div>
 
           <div className="exam-hub-toolbar-right">
-            <label className="exam-hub-select-wrap">
-              <span>Trạng thái:</span>
-              <select
-                className="exam-hub-select"
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
+            <div
+              className={`exam-hub-select-wrap ${isStatusFilterOpen ? 'is-open' : ''}`}
+              ref={statusFilterRef}
+            >
+              <span className="exam-hub-select-label">Trạng thái:</span>
+              <button
+                type="button"
+                className="exam-hub-select-trigger"
+                onClick={() => setIsStatusFilterOpen((prev) => !prev)}
+                aria-haspopup="listbox"
+                aria-expanded={isStatusFilterOpen}
               >
-                <option value="ALL">Tất cả</option>
-                <option value="OPEN">Đang mở</option>
-                <option value="DRAFT">Nháp</option>
-              </select>
-              <ChevronsUpDown size={14} />
-            </label>
+                <span className="exam-hub-select-value">{currentStatusFilter.label}</span>
+                <ChevronsUpDown size={14} className="exam-hub-select-caret" />
+              </button>
+
+              {isStatusFilterOpen && (
+                <div className="exam-hub-select-menu" role="listbox" aria-label="Trạng thái">
+                  {STATUS_FILTER_OPTIONS.map((option) => {
+                    const isSelected = option.value === statusFilter;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        className={`exam-hub-select-option ${isSelected ? 'is-selected' : ''}`}
+                        onClick={() => {
+                          setStatusFilter(option.value);
+                          setIsStatusFilterOpen(false);
+                        }}
+                      >
+                        <span>{option.label}</span>
+                        {isSelected && <CheckCircle2 size={14} />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
 
             <div className="exam-hub-view-toggle">
               <button
@@ -943,5 +990,6 @@ const Exams = () => {
 };
 
 export default Exams;
+
 
 
