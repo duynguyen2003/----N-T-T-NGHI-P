@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // Sử dụng HashRouter để dễ dàng chạy demo mà không cần cấu hình server
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
@@ -55,17 +55,46 @@ import Register from './components/Auth/Register.js';
 import ResetPassword from './components/Auth/ResetPassword.js';
 import ProtectedRoute from './components/Auth/ProtectedRoute.js';
 
+// Import global Toast
+import Toast from './components/Toast.js';
+import { useAuth } from './context/AuthContext.js';
+
 // Import Tools Pages
 import SubnetCalculator from './components/Tools/SubnetCalculator.js';
 import VLSMCalculator from './components/Tools/VLSM_Calculator.js';
 import PortLookup from './components/Tools/PortLookup.js';
 import CiscoCliLookup from './components/Tools/CiscoCliLookup.js';
 
+// Global toast renderer - shows pending toasts from AuthContext after navigation
+function GlobalToastRenderer() {
+  const { pendingToast, setPendingToast } = useAuth();
+
+  useEffect(() => {
+    if (pendingToast) {
+      // Clear it after showing (the Toast component handles its own lifecycle)
+      const timer = setTimeout(() => setPendingToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingToast, setPendingToast]);
+
+  if (!pendingToast) return null;
+
+  return (
+    <Toast
+      key={pendingToast.message}
+      message={pendingToast.message}
+      type={pendingToast.type || 'success'}
+      duration={2500}
+      onClose={() => setPendingToast(null)}
+    />
+  );
+}
 
 
 function App() {
   return (
     <Router>
+      <GlobalToastRenderer />
       <Routes>
         {/* =========================================
             ADMIN ROUTES (Isolated Layout)

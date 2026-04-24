@@ -4,12 +4,13 @@ import { api } from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../Toast';
 import AuthLayout from './AuthLayout';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
-  const { showToast, ToastComponent } = useToast();
+  const { login, setPendingToast } = useAuth();
+  const { ToastComponent } = useToast();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -22,6 +23,31 @@ const Login = () => {
   const [globalError, setGlobalError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setIsLoading(true);
+      setGlobalError('');
+      const data = await api.googleLogin(credentialResponse.credential);
+      
+      // Save token and user to context
+      login(data.user, data.accessToken);
+      
+      // Set pending toast - will be shown after navigation
+      setPendingToast({ message: `Xin chào, ${data.user.fullName}! 👋`, type: 'success' });
+      
+      if (data.user.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else {
+        const from = location.state?.from?.pathname || '/roadmap';
+        navigate(from);
+      }
+    } catch (error) {
+      setGlobalError(error.message || 'Đăng nhập Google thất bại');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle input change
   const handleChange = (e) => {
@@ -65,17 +91,16 @@ const Login = () => {
       // Cất "Vé thông hành" (accessToken) vào localStorage + Context
       login(data.user, data.accessToken);
 
-      showToast(`Chào mừng trở lại, ${data.user.fullName}!`, 'success');
+      // Set pending toast - will be shown after navigation
+      setPendingToast({ message: `Xin chào, ${data.user.fullName}! 👋`, type: 'success' });
 
       // Chuyển hướng vào trang Admin hoặc Lộ trình học tùy vai trò
-      setTimeout(() => {
-        if (data.user.role === 'ADMIN') {
-          navigate('/admin');
-        } else {
-          const redirectPath = location.state?.from || '/roadmap';
-          navigate(redirectPath);
-        }
-      }, 800);
+      if (data.user.role === 'ADMIN') {
+        navigate('/admin');
+      } else {
+        const redirectPath = location.state?.from || '/roadmap';
+        navigate(redirectPath);
+      }
     } catch (error) {
       setGlobalError(error.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
     } finally {
@@ -182,10 +207,18 @@ const Login = () => {
           <span>OR</span>
         </div>
 
-        <button type="button" className="google-btn">
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="google-icon" />
-          Đăng nhập với Google
-        </button>
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              setGlobalError('Đăng nhập Google thất bại');
+            }}
+            text="signin_with"
+            shape="rectangular"
+            theme="outline"
+            size="large"
+          />
+        </div>
       </form>
 
       <div className="auth-footer">

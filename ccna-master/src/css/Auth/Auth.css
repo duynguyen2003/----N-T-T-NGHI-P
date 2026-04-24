@@ -488,7 +488,7 @@
   position: fixed;
   top: 24px;
   right: 24px;
-  z-index: 1000;
+  z-index: 10000;
   pointer-events: none;
   display: flex;
   flex-direction: column;
@@ -512,12 +512,12 @@
   opacity: 0;
 }
 
-.toast-visible {
+.toast-visible .toast {
   transform: translateX(0);
   opacity: 1;
 }
 
-.toast-leaving {
+.toast-leaving .toast {
   transform: translateX(120%);
   opacity: 0;
 }

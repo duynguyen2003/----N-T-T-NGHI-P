@@ -8,7 +8,10 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const { getPrisma } = require('../config/database');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const prisma = getPrisma();
 const RESET_TOKEN_TTL_MINUTES = 30;
@@ -325,5 +328,95 @@ module.exports.getProfile = async (req, res, next) => {
     res.json(userWithoutPassword);
   } catch (error) {
     next(error);
+  }
+};
+
+/**
+ * @desc    Authenticate user via Google
+ * @route   POST /api/auth/google
+ * @access  Public
+ */
+module.exports.googleLogin = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    
+    if (!token) {
+      return res.status(400).json({ message: 'Không có token từ Google' });
+    }
+
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture } = payload;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Không thể lấy email từ tài khoản Google' });
+    }
+
+    // Check if user exists
+    let user = await prisma.user.findFirst({
+      where: {
+        email: {
+          equals: email,
+          mode: 'insensitive'
+        }
+      }
+    });
+
+    // If user doesn't exist, create a new one
+    if (!user) {
+      // Create a cryptographically secure random password since they logged in with Google
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(randomPassword, salt);
+
+      user = await prisma.user.create({
+        data: {
+          fullName: name,
+          email: email.toLowerCase(),
+          passwordHash: passwordHash,
+          avatarUrl: picture,
+          role: 'STUDENT',
+          isActive: true
+        }
+      });
+    } else {
+      // Update last login and avatar if missing
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: { 
+          lastLogin: new Date(),
+          ...( !user.avatarUrl && picture ? { avatarUrl: picture } : {} )
+        }
+      });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Tài khoản của bạn đã bị khóa' });
+    }
+
+    // Generate our system JWT
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'ccna_master_secret_2024',
+      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+    );
+
+    const { passwordHash: _, ...userWithoutPassword } = user;
+
+    res.json({
+      message: 'Đăng nhập Google thành công',
+      accessToken,
+      user: userWithoutPassword
+    });
+
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({ message: 'Xác thực Google thất bại' });
   }
 };

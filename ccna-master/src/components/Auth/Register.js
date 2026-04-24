@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../services/Api';
 import { useToast } from '../Toast';
 import AuthLayout from './AuthLayout';
+import { useAuth } from '../../context/AuthContext';
+import { GoogleLogin } from '@react-oauth/google';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -20,6 +22,26 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [globalError, setGlobalError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { login, setPendingToast } = useAuth();
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setIsLoading(true);
+      setGlobalError('');
+      const data = await api.googleLogin(credentialResponse.credential);
+      login(data.user, data.accessToken);
+      setPendingToast({ message: `Xin chào, ${data.user.fullName}! 👋`, type: 'success' });
+      if (data.user.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/roadmap');
+      }
+    } catch (error) {
+      setGlobalError(error.message || 'Đăng ký/Đăng nhập Google thất bại');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Show/hide password
   const [showPassword, setShowPassword] = useState(false);
@@ -231,6 +253,23 @@ const Register = () => {
             </>
           )}
         </button>
+
+        <div className="auth-divider">
+          <span>HOẶC</span>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => {
+              setGlobalError('Đăng nhập Google thất bại');
+            }}
+            text="signup_with"
+            shape="rectangular"
+            theme="outline"
+            size="large"
+          />
+        </div>
       </form>
 
       <div className="auth-footer">

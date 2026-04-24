@@ -47,7 +47,7 @@ const Footer = () => {
           <div className="footer__col">
             <Link to="/" className="footer__brand-logo" aria-label="NetMastery - Trang chủ">
               <div className="footer__brand-icon">
-                <span className="material-icons-round">hub</span>
+                <span className="material-icons-round">router</span>
               </div>
               <span className="footer__brand-name">NetMastery</span>
             </Link>

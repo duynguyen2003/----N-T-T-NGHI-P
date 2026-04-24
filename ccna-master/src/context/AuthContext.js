@@ -18,6 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true); // loading ban đầu khi đọc localStorage
+  const [pendingToast, setPendingToast] = useState(null); // Toast to show after navigation
 
   // Khởi tạo: đọc localStorage khi app load
   useEffect(() => {
@@ -80,6 +81,8 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateUser,
+    pendingToast,
+    setPendingToast,
   };
 
   return (
