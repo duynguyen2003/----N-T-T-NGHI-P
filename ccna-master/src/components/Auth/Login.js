@@ -29,13 +29,13 @@ const Login = () => {
       setIsLoading(true);
       setGlobalError('');
       const data = await api.googleLogin(credentialResponse.credential);
-      
+
       // Save token and user to context
       login(data.user, data.accessToken);
-      
+
       // Set pending toast - will be shown after navigation
       setPendingToast({ message: `Xin chào, ${data.user.fullName}! 👋`, type: 'success' });
-      
+
       if (data.user.role === 'ADMIN') {
         navigate('/admin/dashboard');
       } else {
@@ -207,14 +207,14 @@ const Login = () => {
           <span>OR</span>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <div style={{ justifyContent: 'center', }}>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => {
               setGlobalError('Đăng nhập Google thất bại');
             }}
             text="signin_with"
-            shape="rectangular"
+            shape="pill"
             theme="outline"
             size="large"
           />

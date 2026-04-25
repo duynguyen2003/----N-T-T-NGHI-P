@@ -32,7 +32,6 @@
 .sidebar {
     width: 90px;
     background-color: var(--card-bg);
-    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -115,7 +114,8 @@
 /* --- RESPONSIVE: Mobile (< 768px) --- */
 @media (max-width: 768px) {
     .layout-container {
-        padding-bottom: 74px; /* Ensure content is not overlapped by bottom nav */
+        padding-bottom: 74px;
+        /* Ensure content is not overlapped by bottom nav */
     }
 
     .main-wrapper {

@@ -152,7 +152,7 @@
 .portal-logo {
   width: 64px;
   height: 64px;
-  background: var(--auth-primary);
+  background: var(--primary-color);
   border-radius: 18px;
   display: flex;
   align-items: center;

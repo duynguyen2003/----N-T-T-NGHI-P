@@ -42,6 +42,7 @@
   font-weight: 700;
   font-size: 18px;
   line-height: 1.2;
+  color: var(--admin-primary);
 }
 
 .logo-subtitle {
@@ -245,6 +246,7 @@
     opacity: 0;
     transform: translateY(-8px) scale(0.96);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -347,7 +349,8 @@
   }
 
   .logo-text {
-    display: none; /* Hide logo text completely to save space for search bar */
+    display: none;
+    /* Hide logo text completely to save space for search bar */
   }
 
   .header-center {

@@ -9,7 +9,7 @@ import { GoogleLogin } from '@react-oauth/google';
 const Register = () => {
   const navigate = useNavigate();
   const { showToast, ToastComponent } = useToast();
-  
+
   // Form state
   const [formData, setFormData] = useState({
     fullName: '',
@@ -17,7 +17,7 @@ const Register = () => {
     password: '',
     confirmPassword: '',
   });
-  
+
   // Error state
   const [errors, setErrors] = useState({});
   const [globalError, setGlobalError] = useState('');
@@ -42,7 +42,7 @@ const Register = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Show/hide password
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -98,7 +98,7 @@ const Register = () => {
     try {
       await api.register(formData.fullName.trim(), formData.email.trim(), formData.password);
       showToast('Đăng ký thành công! Đang chuyển đến trang đăng nhập...', 'success');
-      
+
       setTimeout(() => {
         navigate('/login');
       }, 1500);
@@ -258,14 +258,14 @@ const Register = () => {
           <span>HOẶC</span>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+        <div style={{ justifyContent: 'center' }}>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={() => {
               setGlobalError('Đăng nhập Google thất bại');
             }}
             text="signup_with"
-            shape="rectangular"
+            shape="pill"
             theme="outline"
             size="large"
           />
@@ -274,7 +274,7 @@ const Register = () => {
 
       <div className="auth-footer">
         <p>
-          Đã có tài khoản? 
+          Đã có tài khoản?
           <Link to="/login" className="auth-link">Đăng nhập.</Link>
         </p>
       </div>
