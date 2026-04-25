@@ -45,7 +45,8 @@ const defaultQuestionDraft = {
   question: '',
   options: ['', '', '', ''],
   correctAnswer: 0,
-  explanation: ''
+  explanation: '',
+  imageUrl: ''
 };
 
 const getStatusFromExam = (exam) => ((exam?._count?.questions || 0) > 0 ? 'OPEN' : 'DRAFT');
@@ -76,7 +77,8 @@ const normalizeQuestionFromApi = (questionItem) => {
     question: `${questionItem?.question || ''}`,
     options: normalizedOptions,
     correctAnswer: Math.min(Math.max(normalizedCorrectAnswer, 0), 3),
-    explanation: `${questionItem?.explanation || ''}`
+    explanation: `${questionItem?.explanation || ''}`,
+    imageUrl: `${questionItem?.imageUrl || ''}`
   };
 };
 
@@ -98,6 +100,7 @@ const Exams = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [error, setError] = useState('');
+  const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
   const [hideResult, setHideResult] = useState(false);
@@ -255,6 +258,35 @@ const Exams = () => {
     }));
   };
 
+  const handleQuestionImageUpload = async (event) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!selectedFile) return;
+
+    if (!selectedFile.type.startsWith('image/')) {
+      setError('Vui lòng chọn đúng file ảnh cho sơ đồ mạng.');
+      return;
+    }
+
+    try {
+      setUploadingQuestionImage(true);
+      setError('');
+      const response = await adminApi.uploadExamQuestionImage(token, selectedFile);
+      if (!response?.imageUrl) {
+        throw new Error('Upload ảnh không thành công.');
+      }
+      setQuestionDraft((prev) => ({
+        ...prev,
+        imageUrl: response.imageUrl
+      }));
+    } catch (err) {
+      setError(err.message || 'Không thể tải ảnh câu hỏi.');
+    } finally {
+      setUploadingQuestionImage(false);
+    }
+  };
+
   const handleSaveQuestion = () => {
     const trimmedQuestion = questionDraft.question.trim();
     const cleanedOptions = questionDraft.options.map((option) => option.trim());
@@ -273,7 +305,8 @@ const Exams = () => {
       question: trimmedQuestion,
       options: cleanedOptions,
       correctAnswer: Number(questionDraft.correctAnswer) || 0,
-      explanation: questionDraft.explanation.trim()
+      explanation: questionDraft.explanation.trim(),
+      imageUrl: questionDraft.imageUrl?.trim() || ''
     };
 
     const nextQuestions = [...questions];
@@ -294,7 +327,8 @@ const Exams = () => {
       question: targetQuestion.question,
       options: [...targetQuestion.options],
       correctAnswer: targetQuestion.correctAnswer,
-      explanation: targetQuestion.explanation || ''
+      explanation: targetQuestion.explanation || '',
+      imageUrl: targetQuestion.imageUrl || ''
     });
     setEditingQuestionIndex(index);
   };
@@ -787,6 +821,33 @@ const Exams = () => {
                   />
                 </label>
 
+                <div className="efb-image-upload-wrap">
+                  <label className="efb-btn-secondary efb-image-upload-btn">
+                    <Upload size={14} />
+                    {uploadingQuestionImage ? 'Đang tải ảnh...' : 'Tải ảnh sơ đồ mạng'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingQuestionImage}
+                      onChange={handleQuestionImageUpload}
+                      hidden
+                    />
+                  </label>
+
+                  {questionDraft.imageUrl && (
+                    <div className="efb-image-preview">
+                      <img src={questionDraft.imageUrl} alt="Sơ đồ mạng câu hỏi" />
+                      <button
+                        type="button"
+                        className="efb-btn-ghost"
+                        onClick={() => setQuestionDraft((p) => ({ ...p, imageUrl: '' }))}
+                      >
+                        Gỡ ảnh
+                      </button>
+                    </div>
+                  )}
+                </div>
+
                 <div className="efb-options-grid">
                   {questionDraft.options.map((opt, i) => (
                     <div key={i} className={`efb-option-item ${questionDraft.correctAnswer === i ? 'efb-option-correct' : ''}`}>
@@ -878,6 +939,11 @@ const Exams = () => {
                           </div>
                         ))}
                       </div>
+                      {q.imageUrl && (
+                        <div className="efb-qimage">
+                          <img src={q.imageUrl} alt={`So do mang cau hoi ${idx + 1}`} />
+                        </div>
+                      )}
                       {q.explanation && (
                         <div className="efb-qexplan">
                           <span>Giải thích:</span> {q.explanation}
@@ -889,7 +955,7 @@ const Exams = () => {
               )}
             </section>
 
-          {/* â”€â”€ Section 3: CÃ i Ä‘áº·t nÃ¢ng cao â”€â”€ */}
+          {/*Cài đặt nâng cao*/}
           <section className="efb-card efb-card-orange">
             <div className="efb-card-header">
               <div className="efb-card-badge efb-bg-orange">

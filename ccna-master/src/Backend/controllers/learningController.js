@@ -1,4 +1,5 @@
 const { getPrisma } = require('../config/database');
+const { uploadBufferToCloudinary } = require('../config/cloudinary');
 const prisma = getPrisma();
 
 module.exports.getCourses = async (req, res, next) => {
@@ -32,7 +33,11 @@ module.exports.createCourse = async (req, res, next) => {
     let thumbnailUrl = '';
     
     if (req.file) {
-      thumbnailUrl = `/uploads/thumbnails/${req.file.filename}`;
+      const uploadResult = await uploadBufferToCloudinary(req.file, {
+        folder: 'ccna/courses/thumbnails',
+        resourceType: 'image'
+      });
+      thumbnailUrl = uploadResult.secure_url;
     }
 
     if (!code || !title) {
@@ -66,7 +71,11 @@ module.exports.updateCourse = async (req, res, next) => {
     
     const dataToUpdate = { title, description, level, status };
     if (req.file) {
-      dataToUpdate.thumbnailUrl = `/uploads/thumbnails/${req.file.filename}`;
+      const uploadResult = await uploadBufferToCloudinary(req.file, {
+        folder: 'ccna/courses/thumbnails',
+        resourceType: 'image'
+      });
+      dataToUpdate.thumbnailUrl = uploadResult.secure_url;
     }
 
     const course = await prisma.course.update({
@@ -124,7 +133,11 @@ module.exports.createLab = async (req, res, next) => {
     let fileUrl = null;
     
     if (req.file) {
-      fileUrl = `/uploads/labs/${req.file.filename}`;
+      const uploadResult = await uploadBufferToCloudinary(req.file, {
+        folder: 'ccna/labs/files',
+        resourceType: 'auto'
+      });
+      fileUrl = uploadResult.secure_url;
     }
 
     if (!title) {
@@ -164,7 +177,11 @@ module.exports.updateLab = async (req, res, next) => {
       courseId: courseId ? String(courseId) : undefined 
     };
     if (req.file) {
-      dataToUpdate.fileUrl = `/uploads/labs/${req.file.filename}`;
+      const uploadResult = await uploadBufferToCloudinary(req.file, {
+        folder: 'ccna/labs/files',
+        resourceType: 'auto'
+      });
+      dataToUpdate.fileUrl = uploadResult.secure_url;
     }
 
     const lab = await prisma.lab.update({
@@ -381,7 +398,10 @@ module.exports.createResource = async (req, res, next) => {
         title,
         type: type || req.file.mimetype.split('/')[1] || 'file',
         size: size || `${(req.file.size / 1024).toFixed(0)} KB`,
-        fileUrl: `/uploads/resources/${req.file.filename}`,
+        fileUrl: (await uploadBufferToCloudinary(req.file, {
+          folder: 'ccna/resources/files',
+          resourceType: 'auto'
+        })).secure_url,
         courseId: courseId || null
       }
     });

@@ -1,5 +1,6 @@
 const API_URL = "http://localhost:5000/api";
 
+const getErrorMessage = (data, fallback) => data?.message || data?.error?.message || fallback;
 const getHeaders = (token, isFormData = false) => {
   const headers = {
     'Authorization': `Bearer ${token}`
@@ -15,13 +16,13 @@ export const adminApi = {
   getStats: async (token) => {
     const response = await fetch(`${API_URL}/admin/stats`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy thống kê');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy thống kê'));
     return data;
   },
   getLogs: async (token, page = 1, limit = 10) => {
     const response = await fetch(`${API_URL}/admin/logs?page=${page}&limit=${limit}`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy nhật ký');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy nhật ký'));
     return data;
   },
 
@@ -36,7 +37,7 @@ export const adminApi = {
     if (options.status && options.status !== 'ALL') params.set('status', options.status);
     const response = await fetch(`${API_URL}/admin/users?${params.toString()}`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách người dùng');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách người dùng'));
     return data;
   },
   createUser: async (token, payload) => {
@@ -44,7 +45,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo người dùng');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo người dùng'));
     return data;
   },
   updateUserRole: async (token, userId, role) => {
@@ -52,7 +53,7 @@ export const adminApi = {
       method: 'PATCH', headers: getHeaders(token), body: JSON.stringify({ role })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi cập nhật quyền');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật quyền'));
     return data;
   },
   toggleUserActive: async (token, userId) => {
@@ -60,7 +61,7 @@ export const adminApi = {
       method: 'PATCH', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi cập nhật trạng thái');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật trạng thái'));
     return data;
   },
   deleteUser: async (token, userId) => {
@@ -68,7 +69,7 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa người dùng');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa người dùng'));
     return data;
   },
 
@@ -76,7 +77,7 @@ export const adminApi = {
   getCourses: async (token, page = 1) => {
     const response = await fetch(`${API_URL}/learning/courses?page=${page}`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách khóa học');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách khóa học'));
     return data;
   },
   createCourse: async (token, formData) => {
@@ -84,7 +85,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token, true), body: formData
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo khóa học');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo khóa học'));
     return data;
   },
   updateCourse: async (token, id, formData) => {
@@ -92,7 +93,7 @@ export const adminApi = {
       method: 'PUT', headers: getHeaders(token, true), body: formData
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi cập nhật khóa học');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật khóa học'));
     return data;
   },
   deleteCourse: async (token, id) => {
@@ -100,7 +101,7 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa khóa học');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa khóa học'));
     return data;
   },
 
@@ -108,7 +109,7 @@ export const adminApi = {
   getLabs: async (token, page = 1) => {
     const response = await fetch(`${API_URL}/learning/labs?page=${page}`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách Labs');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách Labs'));
     return data;
   },
   createLab: async (token, formData) => {
@@ -116,7 +117,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token, true), body: formData
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo Lab');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo Lab'));
     return data;
   },
   updateLab: async (token, id, formData) => {
@@ -124,7 +125,7 @@ export const adminApi = {
       method: 'PUT', headers: getHeaders(token, true), body: formData
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi cập nhật Lab');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật Lab'));
     return data;
   },
   deleteLab: async (token, id) => {
@@ -132,7 +133,7 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa Lab');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa Lab'));
     return data;
   },
 
@@ -140,7 +141,7 @@ export const adminApi = {
   getModules: async (token, courseId) => {
     const response = await fetch(`${API_URL}/learning/courses/${courseId}/modules`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách chương');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách chương'));
     return data;
   },
   createModule: async (token, courseId, payload) => {
@@ -148,7 +149,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo chương');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo chương'));
     return data;
   },
   deleteModule: async (token, moduleId) => {
@@ -156,7 +157,7 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa chương');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa chương'));
     return data;
   },
 
@@ -164,7 +165,7 @@ export const adminApi = {
   getLessons: async (token, moduleId) => {
     const response = await fetch(`${API_URL}/learning/modules/${moduleId}/lessons`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách bài học');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách bài học'));
     return data;
   },
   createLesson: async (token, moduleId, payload) => {
@@ -172,7 +173,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo bài học');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo bài học'));
     return data;
   },
   deleteLesson: async (token, lessonId) => {
@@ -180,7 +181,7 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa bài học');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa bài học'));
     return data;
   },
 
@@ -188,13 +189,13 @@ export const adminApi = {
   getExams: async (token, page = 1) => {
     const response = await fetch(`${API_URL}/exams?page=${page}`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy danh sách Exams');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách Exams'));
     return data;
   },
   getExamById: async (token, id) => {
     const response = await fetch(`${API_URL}/exams/detail/${id}`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy chi tiết Exam');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy chi tiết Exam'));
     return data;
   },
   createExam: async (token, payload) => {
@@ -202,7 +203,17 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo Exam');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo Exam'));
+    return data;
+  },
+  uploadExamQuestionImage: async (token, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await fetch(`${API_URL}/exams/question-image`, {
+      method: 'POST', headers: getHeaders(token, true), body: formData
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Loi tai anh cau hoi'));
     return data;
   },
   updateExam: async (token, id, payload) => {
@@ -210,7 +221,7 @@ export const adminApi = {
       method: 'PUT', headers: getHeaders(token), body: JSON.stringify(payload)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi cập nhật Exam');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật Exam'));
     return data;
   },
   deleteExam: async (token, id) => {
@@ -218,13 +229,13 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa Exam');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa Exam'));
     return data;
   },
   getExamResults: async (token, page = 1) => {
     const response = await fetch(`${API_URL}/exams/results?page=${page}`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy kết quả thi');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy kết quả thi'));
     return data;
   },
 
@@ -232,7 +243,7 @@ export const adminApi = {
   getTopics: async (token, courseId) => {
     const response = await fetch(`${API_URL}/learning/courses/${courseId}/topics`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy chủ đề');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy chủ đề'));
     return data;
   },
   createTopic: async (token, courseId, payload) => {
@@ -240,7 +251,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo chủ đề');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo chủ đề'));
     return data;
   },
   deleteTopic: async (token, topicId) => {
@@ -248,7 +259,7 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa chủ đề');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa chủ đề'));
     return data;
   },
 
@@ -257,7 +268,7 @@ export const adminApi = {
     const url = courseId ? `${API_URL}/learning/resources?courseId=${courseId}` : `${API_URL}/learning/resources`;
     const response = await fetch(url, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy tài liệu');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy tài liệu'));
     return data;
   },
   createResource: async (token, formData) => {
@@ -265,7 +276,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token, true), body: formData
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tải tài liệu');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tải tài liệu'));
     return data;
   },
   deleteResource: async (token, id) => {
@@ -273,7 +284,7 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa tài liệu');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa tài liệu'));
     return data;
   },
 
@@ -281,7 +292,7 @@ export const adminApi = {
   getTools: async (token) => {
     const response = await fetch(`${API_URL}/tools`, { headers: getHeaders(token) });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi lấy công cụ');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy công cụ'));
     return data;
   },
   createTool: async (token, payload) => {
@@ -289,7 +300,7 @@ export const adminApi = {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi tạo công cụ');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo công cụ'));
     return data;
   },
   toggleTool: async (token, id) => {
@@ -297,7 +308,7 @@ export const adminApi = {
       method: 'PATCH', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi cập nhật công cụ');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật công cụ'));
     return data;
   },
   deleteTool: async (token, id) => {
@@ -305,7 +316,10 @@ export const adminApi = {
       method: 'DELETE', headers: getHeaders(token)
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Lỗi xóa công cụ');
+    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa công cụ'));
     return data;
   }
 };
+
+
+
