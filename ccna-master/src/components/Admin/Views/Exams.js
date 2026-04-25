@@ -82,6 +82,109 @@ const normalizeQuestionFromApi = (questionItem) => {
   };
 };
 
+const parseCorrectAnswer = (value) => {
+  if (Number.isInteger(Number(value))) {
+    const numericValue = Number(value);
+    if (numericValue >= 0 && numericValue <= 3) return numericValue;
+    if (numericValue >= 1 && numericValue <= 4) return numericValue - 1;
+  }
+
+  const text = `${value || ''}`.trim().toUpperCase();
+  const answerIndex = OPTION_LABELS.indexOf(text);
+  if (answerIndex !== -1) return answerIndex;
+
+  throw new Error(`Đáp án đúng "${value}" không hợp lệ (chấp nhận: A-D, 0-3, 1-4).`);
+};
+
+const parseCsvLine = (line) => {
+  const values = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    const nextChar = line[index + 1];
+
+    if (char === '"' && inQuotes && nextChar === '"') {
+      current += '"';
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      values.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  values.push(current.trim());
+  return values;
+};
+
+const toImportedQuestionsFromCsv = (csvText) => {
+  const rows = csvText
+    .replace(/^\uFEFF/, '')
+    .replace(/\r/g, '')
+    .split('\n')
+    .filter((line) => line.trim().length > 0)
+    .map(parseCsvLine);
+
+  if (rows.length === 0) return [];
+
+  const firstRow = rows[0].map((value) => value.toLowerCase());
+  const hasHeader = firstRow.includes('question') && (firstRow.includes('optiona') || firstRow.includes('option_a'));
+  const dataRows = hasHeader ? rows.slice(1) : rows;
+
+  return dataRows.map((row) => ({
+    question: row[0] || '',
+    optionA: row[1] || '',
+    optionB: row[2] || '',
+    optionC: row[3] || '',
+    optionD: row[4] || '',
+    correctAnswer: row[5] || '',
+    explanation: row[6] || '',
+    imageUrl: row[7] || ''
+  }));
+};
+
+const normalizeImportedQuestion = (rawQuestion, index) => {
+  const questionText = `${rawQuestion?.question || rawQuestion?.content || ''}`.trim();
+  if (!questionText) {
+    throw new Error(`Dòng ${index + 1}: thiếu nội dung câu hỏi.`);
+  }
+
+  const options = Array.isArray(rawQuestion?.options)
+    ? OPTION_LABELS.map((_, optionIndex) => `${rawQuestion.options[optionIndex] || ''}`.trim())
+    : [
+        `${rawQuestion?.optionA || rawQuestion?.a || ''}`.trim(),
+        `${rawQuestion?.optionB || rawQuestion?.b || ''}`.trim(),
+        `${rawQuestion?.optionC || rawQuestion?.c || ''}`.trim(),
+        `${rawQuestion?.optionD || rawQuestion?.d || ''}`.trim()
+      ];
+
+  if (options.some((option) => !option)) {
+    throw new Error(`Dòng ${index + 1}: cần đủ 4 đáp án A/B/C/D.`);
+  }
+
+  const correctAnswer = parseCorrectAnswer(rawQuestion?.correctAnswer ?? rawQuestion?.answer);
+
+  return {
+    question: questionText,
+    options,
+    correctAnswer,
+    explanation: `${rawQuestion?.explanation || ''}`.trim(),
+    imageUrl: `${rawQuestion?.imageUrl || ''}`.trim()
+  };
+};
+
 const Exams = () => {
   const { token } = useContext(AuthContext);
   const [exams, setExams] = useState([]);
@@ -100,6 +203,7 @@ const Exams = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [error, setError] = useState('');
+  const [importMessage, setImportMessage] = useState('');
   const [uploadingQuestionImage, setUploadingQuestionImage] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [shuffleQuestions, setShuffleQuestions] = useState(false);
@@ -107,6 +211,7 @@ const Exams = () => {
   const [viewMode, setViewMode] = useState('list');
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const statusFilterRef = useRef(null);
+  const bulkImportInputRef = useRef(null);
 
   useEffect(() => {
     fetchExams();
@@ -178,6 +283,7 @@ const Exams = () => {
     setSelectedExam(null);
     setIsEditMode(false);
     setError('');
+    setImportMessage('');
     setModules([]);
     setFormData(defaultFormData);
     syncQuestions([]);
@@ -192,6 +298,7 @@ const Exams = () => {
     setSelectedExam(exam);
     setIsEditMode(true);
     setError('');
+    setImportMessage('');
     syncQuestions([]);
     resetQuestionDraft();
     setShowAdvanced(false);
@@ -284,6 +391,85 @@ const Exams = () => {
       setError(err.message || 'Không thể tải ảnh câu hỏi.');
     } finally {
       setUploadingQuestionImage(false);
+    }
+  };
+
+  const handleDownloadCsvTemplate = () => {
+    const sampleCsv = [
+      'question,optionA,optionB,optionC,optionD,correctAnswer,explanation,imageUrl',
+      '"Router nào là default gateway?","R1","R2","SW1","PC1","A","Default gateway là router kết nối ra mạng ngoài.",""'
+    ].join('\n');
+
+    const blob = new Blob([sampleCsv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'exam-questions-template.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  };
+
+  const handleBulkImportQuestions = async (event) => {
+    const selectedFile = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!selectedFile) return;
+
+    try {
+      setError('');
+      setImportMessage('');
+
+      const rawText = await selectedFile.text();
+      if (!rawText.trim()) {
+        throw new Error('File import đang trống.');
+      }
+
+      let rawQuestions = [];
+      const isJsonFile = selectedFile.name.toLowerCase().endsWith('.json');
+
+      if (isJsonFile) {
+        const parsed = JSON.parse(rawText);
+        if (Array.isArray(parsed)) {
+          rawQuestions = parsed;
+        } else if (Array.isArray(parsed?.questions)) {
+          rawQuestions = parsed.questions;
+        } else {
+          throw new Error('JSON không đúng định dạng. Dùng mảng câu hỏi hoặc { questions: [] }.');
+        }
+      } else {
+        rawQuestions = toImportedQuestionsFromCsv(rawText);
+      }
+
+      if (rawQuestions.length === 0) {
+        throw new Error('Không tìm thấy câu hỏi hợp lệ trong file.');
+      }
+
+      const importedQuestions = [];
+      const failedRows = [];
+
+      rawQuestions.forEach((rawQuestion, index) => {
+        try {
+          importedQuestions.push(normalizeImportedQuestion(rawQuestion, index));
+        } catch (validationError) {
+          failedRows.push(validationError.message);
+        }
+      });
+
+      if (importedQuestions.length === 0) {
+        throw new Error(failedRows[0] || 'Không import được câu hỏi nào.');
+      }
+
+      const nextQuestions = [...questions, ...importedQuestions];
+      syncQuestions(nextQuestions);
+
+      setImportMessage(
+        failedRows.length > 0
+          ? `Đã nhập ${importedQuestions.length} câu, bỏ qua ${failedRows.length} dòng lỗi.`
+          : `Đã nhập thành công ${importedQuestions.length} câu hỏi.`
+      );
+    } catch (importError) {
+      setError(importError.message || 'Không thể nhập câu hỏi từ file.');
     }
   };
 
@@ -801,7 +987,11 @@ const Exams = () => {
                   <strong>Tự luận</strong>
                   <span>Dạng văn bản, giáo viên chấm điểm</span>
                 </button>
-                <button type="button" className="efb-type-card">
+                <button
+                  type="button"
+                  className="efb-type-card"
+                  onClick={() => bulkImportInputRef.current?.click()}
+                >
                   <div className="efb-type-icon efb-type-icon-cyan">
                     <Upload size={20} />
                   </div>
@@ -809,6 +999,20 @@ const Exams = () => {
                   <span>Nhập hàng loạt từ Excel / CSV</span>
                 </button>
               </div>
+              <input
+                ref={bulkImportInputRef}
+                type="file"
+                accept=".csv,.json,text/csv,application/json"
+                onChange={handleBulkImportQuestions}
+                hidden
+              />
+              <div className="efb-import-helper">
+                <span>Định dạng: `question,optionA,optionB,optionC,optionD,correctAnswer,explanation,imageUrl`.</span>
+                <button type="button" className="efb-btn-ghost" onClick={handleDownloadCsvTemplate}>
+                  Tải mẫu CSV
+                </button>
+              </div>
+              {importMessage && <p className="exam-builder-success">{importMessage}</p>}
 
               {/* Draft editor */}
               <div className="efb-draft">
