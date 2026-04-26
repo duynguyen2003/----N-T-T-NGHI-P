@@ -25,11 +25,13 @@ router.delete('/labs/:id', learningController.deleteLab);
 // Module (Chương) management
 router.get('/courses/:courseId/modules', learningController.getModulesByCourse);
 router.post('/courses/:courseId/modules', learningController.createModule);
+router.put('/modules/:id', learningController.updateModule);
 router.delete('/modules/:id', learningController.deleteModule);
 
 // Lesson (Bài học) management
 router.get('/modules/:moduleId/lessons', learningController.getLessonsByModule);
 router.post('/modules/:moduleId/lessons', learningController.createLesson);
+router.put('/lessons/:id', learningController.updateLesson);
 router.delete('/lessons/:id', learningController.deleteLesson);
 
 // CourseTopic (Chủ đề) management

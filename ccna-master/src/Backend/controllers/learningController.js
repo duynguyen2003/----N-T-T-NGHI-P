@@ -67,15 +67,36 @@ module.exports.createCourse = async (req, res, next) => {
 module.exports.updateCourse = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, description, level, status } = req.body;
-    
-    const dataToUpdate = { title, description, level, status };
+    const { code, title, description, level, status, orderIndex } = req.body;
+
+    if (title !== undefined && !String(title).trim()) {
+      return res.status(400).json({ message: 'Vui lòng nhập tên khóa học' });
+    }
+    if (code !== undefined && !String(code).trim()) {
+      return res.status(400).json({ message: 'Vui lòng nhập mã khóa học' });
+    }
+
+    const dataToUpdate = {};
+    if (code !== undefined) dataToUpdate.code = String(code).trim().substring(0, 10);
+    if (title !== undefined) dataToUpdate.title = String(title).trim();
+    if (description !== undefined) dataToUpdate.description = description ? String(description) : null;
+    if (level !== undefined) dataToUpdate.level = level;
+    if (status !== undefined) dataToUpdate.status = status;
+    if (orderIndex !== undefined) {
+      const parsedOrder = parseInt(orderIndex, 10);
+      if (!Number.isNaN(parsedOrder)) dataToUpdate.orderIndex = parsedOrder;
+    }
+
     if (req.file) {
       const uploadResult = await uploadBufferToCloudinary(req.file, {
         folder: 'ccna/courses/thumbnails',
         resourceType: 'image'
       });
       dataToUpdate.thumbnailUrl = uploadResult.secure_url;
+    }
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return res.status(400).json({ message: 'Không có dữ liệu cần cập nhật' });
     }
 
     const course = await prisma.course.update({
@@ -272,6 +293,38 @@ module.exports.deleteModule = async (req, res, next) => {
   }
 };
 
+module.exports.updateModule = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title, description, orderIndex } = req.body;
+
+    if (title !== undefined && !String(title).trim()) {
+      return res.status(400).json({ message: 'Vui lòng nhập tên chương' });
+    }
+
+    const dataToUpdate = {};
+    if (title !== undefined) dataToUpdate.title = String(title).trim();
+    if (description !== undefined) dataToUpdate.description = description ? String(description) : null;
+    if (orderIndex !== undefined) {
+      const parsedOrder = parseInt(orderIndex, 10);
+      if (!Number.isNaN(parsedOrder)) dataToUpdate.orderIndex = parsedOrder;
+    }
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return res.status(400).json({ message: 'Không có dữ liệu cần cập nhật' });
+    }
+
+    const mod = await prisma.module.update({
+      where: { id },
+      data: dataToUpdate
+    });
+
+    res.json({ message: 'Cập nhật chương thành công', module: mod });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // =============================================
 // LESSON (BÀI HỌC) MANAGEMENT
 // =============================================
@@ -326,6 +379,37 @@ module.exports.deleteLesson = async (req, res, next) => {
       data: { deletedAt: new Date() }
     });
     res.json({ message: 'Xóa bài học thành công' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports.updateLesson = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { title, sectionNumber, contentHtml, videoUrl, videoDuration } = req.body;
+
+    if (title !== undefined && !String(title).trim()) {
+      return res.status(400).json({ message: 'Vui lòng nhập tên bài học' });
+    }
+
+    const dataToUpdate = {};
+    if (title !== undefined) dataToUpdate.title = String(title).trim();
+    if (sectionNumber !== undefined) dataToUpdate.sectionNumber = sectionNumber ? String(sectionNumber) : null;
+    if (contentHtml !== undefined) dataToUpdate.contentHtml = contentHtml ? String(contentHtml) : null;
+    if (videoUrl !== undefined) dataToUpdate.videoUrl = videoUrl ? String(videoUrl) : null;
+    if (videoDuration !== undefined) dataToUpdate.videoDuration = videoDuration ? String(videoDuration) : null;
+
+    if (Object.keys(dataToUpdate).length === 0) {
+      return res.status(400).json({ message: 'Không có dữ liệu cần cập nhật' });
+    }
+
+    const lesson = await prisma.lesson.update({
+      where: { id: parseInt(id, 10) },
+      data: dataToUpdate
+    });
+
+    res.json({ message: 'Cập nhật bài học thành công', lesson });
   } catch (error) {
     next(error);
   }

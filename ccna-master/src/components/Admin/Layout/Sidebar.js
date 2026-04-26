@@ -20,31 +20,31 @@ const Sidebar = () => {
       <nav className="admin-sidebar-nav" >
         <NavLink to="/admin/dashboard" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={19} />
-          <span>Dashboard</span>
+          <span>Tổng quan</span>
         </NavLink>
         <NavLink to="/admin/users" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <Users size={19} />
-          <span>Users</span>
+          <span>Quản lý người dùng</span>
         </NavLink>
         <NavLink to="/admin/courses" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <BookOpen size={19} />
-          <span>Courses</span>
+          <span>Quản lý khóa học</span>
         </NavLink>
         <NavLink to="/admin/exams" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <FileText size={19} />
-          <span>Exams</span>
+          <span>Quản lý bài kiểm tra</span>
         </NavLink>
         <NavLink to="/admin/labs" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <Activity size={19} />
-          <span>Labs</span>
+          <span>Quản lý thực hành</span>
         </NavLink>
         <NavLink to="/admin/resources" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <FolderOpen size={19} />
-          <span>Resources</span>
+          <span>Quản lý tài liệu</span>
         </NavLink>
         <NavLink to="/admin/tools" className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}>
           <Wrench size={19} />
-          <span>Tools</span>
+          <span>Quản lý công cụ</span>
         </NavLink>
       </nav>
     </div>

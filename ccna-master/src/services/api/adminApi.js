@@ -1,325 +1,225 @@
 const API_URL = "http://localhost:5000/api";
+const DEFAULT_TIMEOUT_MS = 10000;
 
-const getErrorMessage = (data, fallback) => data?.message || data?.error?.message || fallback;
-const getHeaders = (token, isFormData = false) => {
-  const headers = {
-    'Authorization': `Bearer ${token}`
-  };
-  if (!isFormData) {
-    headers['Content-Type'] = 'application/json;charset=utf-8';
+const getHeaders = (token, isFormData = false) => ({
+  'Authorization': `Bearer ${token}`,
+  ...(!isFormData && { 'Content-Type': 'application/json;charset=utf-8' }),
+});
+
+const getErrorMessage = (data, fallback) =>
+  data?.message || data?.error?.message || fallback;
+
+// ✅ Hàm dùng chung — loại bỏ toàn bộ boilerplate lặp lại
+const request = async (url, options = {}, errorMsg = 'Lỗi không xác định') => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    const data = await response.json();
+    if (!response.ok) throw new Error(getErrorMessage(data, errorMsg));
+    return data;
+  } finally {
+    clearTimeout(timeout);
   }
-  return headers;
 };
 
 export const adminApi = {
   // --- STATS & LOGS ---
-  getStats: async (token) => {
-    const response = await fetch(`${API_URL}/admin/stats`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy thống kê'));
-    return data;
-  },
-  getLogs: async (token, page = 1, limit = 10) => {
-    const response = await fetch(`${API_URL}/admin/logs?page=${page}&limit=${limit}`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy nhật ký'));
-    return data;
-  },
+  getStats: (token) =>
+    request(`${API_URL}/admin/stats`, { headers: getHeaders(token) }, 'Lỗi lấy thống kê'),
+
+  getLogs: (token, page = 1, limit = 10) =>
+    request(
+      `${API_URL}/admin/logs?page=${page}&limit=${limit}`,
+      { headers: getHeaders(token) },
+      'Lỗi lấy nhật ký'
+    ),
 
   // --- USERS ---
-  getUsers: async (token, page = 1, search = '', options = {}) => {
-    const params = new URLSearchParams({
-      page: String(page),
-      search: search || ''
-    });
+  getUsers: (token, page = 1, search = '', options = {}) => {
+    const params = new URLSearchParams({ page: String(page), search: search || '' });
     if (options.limit) params.set('limit', String(options.limit));
     if (options.role && options.role !== 'ALL') params.set('role', options.role);
     if (options.status && options.status !== 'ALL') params.set('status', options.status);
-    const response = await fetch(`${API_URL}/admin/users?${params.toString()}`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách người dùng'));
-    return data;
+    return request(`${API_URL}/admin/users?${params}`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách người dùng');
   },
-  createUser: async (token, payload) => {
-    const response = await fetch(`${API_URL}/admin/users`, {
+
+  createUser: (token, payload) =>
+    request(`${API_URL}/admin/users`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo người dùng'));
-    return data;
-  },
-  updateUserRole: async (token, userId, role) => {
-    const response = await fetch(`${API_URL}/admin/users/${userId}/role`, {
+    }, 'Lỗi tạo người dùng'),
+
+  updateUserRole: (token, userId, role) =>
+    request(`${API_URL}/admin/users/${userId}/role`, {
       method: 'PATCH', headers: getHeaders(token), body: JSON.stringify({ role })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật quyền'));
-    return data;
-  },
-  toggleUserActive: async (token, userId) => {
-    const response = await fetch(`${API_URL}/admin/users/${userId}/toggle`, {
+    }, 'Lỗi cập nhật quyền'),
+
+  toggleUserActive: (token, userId) =>
+    request(`${API_URL}/admin/users/${userId}/toggle`, {
       method: 'PATCH', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật trạng thái'));
-    return data;
-  },
-  deleteUser: async (token, userId) => {
-    const response = await fetch(`${API_URL}/admin/users/${userId}`, {
+    }, 'Lỗi cập nhật trạng thái'),
+
+  deleteUser: (token, userId) =>
+    request(`${API_URL}/admin/users/${userId}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa người dùng'));
-    return data;
-  },
+    }, 'Lỗi xóa người dùng'),
 
   // --- COURSES ---
-  getCourses: async (token, page = 1) => {
-    const response = await fetch(`${API_URL}/learning/courses?page=${page}`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách khóa học'));
-    return data;
-  },
-  createCourse: async (token, formData) => {
-    const response = await fetch(`${API_URL}/learning/courses`, {
+  getCourses: (token, page = 1) =>
+    request(`${API_URL}/learning/courses?page=${page}`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách khóa học'),
+
+  createCourse: (token, formData) =>
+    request(`${API_URL}/learning/courses`, {
       method: 'POST', headers: getHeaders(token, true), body: formData
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo khóa học'));
-    return data;
-  },
-  updateCourse: async (token, id, formData) => {
-    const response = await fetch(`${API_URL}/learning/courses/${id}`, {
+    }, 'Lỗi tạo khóa học'),
+
+  updateCourse: (token, id, formData) =>
+    request(`${API_URL}/learning/courses/${id}`, {
       method: 'PUT', headers: getHeaders(token, true), body: formData
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật khóa học'));
-    return data;
-  },
-  deleteCourse: async (token, id) => {
-    const response = await fetch(`${API_URL}/learning/courses/${id}`, {
+    }, 'Lỗi cập nhật khóa học'),
+
+  deleteCourse: (token, id) =>
+    request(`${API_URL}/learning/courses/${id}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa khóa học'));
-    return data;
-  },
+    }, 'Lỗi xóa khóa học'),
 
   // --- LABS ---
-  getLabs: async (token, page = 1) => {
-    const response = await fetch(`${API_URL}/learning/labs?page=${page}`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách Labs'));
-    return data;
-  },
-  createLab: async (token, formData) => {
-    const response = await fetch(`${API_URL}/learning/labs`, {
+  getLabs: (token, page = 1) =>
+    request(`${API_URL}/learning/labs?page=${page}`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách bài thực hành'),
+
+  createLab: (token, formData) =>
+    request(`${API_URL}/learning/labs`, {
       method: 'POST', headers: getHeaders(token, true), body: formData
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo Lab'));
-    return data;
-  },
-  updateLab: async (token, id, formData) => {
-    const response = await fetch(`${API_URL}/learning/labs/${id}`, {
+    }, 'Lỗi tạo bài thực hành'),
+
+  updateLab: (token, id, formData) =>
+    request(`${API_URL}/learning/labs/${id}`, {
       method: 'PUT', headers: getHeaders(token, true), body: formData
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật Lab'));
-    return data;
-  },
-  deleteLab: async (token, id) => {
-    const response = await fetch(`${API_URL}/learning/labs/${id}`, {
+    }, 'Lỗi cập nhật bài thực hành'),
+
+  deleteLab: (token, id) =>
+    request(`${API_URL}/learning/labs/${id}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa Lab'));
-    return data;
-  },
+    }, 'Lỗi xóa bài thực hành'),
 
   // --- MODULES (CHƯƠNG) ---
-  getModules: async (token, courseId) => {
-    const response = await fetch(`${API_URL}/learning/courses/${courseId}/modules`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách chương'));
-    return data;
-  },
-  createModule: async (token, courseId, payload) => {
-    const response = await fetch(`${API_URL}/learning/courses/${courseId}/modules`, {
+  getModules: (token, courseId) =>
+    request(`${API_URL}/learning/courses/${courseId}/modules`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách chương'),
+
+  createModule: (token, courseId, payload) =>
+    request(`${API_URL}/learning/courses/${courseId}/modules`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo chương'));
-    return data;
-  },
-  deleteModule: async (token, moduleId) => {
-    const response = await fetch(`${API_URL}/learning/modules/${moduleId}`, {
+    }, 'Lỗi tạo chương'),
+
+  updateModule: (token, moduleId, payload) =>
+    request(`${API_URL}/learning/modules/${moduleId}`, {
+      method: 'PUT', headers: getHeaders(token), body: JSON.stringify(payload)
+    }, 'Lỗi cập nhật chương'),
+
+  deleteModule: (token, moduleId) =>
+    request(`${API_URL}/learning/modules/${moduleId}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa chương'));
-    return data;
-  },
+    }, 'Lỗi xóa chương'),
 
   // --- LESSONS (BÀI HỌC) ---
-  getLessons: async (token, moduleId) => {
-    const response = await fetch(`${API_URL}/learning/modules/${moduleId}/lessons`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách bài học'));
-    return data;
-  },
-  createLesson: async (token, moduleId, payload) => {
-    const response = await fetch(`${API_URL}/learning/modules/${moduleId}/lessons`, {
+  getLessons: (token, moduleId) =>
+    request(`${API_URL}/learning/modules/${moduleId}/lessons`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách bài học'),
+
+  createLesson: (token, moduleId, payload) =>
+    request(`${API_URL}/learning/modules/${moduleId}/lessons`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo bài học'));
-    return data;
-  },
-  deleteLesson: async (token, lessonId) => {
-    const response = await fetch(`${API_URL}/learning/lessons/${lessonId}`, {
+    }, 'Lỗi tạo bài học'),
+
+  updateLesson: (token, lessonId, payload) =>
+    request(`${API_URL}/learning/lessons/${lessonId}`, {
+      method: 'PUT', headers: getHeaders(token), body: JSON.stringify(payload)
+    }, 'Lỗi cập nhật bài học'),
+
+  deleteLesson: (token, lessonId) =>
+    request(`${API_URL}/learning/lessons/${lessonId}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa bài học'));
-    return data;
-  },
+    }, 'Lỗi xóa bài học'),
 
   // --- EXAMS ---
-  getExams: async (token, page = 1) => {
-    const response = await fetch(`${API_URL}/exams?page=${page}`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy danh sách Exams'));
-    return data;
-  },
-  getExamById: async (token, id) => {
-    const response = await fetch(`${API_URL}/exams/detail/${id}`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy chi tiết Exam'));
-    return data;
-  },
-  createExam: async (token, payload) => {
-    const response = await fetch(`${API_URL}/exams`, {
+  getExams: (token, page = 1) =>
+    request(`${API_URL}/exams?page=${page}`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách bài kiểm tra'),
+
+  getExamById: (token, id) =>
+    request(`${API_URL}/exams/detail/${id}`, { headers: getHeaders(token) }, 'Lỗi lấy chi tiết bài kiểm tra'),
+
+  createExam: (token, payload) =>
+    request(`${API_URL}/exams`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo Exam'));
-    return data;
-  },
-  uploadExamQuestionImage: async (token, file) => {
+    }, 'Lỗi tạo bài kiểm tra'),
+
+  uploadExamQuestionImage: (token, file) => {
     const formData = new FormData();
     formData.append('image', file);
-    const response = await fetch(`${API_URL}/exams/question-image`, {
+    return request(`${API_URL}/exams/question-image`, {
       method: 'POST', headers: getHeaders(token, true), body: formData
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Loi tai anh cau hoi'));
-    return data;
+    }, 'Lỗi tải ảnh câu hỏi');
   },
-  updateExam: async (token, id, payload) => {
-    const response = await fetch(`${API_URL}/exams/${id}`, {
+
+  updateExam: (token, id, payload) =>
+    request(`${API_URL}/exams/${id}`, {
       method: 'PUT', headers: getHeaders(token), body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật Exam'));
-    return data;
-  },
-  deleteExam: async (token, id) => {
-    const response = await fetch(`${API_URL}/exams/${id}`, {
+    }, 'Lỗi cập nhật bài kiểm tra'),
+
+  deleteExam: (token, id) =>
+    request(`${API_URL}/exams/${id}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa Exam'));
-    return data;
-  },
-  getExamResults: async (token, page = 1) => {
-    const response = await fetch(`${API_URL}/exams/results?page=${page}`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy kết quả thi'));
-    return data;
-  },
+    }, 'Lỗi xóa bài kiểm tra'),
+
+  getExamResults: (token, page = 1) =>
+    request(`${API_URL}/exams/results?page=${page}`, { headers: getHeaders(token) }, 'Lỗi lấy kết quả thi'),
 
   // --- COURSE TOPICS ---
-  getTopics: async (token, courseId) => {
-    const response = await fetch(`${API_URL}/learning/courses/${courseId}/topics`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy chủ đề'));
-    return data;
-  },
-  createTopic: async (token, courseId, payload) => {
-    const response = await fetch(`${API_URL}/learning/courses/${courseId}/topics`, {
+  getTopics: (token, courseId) =>
+    request(`${API_URL}/learning/courses/${courseId}/topics`, { headers: getHeaders(token) }, 'Lỗi lấy chủ đề'),
+
+  createTopic: (token, courseId, payload) =>
+    request(`${API_URL}/learning/courses/${courseId}/topics`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo chủ đề'));
-    return data;
-  },
-  deleteTopic: async (token, topicId) => {
-    const response = await fetch(`${API_URL}/learning/topics/${topicId}`, {
+    }, 'Lỗi tạo chủ đề'),
+
+  deleteTopic: (token, topicId) =>
+    request(`${API_URL}/learning/topics/${topicId}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa chủ đề'));
-    return data;
-  },
+    }, 'Lỗi xóa chủ đề'),
 
   // --- RESOURCES ---
-  getResources: async (token, courseId) => {
-    const url = courseId ? `${API_URL}/learning/resources?courseId=${courseId}` : `${API_URL}/learning/resources`;
-    const response = await fetch(url, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy tài liệu'));
-    return data;
+  getResources: (token, courseId) => {
+    const params = courseId ? `?courseId=${courseId}` : '';
+    return request(`${API_URL}/learning/resources${params}`, { headers: getHeaders(token) }, 'Lỗi lấy tài liệu');
   },
-  createResource: async (token, formData) => {
-    const response = await fetch(`${API_URL}/learning/resources`, {
+
+  createResource: (token, formData) =>
+    request(`${API_URL}/learning/resources`, {
       method: 'POST', headers: getHeaders(token, true), body: formData
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tải tài liệu'));
-    return data;
-  },
-  deleteResource: async (token, id) => {
-    const response = await fetch(`${API_URL}/learning/resources/${id}`, {
+    }, 'Lỗi tải tài liệu'),
+
+  deleteResource: (token, id) =>
+    request(`${API_URL}/learning/resources/${id}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa tài liệu'));
-    return data;
-  },
+    }, 'Lỗi xóa tài liệu'),
 
   // --- TOOLS ---
-  getTools: async (token) => {
-    const response = await fetch(`${API_URL}/tools`, { headers: getHeaders(token) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi lấy công cụ'));
-    return data;
-  },
-  createTool: async (token, payload) => {
-    const response = await fetch(`${API_URL}/tools`, {
+  getTools: (token) =>
+    request(`${API_URL}/tools`, { headers: getHeaders(token) }, 'Lỗi lấy công cụ'),
+
+  createTool: (token, payload) =>
+    request(`${API_URL}/tools`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi tạo công cụ'));
-    return data;
-  },
-  toggleTool: async (token, id) => {
-    const response = await fetch(`${API_URL}/tools/${id}/toggle`, {
+    }, 'Lỗi tạo công cụ'),
+
+  toggleTool: (token, id) =>
+    request(`${API_URL}/tools/${id}/toggle`, {
       method: 'PATCH', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi cập nhật công cụ'));
-    return data;
-  },
-  deleteTool: async (token, id) => {
-    const response = await fetch(`${API_URL}/tools/${id}`, {
+    }, 'Lỗi cập nhật công cụ'),
+
+  deleteTool: (token, id) =>
+    request(`${API_URL}/tools/${id}`, {
       method: 'DELETE', headers: getHeaders(token)
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(getErrorMessage(data, 'Lỗi xóa công cụ'));
-    return data;
-  }
+    }, 'Lỗi xóa công cụ')
 };
-
-
-

@@ -1,10 +1,187 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, ChevronDown, ChevronRight, BookOpen, FileText, Video, Tag, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+  BookOpen,
+  FileText,
+  Video,
+  Tag,
+  X,
+  Check,
+  CheckCircle2,
+  Loader2,
+  AlertTriangle,
+  Link,
+  AlignLeft,
+  Hash,
+  ArrowRight,
+  Save,
+  PlusCircle,
+  Layers,
+  Clock,
+  Eye,
+  Pencil
+} from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
 import '../../../css/Admin/AdminViews.css';
+
+const stepLabels = ['Cơ bản', 'Nội dung', 'Rà soát'];
+
+const initialModuleForm = { title: '', description: '' };
+const initialLessonForm = { title: '', sectionNumber: '', contentHtml: '', videoUrl: '' };
+
+const isValidUrl = (value) => {
+  if (!value) return true;
+  try {
+    // eslint-disable-next-line no-new
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+function Stepper({ current, total }) {
+  return (
+    <div className="acm-stepper">
+      {Array.from({ length: total }).map((_, index) => {
+        const stepNumber = index + 1;
+        const done = stepNumber < current;
+        const active = stepNumber === current;
+
+        return (
+          <div key={stepNumber} className="acm-stepper-item">
+            <div className={`acm-step-dot ${done ? 'done' : ''} ${active ? 'active' : ''}`}>
+              {done ? <Check size={12} /> : stepNumber}
+            </div>
+            <span className={`acm-step-label ${active ? 'active' : ''}`}>{stepLabels[index]}</span>
+            {stepNumber < total ? <span className={`acm-step-line ${done ? 'done' : ''}`} /> : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function Toast({ message, onClose }) {
+  useEffect(() => {
+    const timer = window.setTimeout(onClose, 2800);
+    return () => window.clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="acm-toast" role="status">
+      <CheckCircle2 size={16} />
+      <span>{message}</span>
+      <button type="button" onClick={onClose}>
+        <X size={14} />
+      </button>
+    </div>
+  );
+}
+
+function ModuleAccordion({
+  module,
+  index,
+  isOpen,
+  activeModuleId,
+  activeLessonId,
+  onToggle,
+  onActivateModule,
+  onCreateLesson,
+  onEditModule,
+  onDeleteModule,
+  onSelectLesson,
+  onDeleteLesson
+}) {
+  return (
+    <article className={`acm-module-item ${isOpen ? 'open' : ''}`}>
+      <button
+        type="button"
+        className="acm-module-toggle"
+        onClick={() => {
+          onToggle(module.id);
+          onActivateModule(module);
+        }}
+      >
+        <span className="acm-module-index">{index + 1}</span>
+        <span className="acm-module-main">
+          <strong>{module.title}</strong>
+          <small>{module.lessons?.length || 0} bài học</small>
+        </span>
+        <span className="acm-module-badge">{module.lessons?.length || 0}</span>
+        {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+      </button>
+
+      {isOpen ? (
+        <div className="acm-module-content">
+          <div className="acm-module-lesson-list">
+            {(module.lessons || []).map((lesson) => (
+              <div key={lesson.id} className="acm-module-lesson-row">
+                <button
+                  type="button"
+                  className={`acm-module-lesson-item ${String(activeLessonId) === String(lesson.id) ? 'active' : ''}`}
+                  onClick={() => onSelectLesson(module, lesson)}
+                >
+                  {lesson.videoUrl ? <Video size={13} /> : <FileText size={13} />}
+                  <span>
+                    {lesson.sectionNumber ? `${lesson.sectionNumber} ` : ''}
+                    {lesson.title}
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="acm-action-btn danger acm-module-lesson-delete"
+                  title="Xóa bài học"
+                  onClick={() => onDeleteLesson(lesson.id)}
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="acm-module-actions">
+            <button
+              type="button"
+              className={`acm-module-add-lesson ${String(activeModuleId) === String(module.id) ? 'active' : ''}`}
+              onClick={() => onCreateLesson(module)}
+            >
+              <Plus size={13} />
+              Thêm bài học
+            </button>
+            <button
+              type="button"
+              className="acm-module-edit"
+              title="Sửa chương"
+              onClick={() => onEditModule(module)}
+            >
+              <Pencil size={13} />
+            </button>
+            <button type="button" className="acm-module-delete" title="Xóa chương" onClick={() => onDeleteModule(module.id)}>
+              <Trash2 size={13} />
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
+function ReviewRow({ label, value, mono }) {
+  return (
+    <div className="acm-review-row">
+      <span>{label}</span>
+      <strong className={mono ? 'mono' : ''}>{value || '—'}</strong>
+    </div>
+  );
+}
 
 const CourseDetail = () => {
   const { courseId } = useParams();
@@ -14,259 +191,663 @@ const CourseDetail = () => {
   const [course, setCourse] = useState(null);
   const [modules, setModules] = useState([]);
   const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expandedModules, setExpandedModules] = useState({});
-
-  // Modal states
-  const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
-  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false);
+  const [openModules, setOpenModules] = useState({});
   const [activeModuleId, setActiveModuleId] = useState(null);
-  const [moduleForm, setModuleForm] = useState({ title: '', description: '' });
-  const [lessonForm, setLessonForm] = useState({ title: '', sectionNumber: '', contentHtml: '', videoUrl: '' });
+  const [editingLessonId, setEditingLessonId] = useState(null);
+
+  const [loading, setLoading] = useState(true);
+  const [savingLesson, setSavingLesson] = useState(false);
+  const [savingModule, setSavingModule] = useState(false);
+
+  const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
+  const [editingModule, setEditingModule] = useState(null);
+  const [moduleForm, setModuleForm] = useState(initialModuleForm);
+  const [lessonForm, setLessonForm] = useState(initialLessonForm);
   const [topicInput, setTopicInput] = useState('');
+  const [step, setStep] = useState(1);
+
   const [error, setError] = useState('');
+  const [lessonErrors, setLessonErrors] = useState({});
+  const [toast, setToast] = useState('');
+
+  const activeModule = useMemo(
+    () => modules.find((mod) => String(mod.id) === String(activeModuleId)) || null,
+    [modules, activeModuleId]
+  );
+
+  const courseStats = useMemo(() => {
+    const lessonCount = modules.reduce((sum, moduleItem) => sum + (moduleItem.lessons?.length || 0), 0);
+    return {
+      moduleCount: modules.length,
+      lessonCount
+    };
+  }, [modules]);
+
+  const buildOpenMap = useCallback((moduleList, prev = {}) => {
+    const nextMap = {};
+    moduleList.forEach((moduleItem, index) => {
+      nextMap[moduleItem.id] = Object.prototype.hasOwnProperty.call(prev, moduleItem.id)
+        ? prev[moduleItem.id]
+        : index === 0;
+    });
+    return nextMap;
+  }, []);
+
+  const fetchData = useCallback(async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      setError('');
+
+      const [coursesRes, modulesRes, topicsRes] = await Promise.all([
+        adminApi.getCourses(token, 1),
+        adminApi.getModules(token, courseId),
+        adminApi.getTopics(token, courseId)
+      ]);
+
+      const list = coursesRes.data || [];
+      const found = list.find((item) => String(item.id) === String(courseId));
+      setCourse(found || { id: courseId, title: `Khóa học #${courseId}` });
+
+      const modulesData = modulesRes.data || [];
+      setModules(modulesData);
+      setOpenModules((prev) => buildOpenMap(modulesData, prev));
+
+      setTopics(topicsRes.data || []);
+
+      setActiveModuleId((prev) => {
+        if (!prev) return prev;
+        return modulesData.some((mod) => String(mod.id) === String(prev)) ? prev : null;
+      });
+
+      setEditingLessonId((prev) => {
+        if (!prev) return prev;
+        const foundLesson = modulesData.some((mod) =>
+          (mod.lessons || []).some((lesson) => String(lesson.id) === String(prev))
+        );
+        return foundLesson ? prev : null;
+      });
+    } catch (err) {
+      setError(err.message || 'Không thể tải dữ liệu khóa học.');
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [token, courseId, buildOpenMap]);
 
   useEffect(() => {
     fetchData();
-  }, [courseId]);
+  }, [fetchData]);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      // Fetch course info
-      const coursesRes = await adminApi.getCourses(token, 1);
-      const found = (coursesRes.data || []).find(c => c.id === courseId);
-      setCourse(found || { id: courseId, title: courseId });
+  const validateStep = useCallback((targetStep = step) => {
+    const nextErrors = {};
 
-      // Fetch modules with nested lessons
-      const modulesRes = await adminApi.getModules(token, courseId);
-      setModules(modulesRes.data || []);
+    if (targetStep === 1 && !lessonForm.title.trim()) {
+      nextErrors.title = 'Tên bài học là trường bắt buộc.';
+    }
 
-      // Fetch topics
-      const topicsRes = await adminApi.getTopics(token, courseId);
-      setTopics(topicsRes.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (targetStep === 2 && lessonForm.videoUrl.trim() && !isValidUrl(lessonForm.videoUrl.trim())) {
+      nextErrors.videoUrl = 'Video URL không hợp lệ.';
+    }
+
+    setLessonErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }, [lessonForm, step]);
+
+  const toggleModule = (moduleId) => {
+    setOpenModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }));
+  };
+
+  const activateModule = (moduleItem) => {
+    setActiveModuleId(moduleItem.id);
+    setEditingLessonId(null);
+    setLessonForm(initialLessonForm);
+    setLessonErrors({});
+    setStep(1);
+  };
+
+  const openCreateLessonComposer = (moduleItem) => {
+    setActiveModuleId(moduleItem.id);
+    setEditingLessonId(null);
+    setStep(1);
+    setLessonErrors({});
+    setLessonForm(initialLessonForm);
+    setOpenModules((prev) => ({ ...prev, [moduleItem.id]: true }));
+  };
+
+  const openEditLessonComposer = (moduleItem, lesson) => {
+    setActiveModuleId(moduleItem.id);
+    setEditingLessonId(lesson.id);
+    setStep(1);
+    setLessonErrors({});
+    setLessonForm({
+      title: lesson.title || '',
+      sectionNumber: lesson.sectionNumber || '',
+      videoUrl: lesson.videoUrl || '',
+      contentHtml: lesson.contentHtml || ''
+    });
+    setOpenModules((prev) => ({ ...prev, [moduleItem.id]: true }));
+  };
+
+  const openCreateModuleModal = () => {
+    setEditingModule(null);
+    setModuleForm(initialModuleForm);
+    setError('');
+    setIsModuleModalOpen(true);
+  };
+
+  const openEditModuleModal = (moduleItem) => {
+    setEditingModule(moduleItem);
+    setModuleForm({
+      title: moduleItem.title || '',
+      description: moduleItem.description || ''
+    });
+    setError('');
+    setIsModuleModalOpen(true);
+  };
+
+  const handleLessonChange = (field, value) => {
+    setLessonForm((prev) => ({ ...prev, [field]: value }));
+    if (lessonErrors[field]) {
+      setLessonErrors((prev) => ({ ...prev, [field]: '' }));
     }
   };
 
-  const toggleModule = (moduleId) => {
-    setExpandedModules(prev => ({ ...prev, [moduleId]: !prev[moduleId] }));
-  };
-
-  // --- MODULE ACTIONS ---
-  const handleCreateModule = async () => {
+  const handleSubmitModule = async () => {
     try {
       setError('');
-      if (!moduleForm.title) throw new Error('Vui lòng nhập tên chương');
-      await adminApi.createModule(token, courseId, moduleForm);
+      if (!moduleForm.title.trim()) {
+        throw new Error('Vui lòng nhập tên chương.');
+      }
+
+      setSavingModule(true);
+
+      if (editingModule) {
+        await adminApi.updateModule(token, editingModule.id, {
+          title: moduleForm.title.trim(),
+          description: moduleForm.description.trim()
+        });
+        setToast('Đã cập nhật chương.');
+      } else {
+        await adminApi.createModule(token, courseId, {
+          title: moduleForm.title.trim(),
+          description: moduleForm.description.trim()
+        });
+        setToast('Đã tạo chương mới.');
+      }
+
       setIsModuleModalOpen(false);
-      setModuleForm({ title: '', description: '' });
-      fetchData();
+      setEditingModule(null);
+      setModuleForm(initialModuleForm);
+      await fetchData(true);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Không thể lưu chương.');
+    } finally {
+      setSavingModule(false);
     }
   };
 
   const handleDeleteModule = async (moduleId) => {
-    if (window.confirm('Bạn có chắc muốn xóa chương này và tất cả bài học bên trong?')) {
-      try {
-        await adminApi.deleteModule(token, moduleId);
-        fetchData();
-      } catch (err) { alert(err.message); }
-    }
-  };
+    if (!window.confirm('Bạn có chắc muốn xóa chương này và toàn bộ bài học bên trong?')) return;
 
-  // --- LESSON ACTIONS ---
-  const openLessonModal = (moduleId) => {
-    setActiveModuleId(moduleId);
-    setLessonForm({ title: '', sectionNumber: '', contentHtml: '', videoUrl: '' });
-    setError('');
-    setIsLessonModalOpen(true);
-  };
-
-  const handleCreateLesson = async () => {
     try {
-      setError('');
-      if (!lessonForm.title) throw new Error('Vui lòng nhập tên bài học');
-      await adminApi.createLesson(token, activeModuleId, lessonForm);
-      setIsLessonModalOpen(false);
-      setLessonForm({ title: '', sectionNumber: '', contentHtml: '', videoUrl: '' });
-      fetchData();
+      await adminApi.deleteModule(token, moduleId);
+      setToast('Đã xóa chương.');
+      if (String(activeModuleId) === String(moduleId)) {
+        setActiveModuleId(null);
+        setEditingLessonId(null);
+        setLessonForm(initialLessonForm);
+      }
+      await fetchData(true);
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Không thể xóa chương.');
     }
   };
 
   const handleDeleteLesson = async (lessonId) => {
-    if (window.confirm('Bạn có chắc muốn xóa bài học này?')) {
-      try {
-        await adminApi.deleteLesson(token, lessonId);
-        fetchData();
-      } catch (err) { alert(err.message); }
+    if (!window.confirm('Bạn có chắc muốn xóa bài học này?')) return;
+
+    try {
+      await adminApi.deleteLesson(token, lessonId);
+      setToast('Đã xóa bài học.');
+      if (String(editingLessonId) === String(lessonId)) {
+        setEditingLessonId(null);
+        setLessonForm(initialLessonForm);
+        setStep(1);
+      }
+      await fetchData(true);
+    } catch (err) {
+      setError(err.message || 'Không thể xóa bài học.');
     }
   };
 
+  const handleAddTopic = async () => {
+    const title = topicInput.trim();
+    if (!title) return;
+
+    try {
+      await adminApi.createTopic(token, courseId, { title });
+      setTopicInput('');
+      await fetchData(true);
+      setToast('Đã thêm chủ đề.');
+    } catch (err) {
+      setError(err.message || 'Không thể thêm chủ đề.');
+    }
+  };
+
+  const handleDeleteTopic = async (topicId) => {
+    if (!window.confirm('Xóa chủ đề này?')) return;
+
+    try {
+      await adminApi.deleteTopic(token, topicId);
+      await fetchData(true);
+      setToast('Đã xóa chủ đề.');
+    } catch (err) {
+      setError(err.message || 'Không thể xóa chủ đề.');
+    }
+  };
+
+  const handleSaveLesson = async (andAddAnother = false) => {
+    if (!activeModuleId) return;
+    if (!validateStep(step)) return;
+
+    try {
+      setSavingLesson(true);
+      setLessonErrors((prev) => ({ ...prev, submit: '' }));
+
+      const payload = {
+        title: lessonForm.title.trim(),
+        sectionNumber: lessonForm.sectionNumber.trim(),
+        videoUrl: lessonForm.videoUrl.trim(),
+        contentHtml: lessonForm.contentHtml
+      };
+
+      if (editingLessonId) {
+        await adminApi.updateLesson(token, editingLessonId, payload);
+        setToast('Đã cập nhật bài học.');
+      } else {
+        await adminApi.createLesson(token, activeModuleId, payload);
+        setToast('Đã tạo bài học thành công.');
+      }
+
+      await fetchData(true);
+
+      if (!editingLessonId && andAddAnother) {
+        setLessonForm(initialLessonForm);
+        setLessonErrors({});
+        setStep(1);
+        return;
+      }
+
+      if (!editingLessonId) {
+        setActiveModuleId(null);
+      }
+
+      setEditingLessonId(null);
+      setLessonForm(initialLessonForm);
+      setLessonErrors({});
+      setStep(1);
+    } catch (err) {
+      setLessonErrors((prev) => ({ ...prev, submit: err.message || 'Không thể lưu bài học.' }));
+    } finally {
+      setSavingLesson(false);
+    }
+  };
+
+  const handleNext = () => {
+    if (!validateStep(step)) return;
+    setStep((prev) => Math.min(prev + 1, 3));
+  };
+
+  const handleBack = () => {
+    setStep((prev) => Math.max(prev - 1, 1));
+  };
+
   if (loading) {
-    return <div className="users-wrapper" style={{ textAlign: 'center', padding: '60px 0' }}>Đang tải...</div>;
+    return (
+      <div className="users-wrapper acm-loading-page">
+        <Loader2 size={20} className="acm-spin" /> Đang tải dữ liệu...
+      </div>
+    );
   }
 
   return (
-    <div className="users-wrapper">
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-        <button onClick={() => navigate('/admin/courses')} style={{ background: 'none', border: '1px solid var(--admin-border-color)', color: 'var(--admin-text-primary)', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'var(--admin-transition)' }}>
-          <ArrowLeft size={18} /> Quay lại
+    <div className="users-wrapper acm-detail-page">
+      <header className="acm-detail-head">
+        <button type="button" className="acm-ghost-btn" onClick={() => navigate('/admin/courses')}>
+          <ArrowLeft size={16} />
+          Quay lại
         </button>
-        <div>
-          <h3 style={{ margin: 0 }}>{course?.title || 'Khóa học'}</h3>
-          <p style={{ margin: '4px 0 0', color: 'var(--admin-text-secondary)', fontSize: '14px' }}>
-            Mã: {course?.code || course?.id} • {modules.length} chương • {modules.reduce((sum, m) => sum + (m.lessons?.length || 0), 0)} bài học
+
+        <div className="acm-detail-info">
+          <h3 className="acm-detail-title">{course?.title || 'Khóa học'}</h3>
+          <p className="acm-detail-subtitle">
+            Mã: {course?.code || course?.id} · {courseStats.moduleCount} chương · {courseStats.lessonCount} bài học
           </p>
         </div>
-      </div>
 
-      {/* Topics Section */}
-      <div style={{ marginBottom: '20px', padding: '16px 20px', backgroundColor: 'var(--admin-sidebar-bg)', border: '1px solid var(--admin-border-color)', borderRadius: 'var(--admin-border-radius)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Tag size={16} style={{ color: 'var(--admin-primary)' }} />
-          <span style={{ fontWeight: 600, fontSize: '14px' }}>Chủ đề (Topics)</span>
+        <button type="button" className="acm-primary-btn" onClick={openCreateModuleModal}>
+          <Plus size={15} />
+          Thêm chương
+        </button>
+      </header>
+
+      {error ? <p className="acm-form-error">{error}</p> : null}
+
+      <section className="acm-topic-panel">
+        <div className="acm-topic-header">
+          <Tag size={15} />
+          <strong>Chủ đề khóa học</strong>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-          {topics.map(t => (
-            <span key={t.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', borderRadius: '20px', backgroundColor: 'rgba(42,133,255,0.1)', color: 'var(--admin-primary)', fontSize: '13px' }}>
-              {t.title}
-              <button onClick={() => { if (window.confirm('Xóa chủ đề này?')) adminApi.deleteTopic(token, t.id).then(fetchData); }} style={{ background: 'none', border: 'none', color: 'var(--admin-primary)', cursor: 'pointer', padding: '0 2px', display: 'flex' }}><X size={12} /></button>
+
+        <div className="acm-topic-list">
+          {topics.length === 0 ? <span className="acm-topic-empty">Chưa có chủ đề</span> : null}
+          {topics.map((topic) => (
+            <span key={topic.id} className="acm-topic-chip">
+              {topic.title}
+              <button type="button" onClick={() => handleDeleteTopic(topic.id)}>
+                <X size={11} />
+              </button>
             </span>
           ))}
-          {topics.length === 0 && <span style={{ color: 'var(--admin-text-secondary)', fontSize: '13px' }}>Chưa có chủ đề</span>}
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input className="admin-search-input" style={{ flex: 1 }} placeholder="Nhập chủ đề mới (VD: IPv4 & IPv6)" value={topicInput} onChange={e => setTopicInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && topicInput.trim()) { adminApi.createTopic(token, courseId, { title: topicInput.trim() }).then(() => { setTopicInput(''); fetchData(); }); } }} />
-          <button className="admin-btn-primary" style={{ padding: '6px 12px' }} onClick={() => { if (topicInput.trim()) { adminApi.createTopic(token, courseId, { title: topicInput.trim() }).then(() => { setTopicInput(''); fetchData(); }); } }}>
-            <Plus size={14} /> Thêm
+
+        <div className="acm-topic-input-row">
+          <input
+            className="acm-input"
+            value={topicInput}
+            onChange={(e) => setTopicInput(e.target.value)}
+            placeholder="Thêm chủ đề mới"
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                handleAddTopic();
+              }
+            }}
+          />
+          <button type="button" className="acm-secondary-btn" onClick={handleAddTopic}>
+            <Plus size={14} />
+            Thêm
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Add Module Button */}
-      <div style={{ marginBottom: '20px' }}>
-        <button className="admin-btn-primary" onClick={() => { setError(''); setIsModuleModalOpen(true); }}>
-          <Plus size={18} /> Thêm Chương
-        </button>
-      </div>
+      <section className="acm-detail-layout">
+        <aside className="acm-module-sidebar">
+          <div className="acm-module-sidebar-head">
+            <h4>Modules</h4>
+            <span>{modules.length}</span>
+          </div>
 
-      {/* Module List (Accordion) */}
-      {modules.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--admin-sidebar-bg)', border: '1px solid var(--admin-border-color)', borderRadius: 'var(--admin-border-radius)', color: 'var(--admin-text-secondary)' }}>
-          <BookOpen size={48} style={{ opacity: 0.3, marginBottom: '16px' }} />
-          <p>Chưa có chương nào. Hãy bấm "Thêm Chương" để bắt đầu xây dựng nội dung.</p>
-        </div>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {modules.map((mod, idx) => (
-            <div key={mod.id} style={{ backgroundColor: 'var(--admin-sidebar-bg)', border: '1px solid var(--admin-border-color)', borderRadius: 'var(--admin-border-radius)', overflow: 'hidden' }}>
-              {/* Module Header */}
-              <div
-                onClick={() => toggleModule(mod.id)}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', cursor: 'pointer', userSelect: 'none', transition: 'var(--admin-transition)' }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {expandedModules[mod.id] ? <ChevronDown size={20} style={{ color: 'var(--admin-primary)' }} /> : <ChevronRight size={20} />}
-                  <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: 'rgba(42, 133, 255, 0.1)', color: 'var(--admin-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px' }}>
-                    {idx + 1}
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{mod.title}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--admin-text-secondary)', marginTop: '2px' }}>
-                      {mod.lessons?.length || 0} bài học
-                    </div>
-                  </div>
+          {modules.length === 0 ? (
+            <div className="acm-empty-state compact">
+              <BookOpen size={30} />
+              <p>Chưa có module. Hãy tạo chương đầu tiên.</p>
+            </div>
+          ) : (
+            <div className="acm-module-list">
+              {modules.map((moduleItem, index) => (
+                <ModuleAccordion
+                  key={moduleItem.id}
+                  module={moduleItem}
+                  index={index}
+                  isOpen={!!openModules[moduleItem.id]}
+                  activeModuleId={activeModuleId}
+                  activeLessonId={editingLessonId}
+                  onToggle={toggleModule}
+                  onActivateModule={activateModule}
+                  onCreateLesson={openCreateLessonComposer}
+                  onEditModule={openEditModuleModal}
+                  onDeleteModule={handleDeleteModule}
+                  onSelectLesson={openEditLessonComposer}
+                  onDeleteLesson={handleDeleteLesson}
+                />
+              ))}
+            </div>
+          )}
+        </aside>
+
+        <main className="acm-composer-pane">
+          {!activeModule ? (
+            <div className="acm-composer-empty">
+              <div className="acm-empty-icon">
+                <PlusCircle size={28} />
+              </div>
+              <h4>Chọn module để xem và sửa</h4>
+              <p>Bấm vào module và chọn bài học bên trái để xem lại nội dung đã tạo.</p>
+            </div>
+          ) : (
+            <div className="acm-composer">
+              <div className="acm-composer-header">
+                <div>
+                  <p className="acm-composer-module">{activeModule.title}</p>
+                  <p className="acm-composer-mode">{editingLessonId ? 'Đang sửa bài học đã tạo' : 'Đang tạo bài học mới'}</p>
+                  <h4 className="acm-composer-title">{lessonForm.title || 'Bài học chưa có tiêu đề'}</h4>
                 </div>
-                <button
-                  className="admin-action-btn delete"
-                  title="Xóa chương"
-                  onClick={(e) => { e.stopPropagation(); handleDeleteModule(mod.id); }}
-                >
-                  <Trash2 size={16} />
-                </button>
+                <Stepper current={step} total={3} />
               </div>
 
-              {/* Lessons (Expanded) */}
-              {expandedModules[mod.id] && (
-                <div style={{ borderTop: '1px solid var(--admin-border-color)', padding: '12px 20px 16px 64px' }}>
-                  {mod.lessons && mod.lessons.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {mod.lessons.map((lesson, lIdx) => (
-                        <div key={lesson.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid var(--admin-border-color)' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            {lesson.videoUrl ? <Video size={16} style={{ color: 'var(--admin-primary)' }} /> : <FileText size={16} style={{ color: 'var(--admin-text-secondary)' }} />}
-                            <span style={{ fontSize: '14px' }}>
-                              {lesson.sectionNumber && <span style={{ color: 'var(--admin-text-secondary)', marginRight: '6px' }}>{lesson.sectionNumber}</span>}
-                              {lesson.title}
-                            </span>
-                          </div>
-                          <button className="admin-action-btn delete" title="Xóa bài" onClick={() => handleDeleteLesson(lesson.id)}>
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      ))}
+              <div className="acm-composer-body">
+                {step === 1 ? (
+                  <div className="acm-step-content">
+                    <label className="acm-field">
+                      <span>
+                        <AlignLeft size={12} /> Tiêu đề bài học *
+                      </span>
+                      <input
+                        className={`acm-input ${lessonErrors.title ? 'error' : ''}`}
+                        value={lessonForm.title}
+                        onChange={(e) => handleLessonChange('title', e.target.value)}
+                        placeholder="VD: Network Services - DHCP, DNS, NAT"
+                      />
+                      {lessonErrors.title ? <em className="acm-error-text">{lessonErrors.title}</em> : null}
+                    </label>
+
+                    <label className="acm-field">
+                      <span>
+                        <Hash size={12} /> Số thứ tự (Section)
+                      </span>
+                      <input
+                        className="acm-input mono"
+                        value={lessonForm.sectionNumber}
+                        onChange={(e) => handleLessonChange('sectionNumber', e.target.value)}
+                        placeholder="1.2.1"
+                      />
+                      <small className="acm-field-hint">Để trống nếu muốn hệ thống tự sinh số thứ tự.</small>
+                    </label>
+
+                    <div className="acm-note-box">
+                      <Layers size={14} />
+                      <p>Tiêu đề rõ ràng sẽ giúp học viên tìm bài và theo dõi tiến trình dễ hơn.</p>
                     </div>
+                  </div>
+                ) : null}
+
+                {step === 2 ? (
+                  <div className="acm-step-content">
+                    <label className="acm-field">
+                      <span>
+                        <Link size={12} /> Video URL
+                      </span>
+                      <input
+                        className={`acm-input mono ${lessonErrors.videoUrl ? 'error' : ''}`}
+                        value={lessonForm.videoUrl}
+                        onChange={(e) => handleLessonChange('videoUrl', e.target.value)}
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                      {lessonErrors.videoUrl ? <em className="acm-error-text">{lessonErrors.videoUrl}</em> : null}
+                    </label>
+
+                    <label className="acm-field">
+                      <span>
+                        <AlignLeft size={12} /> Nội dung bài học (HTML)
+                      </span>
+                      <div className="acm-editor-box">
+                        <div className="acm-editor-toolbar">
+                          <button type="button">B</button>
+                          <button type="button">I</button>
+                          <button type="button">U</button>
+                          <span>
+                            <Clock size={11} /> Auto save
+                          </span>
+                        </div>
+                        <textarea
+                          className="acm-editor-textarea"
+                          rows={10}
+                          value={lessonForm.contentHtml}
+                          onChange={(e) => handleLessonChange('contentHtml', e.target.value)}
+                          placeholder="Nhập nội dung bài học tại đây"
+                        />
+                      </div>
+                    </label>
+                    <small className="acm-field-hint">{lessonForm.contentHtml.length} ký tự</small>
+                  </div>
+                ) : null}
+
+                {step === 3 ? (
+                  <div className="acm-step-content">
+                    <div className="acm-review-card">
+                      <h5>
+                        <Eye size={13} /> Tóm tắt bài học
+                      </h5>
+                      <ReviewRow label="Tiêu đề" value={lessonForm.title} />
+                      <ReviewRow label="Section" value={lessonForm.sectionNumber || '(Tự sinh)'} mono />
+                      <ReviewRow label="Module" value={activeModule.title} />
+                      <ReviewRow label="Video URL" value={lessonForm.videoUrl || '—'} mono />
+                      <ReviewRow label="Độ dài nội dung" value={`${lessonForm.contentHtml.length} ký tự`} />
+                    </div>
+                    {!lessonForm.videoUrl && !lessonForm.contentHtml ? (
+                      <div className="acm-warning-box">
+                        <AlertTriangle size={15} />
+                        <p>Bài học đang để trống. Bạn có thể lưu nháp và bổ sung sau.</p>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {lessonErrors.submit ? <p className="acm-form-error">{lessonErrors.submit}</p> : null}
+              </div>
+
+              <div className="acm-composer-footer">
+                <button
+                  type="button"
+                  className="acm-btn-muted"
+                  disabled={savingLesson}
+                  onClick={step === 1 ? () => {
+                    setActiveModuleId(null);
+                    setEditingLessonId(null);
+                    setLessonForm(initialLessonForm);
+                    setLessonErrors({});
+                  } : handleBack}
+                >
+                  <ArrowLeft size={13} />
+                  {step === 1 ? 'Hủy' : 'Quay lại'}
+                </button>
+
+                <div className="acm-composer-actions-right">
+                  {step < 3 ? (
+                    <button type="button" className="acm-primary-btn" onClick={handleNext} disabled={savingLesson}>
+                      Tiếp theo <ArrowRight size={13} />
+                    </button>
                   ) : (
-                    <p style={{ color: 'var(--admin-text-secondary)', fontSize: '13px', margin: '4px 0 12px' }}>Chưa có bài học nào trong chương này.</p>
+                    <>
+                      {!editingLessonId ? (
+                        <button
+                          type="button"
+                          className="acm-btn-outline"
+                          disabled={savingLesson}
+                          onClick={() => handleSaveLesson(true)}
+                        >
+                          {savingLesson ? <Loader2 size={13} className="acm-spin" /> : <PlusCircle size={13} />}
+                          Lưu & thêm mới
+                        </button>
+                      ) : null}
+
+                      <button
+                        type="button"
+                        className="acm-primary-btn"
+                        disabled={savingLesson}
+                        onClick={() => handleSaveLesson(false)}
+                      >
+                        {savingLesson ? <Loader2 size={13} className="acm-spin" /> : <Save size={13} />}
+                        {editingLessonId ? 'Lưu cập nhật' : 'Lưu bài học'}
+                      </button>
+                    </>
                   )}
-                  <button
-                    onClick={() => openLessonModal(mod.id)}
-                    style={{ marginTop: '12px', background: 'none', border: '1px dashed var(--admin-border-color)', color: 'var(--admin-primary)', padding: '8px 14px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', transition: 'var(--admin-transition)' }}
-                  >
-                    <Plus size={14} /> Thêm Bài Học
-                  </button>
                 </div>
-              )}
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          )}
 
-      {/* Modal: Thêm Chương */}
-      <AdminModal title="Thêm Chương Mới" isOpen={isModuleModalOpen} onClose={() => setIsModuleModalOpen(false)} onConfirm={handleCreateModule}>
-        {error && <p style={{ color: 'var(--admin-danger)', marginBottom: '10px' }}>{error}</p>}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Tên chương *</label>
-            <input className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} placeholder="VD: Giới thiệu mạng máy tính" value={moduleForm.title} onChange={e => setModuleForm({ ...moduleForm, title: e.target.value })} />
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Mô tả (Tùy chọn)</label>
-            <textarea className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box', height: '80px', resize: 'vertical' }} value={moduleForm.description} onChange={e => setModuleForm({ ...moduleForm, description: e.target.value })} />
-          </div>
+          {activeModule ? (
+            <section className="acm-module-lessons">
+              <h5>Danh sách bài học trong module</h5>
+              {activeModule.lessons?.length ? (
+                <div className="acm-lesson-list">
+                  {activeModule.lessons.map((lesson) => (
+                    <article key={lesson.id} className={`acm-lesson-row ${String(editingLessonId) === String(lesson.id) ? 'active' : ''}`}>
+                      <span>
+                        {lesson.videoUrl ? <Video size={13} /> : <FileText size={13} />}
+                        {lesson.sectionNumber ? `${lesson.sectionNumber} ` : ''}
+                        {lesson.title}
+                      </span>
+                      <div className="acm-lesson-row-actions">
+                        <button
+                          type="button"
+                          className="acm-action-btn"
+                          title="Sửa bài học"
+                          onClick={() => openEditLessonComposer(activeModule, lesson)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button type="button" className="acm-action-btn danger" title="Xóa bài học" onClick={() => handleDeleteLesson(lesson.id)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="acm-cell-muted">Module nay chua co bai hoc nao.</p>
+              )}
+            </section>
+          ) : null}
+        </main>
+      </section>
+
+      <AdminModal
+        title={editingModule ? 'Cap nhat chuong' : 'Them chuong moi'}
+        description="Ban co the xem lai thong tin chuong da tao va cap nhat truc tiep."
+        isOpen={isModuleModalOpen}
+        onClose={() => {
+          setIsModuleModalOpen(false);
+          setEditingModule(null);
+        }}
+        onConfirm={handleSubmitModule}
+        confirmText={savingModule ? 'Dang luu...' : editingModule ? 'Luu thay doi' : 'Tao chuong'}
+      >
+        {error ? <p className="acm-form-error">{error}</p> : null}
+        <div className="acm-form-grid">
+          <label className="acm-field">
+            <span>Ten chuong *</span>
+            <input
+              className="acm-input"
+              placeholder="VD: Introduction to TCP/IP"
+              value={moduleForm.title}
+              onChange={(e) => setModuleForm((prev) => ({ ...prev, title: e.target.value }))}
+            />
+          </label>
+
+          <label className="acm-field">
+            <span>Mo ta</span>
+            <textarea
+              className="acm-textarea"
+              value={moduleForm.description}
+              onChange={(e) => setModuleForm((prev) => ({ ...prev, description: e.target.value }))}
+            />
+          </label>
         </div>
       </AdminModal>
 
-      {/* Modal: Thêm Bài Học */}
-      <AdminModal title="Thêm Bài Học Mới" isOpen={isLessonModalOpen} onClose={() => setIsLessonModalOpen(false)} onConfirm={handleCreateLesson}>
-        {error && <p style={{ color: 'var(--admin-danger)', marginBottom: '10px' }}>{error}</p>}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Tên bài học *</label>
-            <input className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} placeholder="VD: Mạng là gì?" value={lessonForm.title} onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })} />
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Số mục (Section)</label>
-            <input className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} placeholder="VD: 1.1.1" value={lessonForm.sectionNumber} onChange={e => setLessonForm({ ...lessonForm, sectionNumber: e.target.value })} />
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Link Video (Tùy chọn)</label>
-            <input className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} placeholder="https://youtube.com/..." value={lessonForm.videoUrl} onChange={e => setLessonForm({ ...lessonForm, videoUrl: e.target.value })} />
-          </div>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Nội dung bài giảng (HTML)</label>
-            <textarea className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box', height: '100px', resize: 'vertical', fontFamily: 'monospace', fontSize: '13px' }} placeholder="<p>Nội dung bài học...</p>" value={lessonForm.contentHtml} onChange={e => setLessonForm({ ...lessonForm, contentHtml: e.target.value })} />
-          </div>
-        </div>
-      </AdminModal>
+      {toast ? <Toast message={toast} onClose={() => setToast('')} /> : null}
     </div>
   );
 };

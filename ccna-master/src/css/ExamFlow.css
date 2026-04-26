@@ -380,7 +380,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-family: monospace;
+  font-family: 'Inter', var(--system-ui, sans-serif);
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--text-main, #1e293b);

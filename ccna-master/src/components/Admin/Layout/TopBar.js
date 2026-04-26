@@ -14,18 +14,28 @@ const TopBar = ({ onToggleSidebar }) => {
   };
 
   const pageTitles = {
-    dashboard: 'Overview',
-    users: 'Users Management',
-    courses: 'Courses Management',
-    exams: 'Exams Management',
-    labs: 'Labs Management',
-    resources: 'Resources Management',
-    tools: 'Tools Management'
+    dashboard: 'Tổng quan hệ thống',
+    users: 'Quản lý người dùng',
+    courses: 'Quản lý khóa học',
+    exams: 'Quản lý bài thi',
+    labs: 'Quản lý bài thực hành',
+    resources: 'Quản lý tài liệu',
+    tools: 'Quản lý công cụ'
   };
 
   const getPageTitle = () => {
-    const path = location.pathname.split('/').pop();
-    return pageTitles[path] || path.charAt(0).toUpperCase() + path.slice(1);
+    const segments = location.pathname.split('/').filter(Boolean);
+    // segments: ['admin', 'courses', '1'] or ['admin', 'courses']
+    
+    if (segments.length >= 2) {
+      const module = segments[1];
+      if (segments.length > 2 && module === 'courses') {
+        return 'Chi tiết khóa học';
+      }
+      return pageTitles[module] || module.charAt(0).toUpperCase() + module.slice(1);
+    }
+    
+    return 'Admin Dashboard';
   };
 
   return (
