@@ -110,12 +110,12 @@
 
 .admin-nav-item:hover {
   background-color: rgb(239 246 255 / 0.5);
-  color:var(--admin-sidebar-active-bg); 
+  color: var(--admin-sidebar-active-bg);
 }
 
 .admin-nav-item.active {
   background-color: rgb(239 246 255 / 0.5);
-  color:var(--admin-sidebar-active-bg); 
+  color: var(--admin-sidebar-active-bg);
   font-weight: 600;
 }
 
@@ -131,14 +131,17 @@
   overflow: hidden;
   white-space: nowrap;
 }
+
 .sidebar-collapsed:not(.sidebar-hover) .admin-sidebar-container {
   width: 76px;
   min-width: 76px;
 }
+
 .sidebar-collapsed:not(.sidebar-hover) .admin-sidebar-header {
   padding: 18px 0 14px;
   justify-content: center;
 }
+
 .sidebar-collapsed:not(.sidebar-hover) .admin-brand-text {
   display: none;
   opacity: 0;
@@ -148,10 +151,12 @@
   padding: 11px 0;
   justify-content: center;
 }
+
 .sidebar-collapsed:not(.sidebar-hover) .admin-nav-item span {
   display: none;
   opacity: 0;
 }
+
 .sidebar-collapsed.sidebar-hover .admin-sidebar-container {
   box-shadow: none;
 }
@@ -161,7 +166,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--admin-bg);
+  background-color: #fff;
   overflow: hidden;
 }
 
@@ -175,7 +180,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .topbar-left {

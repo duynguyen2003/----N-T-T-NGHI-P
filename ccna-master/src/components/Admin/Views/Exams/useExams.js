@@ -1,24 +1,29 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { adminApi } from '../../../services/api/adminApi';
+import { useState, useEffect, useMemo, useCallback, useContext } from 'react';
+import { AuthContext } from '../../../../context/AuthContext';
+import { adminApi } from '../../../../services/api/adminApi';
 import { getStatusFromExam } from './utils';
 import { STATUS_FILTER_OPTIONS } from './constants';
 
-export const useExams = (token) => {
+export const useExams = () => {
+  const { token } = useContext(AuthContext);
+
   const [exams, setExams] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [modules, setModules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [viewMode, setViewMode] = useState('list');
-  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+
+  // ─── Fetchers ───────────────────────────────────────────────────────────────
 
   const fetchExams = useCallback(async () => {
     try {
       setLoading(true);
       const res = await adminApi.getExams(token, 1);
-      setExams(res.data || []);
+      setExams(res.data ?? []);
     } catch (err) {
-      console.error(err);
+      console.error('fetchExams:', err);
     } finally {
       setLoading(false);
     }
@@ -27,9 +32,20 @@ export const useExams = (token) => {
   const fetchCourses = useCallback(async () => {
     try {
       const res = await adminApi.getCourses(token, 1);
-      setCourses(res.data || []);
+      setCourses(res.data ?? []);
     } catch (err) {
-      console.error(err);
+      console.error('fetchCourses:', err);
+    }
+  }, [token]);
+
+  const fetchModules = useCallback(async (courseId) => {
+    if (!courseId) { setModules([]); return; }
+    try {
+      const res = await adminApi.getModules(token, courseId);
+      setModules(res.data ?? []);
+    } catch (err) {
+      console.error('fetchModules:', err);
+      setModules([]);
     }
   }, [token]);
 
@@ -38,61 +54,63 @@ export const useExams = (token) => {
     fetchCourses();
   }, [fetchExams, fetchCourses]);
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Bạn có chắc muốn xóa bài thi này?')) {
-      try {
-        await adminApi.deleteExam(token, id);
-        fetchExams();
-      } catch (err) {
-        alert(err.message);
-      }
+  // ─── Delete ─────────────────────────────────────────────────────────────────
+
+  const deleteExam = useCallback(async (id) => {
+    if (!window.confirm('Bạn có chắc muốn xóa bài thi này?')) return;
+    try {
+      await adminApi.deleteExam(token, id);
+      fetchExams();
+    } catch (err) {
+      alert(err.message);
     }
-  };
+  }, [token, fetchExams]);
+
+  // ─── Derived list ───────────────────────────────────────────────────────────
 
   const filteredExams = useMemo(() => {
-    const keyword = searchKeyword.trim().toLowerCase();
-
+    const kw = searchKeyword.trim().toLowerCase();
     return exams.filter((exam) => {
-      const status = getStatusFromExam(exam);
-      const matchesStatus = statusFilter === 'ALL' || statusFilter === status;
-      const matchesKeyword = !keyword
-        || (exam.title || '').toLowerCase().includes(keyword)
-        || (exam.examCode || '').toLowerCase().includes(keyword)
-        || (exam.course?.code || '').toLowerCase().includes(keyword);
-
-      return matchesStatus && matchesKeyword;
+      const matchStatus = statusFilter === 'ALL' || getStatusFromExam(exam) === statusFilter;
+      const matchKeyword = !kw
+        || (exam.title ?? '').toLowerCase().includes(kw)
+        || (exam.examCode ?? '').toLowerCase().includes(kw)
+        || (exam.course?.code ?? '').toLowerCase().includes(kw);
+      return matchStatus && matchKeyword;
     });
   }, [exams, searchKeyword, statusFilter]);
 
+  // ─── Stats ──────────────────────────────────────────────────────────────────
+
   const examStats = useMemo(() => {
     const total = exams.length;
-    const openCount = exams.filter((exam) => getStatusFromExam(exam) === 'OPEN').length;
-    const totalAttempts = exams.reduce((sum, exam) => sum + (exam?._count?.results || 0), 0);
+    const openCount = exams.filter((e) => getStatusFromExam(e) === 'OPEN').length;
+    const totalAttempts = exams.reduce((s, e) => s + (e?._count?.results ?? 0), 0);
     const avgPassing = total
-      ? Math.round(exams.reduce((sum, exam) => sum + (exam.passingScore || 0), 0) / total)
+      ? Math.round(exams.reduce((s, e) => s + (e.passingScore ?? 0), 0) / total)
       : 0;
-
     return { total, openCount, totalAttempts, avgPassing };
   }, [exams]);
 
-  const currentStatusFilter = STATUS_FILTER_OPTIONS.find((option) => option.value === statusFilter) || STATUS_FILTER_OPTIONS[0];
+  // ─── Course options for <select> ────────────────────────────────────────────
+
+  const courseOptions = useMemo(() => [
+    { value: '', label: 'Chọn khóa học' },
+    ...courses.map((c) => ({ value: c.id, label: `${c.code} – ${c.title}` })),
+  ], [courses]);
 
   return {
-    exams,
-    courses,
+    // data
+    exams, filteredExams, examStats,
+    courses, courseOptions, modules,
     loading,
-    searchKeyword,
-    setSearchKeyword,
-    statusFilter,
-    setStatusFilter,
-    viewMode,
-    setViewMode,
-    isStatusFilterOpen,
-    setIsStatusFilterOpen,
-    filteredExams,
-    examStats,
-    currentStatusFilter,
-    fetchExams,
-    handleDelete
+    // filter state
+    searchKeyword, setSearchKeyword,
+    statusFilter, setStatusFilter,
+    viewMode, setViewMode,
+    // actions
+    fetchExams, fetchCourses, fetchModules,
+    deleteExam,
+    setModules,
   };
 };

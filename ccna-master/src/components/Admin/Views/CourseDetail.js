@@ -806,7 +806,7 @@ const CourseDetail = () => {
                   ))}
                 </div>
               ) : (
-                <p className="acm-cell-muted">Module nay chua co bai hoc nao.</p>
+                <p className="acm-cell-muted">Module này chưa có bài học nào.</p>
               )}
             </section>
           ) : null}
@@ -814,20 +814,20 @@ const CourseDetail = () => {
       </section>
 
       <AdminModal
-        title={editingModule ? 'Cap nhat chuong' : 'Them chuong moi'}
-        description="Ban co the xem lai thong tin chuong da tao va cap nhat truc tiep."
+        title={editingModule ? 'Cập nhật chương' : 'Thêm chương mới'}
+        description="Bạn có thể xem lại thông tin chương đã tạo và cập nhật trực tiếp."
         isOpen={isModuleModalOpen}
         onClose={() => {
           setIsModuleModalOpen(false);
           setEditingModule(null);
         }}
         onConfirm={handleSubmitModule}
-        confirmText={savingModule ? 'Dang luu...' : editingModule ? 'Luu thay doi' : 'Tao chuong'}
+        confirmText={savingModule ? 'Đang lưu...' : editingModule ? 'Lưu thay đổi' : 'Tạo chương'}
       >
         {error ? <p className="acm-form-error">{error}</p> : null}
         <div className="acm-form-grid">
           <label className="acm-field">
-            <span>Ten chuong *</span>
+            <span>Tên chương *</span>
             <input
               className="acm-input"
               placeholder="VD: Introduction to TCP/IP"
@@ -837,7 +837,7 @@ const CourseDetail = () => {
           </label>
 
           <label className="acm-field">
-            <span>Mo ta</span>
+            <span>Mô tả</span>
             <textarea
               className="acm-textarea"
               value={moduleForm.description}
