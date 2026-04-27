@@ -9,6 +9,7 @@ import ExamStats from './ExamStats';
 import ExamToolbar from './ExamToolbar';
 import { ExamGrid, ExamListShell } from './ExamViews';
 import ExamEditor from './ExamEditor';
+import AdminPagination from '../../Components/AdminPagination';
 import '../../../../css/Admin/AdminViews.css';
 import '../../../../css/Admin/AdminExamBuilder.css';
 
@@ -29,7 +30,13 @@ const Exams = () => {
     filteredExams,
     examStats,
     fetchExams,
-    deleteExam
+    deleteExam,
+    // pagination state
+    currentPage,
+    setCurrentPage,
+    totalPages,
+    totalItems,
+    pageSize
   } = useExams();
 
   const {
@@ -147,6 +154,14 @@ const Exams = () => {
               onDelete={deleteExam}
             />
           )}
+
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setCurrentPage}
+          />
         </>
       )}
 

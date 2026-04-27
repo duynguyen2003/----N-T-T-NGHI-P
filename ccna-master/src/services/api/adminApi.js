@@ -194,9 +194,12 @@ export const adminApi = {
     }, 'Lỗi xóa chủ đề'),
 
   // --- RESOURCES ---
-  getResources: (token, courseId) => {
-    const params = courseId ? `?courseId=${courseId}` : '';
-    return request(`${API_URL}/learning/resources${params}`,
+  getResources: (token, courseId = '', page = 1) => {
+    const params = new URLSearchParams();
+    if (courseId) params.append('courseId', courseId);
+    if (page) params.append('page', String(page));
+    
+    return request(`${API_URL}/learning/resources?${params.toString()}`,
       { headers: getHeaders(token) }, 'Lỗi lấy tài liệu');
   },
 

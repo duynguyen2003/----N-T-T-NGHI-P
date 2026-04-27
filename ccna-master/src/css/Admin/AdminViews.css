@@ -6,3 +6,63 @@
 @import './AdminExams.css';
 @import './AdminExamBuilder.css';
 @import './AdminCourseManagement.css';
+
+/* ── Admin Pagination ── */
+.admin-pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0;
+  margin-top: 10px;
+  border-top: 1px solid #edf2f7;
+}
+
+.admin-pagination-info {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.admin-pagination-info strong {
+  color: #1e293b;
+}
+
+.admin-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-pagination-btn, .admin-pagination-arrow {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-pagination-btn:hover, .admin-pagination-arrow:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+.admin-pagination-btn.active {
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #fff;
+}
+
+.admin-pagination-arrow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+}

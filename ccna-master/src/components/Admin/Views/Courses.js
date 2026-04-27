@@ -5,6 +5,7 @@ import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
 import CustomSelect from '../Components/CustomSelect';
+import AdminPagination from '../Components/AdminPagination';
 import '../../../css/Admin/AdminViews.css';
 
 const initialCourseForm = {
@@ -40,6 +41,11 @@ const Courses = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [searchValue, setSearchValue] = useState('');
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 10;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
   const [formData, setFormData] = useState(initialCourseForm);
@@ -47,21 +53,26 @@ const Courses = () => {
   const [previewUrl, setPreviewUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchCourses = useCallback(async () => {
+  const fetchCourses = useCallback(async (page = currentPage) => {
     try {
       setLoading(true);
-      const res = await adminApi.getCourses(token, 1);
+      const res = await adminApi.getCourses(token, page);
       setCourses(res.data || []);
+      if (res.pagination) {
+        setTotalPages(res.pagination.totalPages || 1);
+        setTotalItems(res.pagination.total || 0);
+        setCurrentPage(res.pagination.page || 1);
+      }
     } catch (err) {
       setError(err.message || 'Không thể tải danh sách khóa học.');
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, currentPage]);
 
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    fetchCourses(currentPage);
+  }, [currentPage]);
 
   const filteredCourses = useMemo(() => {
     const keyword = searchValue.trim().toLowerCase();
@@ -131,7 +142,7 @@ const Courses = () => {
       setEditingCourse(null);
       setFormData(initialCourseForm);
       setPreviewUrl('');
-      await fetchCourses();
+      await fetchCourses(currentPage);
     } catch (err) {
       setError(err.message || 'Không thể lưu khóa học.');
     } finally {
@@ -145,7 +156,7 @@ const Courses = () => {
     try {
       setDeletingId(id);
       await adminApi.deleteCourse(token, id);
-      await fetchCourses();
+      await fetchCourses(currentPage);
     } catch (err) {
       setError(err.message || 'Không thể xóa khóa học.');
     } finally {
@@ -170,7 +181,7 @@ const Courses = () => {
         <article className="acm-stat-card">
           <div>
             <p className="acm-stat-label">Tổng khóa học</p>
-            <p className="acm-stat-value">{courses.length}</p>
+            <p className="acm-stat-value">{totalItems}</p>
           </div>
           <GraduationCap size={18} />
         </article>
@@ -208,84 +219,94 @@ const Courses = () => {
             <p>Không có khóa học phù hợp.</p>
           </div>
         ) : (
-          <div className="acm-course-table-wrap">
-            <table className="acm-course-table">
-              <thead>
-                <tr>
-                  <th>Mã</th>
-                  <th>Khóa học</th>
-                  <th>Mô tả</th>
-                  <th>Mức độ</th>
-                  <th>Trạng thái</th>
-                  <th>Thứ tự</th>
-                  <th>Hành động</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCourses.map((course) => (
-                  <tr key={course.id}>
-                    <td>
-                      <span className="acm-code-pill">{course.code}</span>
-                    </td>
-                    <td>
-                      <div className="acm-course-name-cell">
-                        <span className="acm-thumbnail">
-                          {course.thumbnailUrl ? (
-                            <img src={resolveMediaUrl(course.thumbnailUrl)} alt={course.title} />
-                          ) : (
-                            <Image size={16} />
-                          )}
-                        </span>
-                        <span>{course.title}</span>
-                      </div>
-                    </td>
-                    <td className="acm-cell-muted">
-                      {course.description
-                        ? course.description.length > 70
-                          ? `${course.description.slice(0, 70)}...`
-                          : course.description
-                        : '—'}
-                    </td>
-                    <td>
-                      <span className="acm-level-pill">{course.level || '—'}</span>
-                    </td>
-                    <td>
-                      <span className={`acm-status-badge ${course.status === 'PUBLISHED' ? 'published' : 'draft'}`}>
-                        {course.status || 'DRAFT'}
-                      </span>
-                    </td>
-                    <td>{course.orderIndex ?? 0}</td>
-                    <td>
-                      <div className="acm-row-actions">
-                        <button
-                          className="acm-action-btn"
-                          title="Sửa khóa học"
-                          onClick={() => openEditModal(course)}
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          className="acm-action-btn"
-                          title="Quản lý nội dung"
-                          onClick={() => navigate(`/admin/courses/${course.id}`)}
-                        >
-                          <BookOpen size={15} />
-                        </button>
-                        <button
-                          className="acm-action-btn danger"
-                          title="Xóa"
-                          disabled={deletingId === course.id}
-                          onClick={() => handleDelete(course.id)}
-                        >
-                          {deletingId === course.id ? <Loader2 size={15} className="acm-spin" /> : <Trash2 size={15} />}
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div className="acm-course-table-wrap">
+              <table className="acm-course-table">
+                <thead>
+                  <tr>
+                    <th>Mã</th>
+                    <th>Khóa học</th>
+                    <th>Mô tả</th>
+                    <th>Mức độ</th>
+                    <th>Trạng thái</th>
+                    <th>Thứ tự</th>
+                    <th>Hành động</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredCourses.map((course) => (
+                    <tr key={course.id}>
+                      <td>
+                        <span className="acm-code-pill">{course.code}</span>
+                      </td>
+                      <td>
+                        <div className="acm-course-name-cell">
+                          <span className="acm-thumbnail">
+                            {course.thumbnailUrl ? (
+                              <img src={resolveMediaUrl(course.thumbnailUrl)} alt={course.title} />
+                            ) : (
+                              <Image size={16} />
+                            )}
+                          </span>
+                          <span>{course.title}</span>
+                        </div>
+                      </td>
+                      <td className="acm-cell-muted">
+                        {course.description
+                          ? course.description.length > 70
+                            ? `${course.description.slice(0, 70)}...`
+                            : course.description
+                          : '—'}
+                      </td>
+                      <td>
+                        <span className="acm-level-pill">{course.level || '—'}</span>
+                      </td>
+                      <td>
+                        <span className={`acm-status-badge ${course.status === 'PUBLISHED' ? 'published' : 'draft'}`}>
+                          {course.status || 'DRAFT'}
+                        </span>
+                      </td>
+                      <td>{course.orderIndex ?? 0}</td>
+                      <td>
+                        <div className="acm-row-actions">
+                          <button
+                            className="acm-action-btn"
+                            title="Sửa khóa học"
+                            onClick={() => openEditModal(course)}
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            className="acm-action-btn"
+                            title="Quản lý nội dung"
+                            onClick={() => navigate(`/admin/courses/${course.id}`)}
+                          >
+                            <BookOpen size={15} />
+                          </button>
+                          <button
+                            className="acm-action-btn danger"
+                            title="Xóa"
+                            disabled={deletingId === course.id}
+                            onClick={() => handleDelete(course.id)}
+                          >
+                            {deletingId === course.id ? <Loader2 size={15} className="acm-spin" /> : <Trash2 size={15} />}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <AdminPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setCurrentPage}
+            />
+          </>
         )}
       </section>
 

@@ -150,15 +150,34 @@ module.exports.getLabs = async (req, res, next) => {
 
 module.exports.createLab = async (req, res, next) => {
   try {
-    const { title, category, difficulty, duration, guideContent, courseId, moduleId } = req.body;
-    let fileUrl = null;
+    const { title, category, difficulty, duration, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
     
-    if (req.file) {
-      const uploadResult = await uploadBufferToCloudinary(req.file, {
-        folder: 'ccna/labs/files',
-        resourceType: 'auto'
-      });
-      fileUrl = uploadResult.secure_url;
+    let fileUrl = null;
+    let imageUrl = null;
+    let topologyImgUrl = null;
+
+    if (req.files) {
+      if (req.files.filePka) {
+        const uploadResult = await uploadBufferToCloudinary(req.files.filePka[0], {
+          folder: 'ccna/labs/files',
+          resourceType: 'auto'
+        });
+        fileUrl = uploadResult.secure_url;
+      }
+      if (req.files.thumbnailImg) {
+        const uploadResult = await uploadBufferToCloudinary(req.files.thumbnailImg[0], {
+          folder: 'ccna/labs/thumbnails',
+          resourceType: 'image'
+        });
+        imageUrl = uploadResult.secure_url;
+      }
+      if (req.files.topologyImg) {
+        const uploadResult = await uploadBufferToCloudinary(req.files.topologyImg[0], {
+          folder: 'ccna/labs/topologies',
+          resourceType: 'image'
+        });
+        topologyImgUrl = uploadResult.secure_url;
+      }
     }
 
     if (!title) {
@@ -172,7 +191,12 @@ module.exports.createLab = async (req, res, next) => {
         difficulty: difficulty || 'EASY',
         duration: duration || null,
         guideContent: guideContent || null,
+        objective: objective || null,
+        tools: tools ? (typeof tools === 'string' ? JSON.parse(tools) : tools) : null,
+        steps: steps ? (typeof steps === 'string' ? JSON.parse(steps) : steps) : null,
         fileUrl,
+        imageUrl,
+        topologyImgUrl,
         courseId: courseId || null,
         moduleId: moduleId || null
       }
@@ -187,22 +211,43 @@ module.exports.createLab = async (req, res, next) => {
 module.exports.updateLab = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, description, courseId, difficulty } = req.body;
+    const { title, category, difficulty, duration, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
     
-    const diffMap = { 'BEGINNER': 'EASY', 'INTERMEDIATE': 'MEDIUM', 'ADVANCED': 'HARD' };
-
     const dataToUpdate = { 
       title, 
-      guideContent: description, 
-      difficulty: difficulty ? (diffMap[difficulty] || difficulty) : undefined, 
-      courseId: courseId ? String(courseId) : undefined 
+      category,
+      difficulty,
+      duration,
+      guideContent,
+      objective,
+      courseId: courseId || null,
+      moduleId: moduleId || null,
+      tools: tools ? (typeof tools === 'string' ? JSON.parse(tools) : tools) : undefined,
+      steps: steps ? (typeof steps === 'string' ? JSON.parse(steps) : steps) : undefined,
     };
-    if (req.file) {
-      const uploadResult = await uploadBufferToCloudinary(req.file, {
-        folder: 'ccna/labs/files',
-        resourceType: 'auto'
-      });
-      dataToUpdate.fileUrl = uploadResult.secure_url;
+
+    if (req.files) {
+      if (req.files.filePka) {
+        const uploadResult = await uploadBufferToCloudinary(req.files.filePka[0], {
+          folder: 'ccna/labs/files',
+          resourceType: 'auto'
+        });
+        dataToUpdate.fileUrl = uploadResult.secure_url;
+      }
+      if (req.files.thumbnailImg) {
+        const uploadResult = await uploadBufferToCloudinary(req.files.thumbnailImg[0], {
+          folder: 'ccna/labs/thumbnails',
+          resourceType: 'image'
+        });
+        dataToUpdate.imageUrl = uploadResult.secure_url;
+      }
+      if (req.files.topologyImg) {
+        const uploadResult = await uploadBufferToCloudinary(req.files.topologyImg[0], {
+          folder: 'ccna/labs/topologies',
+          resourceType: 'image'
+        });
+        dataToUpdate.topologyImgUrl = uploadResult.secure_url;
+      }
     }
 
     const lab = await prisma.lab.update({

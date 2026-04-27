@@ -15,19 +15,30 @@ export const useExams = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [viewMode, setViewMode] = useState('list');
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 10;
+
   // ─── Fetchers ───────────────────────────────────────────────────────────────
 
-  const fetchExams = useCallback(async () => {
+  const fetchExams = useCallback(async (page = currentPage) => {
     try {
       setLoading(true);
-      const res = await adminApi.getExams(token, 1);
+      const res = await adminApi.getExams(token, page);
       setExams(res.data ?? []);
+      if (res.pagination) {
+        setTotalPages(res.pagination.totalPages || 1);
+        setTotalItems(res.pagination.total || 0);
+        setCurrentPage(res.pagination.page || 1);
+      }
     } catch (err) {
       console.error('fetchExams:', err);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, currentPage]);
 
   const fetchCourses = useCallback(async () => {
     try {
@@ -50,9 +61,11 @@ export const useExams = () => {
   }, [token]);
 
   useEffect(() => {
-    fetchExams();
+    fetchExams(currentPage);
     fetchCourses();
-  }, [fetchExams, fetchCourses]);
+  }, [currentPage, fetchExams, fetchCourses]);
+
+
 
   // ─── Delete ─────────────────────────────────────────────────────────────────
 
@@ -104,6 +117,8 @@ export const useExams = () => {
     exams, filteredExams, examStats,
     courses, courseOptions, modules,
     loading,
+    // pagination state
+    currentPage, setCurrentPage, totalPages, totalItems, pageSize,
     // filter state
     searchKeyword, setSearchKeyword,
     statusFilter, setStatusFilter,

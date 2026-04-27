@@ -3,6 +3,7 @@ import { Plus, Trash2, FileDown, File } from 'lucide-react';
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
+import AdminPagination from '../Components/AdminPagination';
 import '../../../css/Admin/AdminViews.css';
 
 const Resources = () => {
@@ -10,20 +11,32 @@ const Resources = () => {
   const [resources, setResources] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const pageSize = 20;
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({ title: '', type: '', courseId: '', file: null });
   const [error, setError] = useState('');
 
-  useEffect(() => { fetchResources(); fetchCourses(); }, []);
-
-  const fetchResources = async () => {
+  const fetchResources = async (page = currentPage) => {
     try {
       setLoading(true);
-      const res = await adminApi.getResources(token);
+      const res = await adminApi.getResources(token, '', page); // Note: empty string for courseId filter
       setResources(res.data || []);
+      if (res.pagination) {
+        setTotalPages(res.pagination.totalPages || 1);
+        setTotalItems(res.pagination.total || 0);
+        setCurrentPage(res.pagination.page || 1);
+      }
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
   };
+
+  useEffect(() => { fetchResources(currentPage); fetchCourses(); }, [currentPage]);
 
   const fetchCourses = async () => {
     try {
@@ -115,6 +128,14 @@ const Resources = () => {
           </tbody>
         </table>
       </div>
+
+      <AdminPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        pageSize={pageSize}
+        onPageChange={setCurrentPage}
+      />
 
       <AdminModal title="Tải Lên Tài Liệu" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onConfirm={handleCreate}>
         {error && <p style={{ color: 'var(--admin-danger)', marginBottom: '10px' }}>{error}</p>}

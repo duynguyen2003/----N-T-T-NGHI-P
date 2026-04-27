@@ -1146,6 +1146,7 @@
   padding: 24px 0;
   display: flex;
   justify-content: center;
+  background: #fff;
 }
 
 .efb-page-content .efb-shell {

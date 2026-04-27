@@ -166,19 +166,22 @@ model Lesson {
 }
 
 model Lab {
-  id           Int        @id @default(autoincrement())
-  title        String     @db.VarChar(200)
-  category     String?    @db.VarChar(50)
-  difficulty   Difficulty @default(EASY)
-  duration     String?    @db.VarChar(20)
-  imageUrl     String?    @map("image_url") @db.VarChar(500)
-  tools        Json?      // Danh sách công cụ (Packet Tracer...)
-  fileUrl      String?    @map("file_url") @db.VarChar(500)
-  guideContent String?    @map("guide_content") @db.Text
-  courseId     String?    @map("course_id") @db.VarChar(10)
-  moduleId     String?    @map("module_id") @db.VarChar(10)
-  createdAt    DateTime   @default(now()) @map("created_at")
-  deletedAt    DateTime?  @map("deleted_at")
+  id              Int        @id @default(autoincrement())
+  title           String     @db.VarChar(200)
+  category        String?    @db.VarChar(50)
+  difficulty      Difficulty @default(EASY)
+  duration        String?    @db.VarChar(20)
+  imageUrl        String?    @map("image_url") @db.VarChar(500) // Ảnh đại diện bài Lab
+  topologyImgUrl  String?    @map("topology_img_url") @db.VarChar(500) // Ảnh sơ đồ mạng
+  objective       String?    @db.Text // Mục tiêu bài tập
+  tools           Json?      // Danh sách công cụ (Packet Tracer...)
+  fileUrl         String?    @map("file_url") @db.VarChar(500) // File bài tập .pka/.pkt
+  steps           Json?      // Các bước hướng dẫn (Array of objects)
+  guideContent    String?    @map("guide_content") @db.Text // Mô tả/Hướng dẫn chung
+  courseId        String?    @map("course_id") @db.VarChar(10)
+  moduleId        String?    @map("module_id") @db.VarChar(10)
+  createdAt       DateTime   @default(now()) @map("created_at")
+  deletedAt       DateTime?  @map("deleted_at")
 
   course       Course?    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   module       Module?    @relation(fields: [moduleId], references: [id], onDelete: Cascade)

@@ -66,16 +66,22 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
           <div className="lab-modal-sidebar">
             <div className="lab-sidebar-section">
               <div className="lab-sidebar-label">
-                <Network size={13} /> Topology
+                <Network size={13} /> Sơ đồ mạng (Topology)
               </div>
-              <pre className="lab-topology-pre">{lab.topology}</pre>
+              {lab.topologyImgUrl ? (
+                <div className="lab-topology-img-wrap" style={{ marginTop: '8px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #30363d' }}>
+                  <img src={lab.topologyImgUrl} alt="Topology" style={{ width: '100%', display: 'block' }} />
+                </div>
+              ) : (
+                <pre className="lab-topology-pre">{lab.topology || 'Không có sơ đồ'}</pre>
+              )}
             </div>
 
             <div className="lab-sidebar-section">
               <div className="lab-sidebar-label">
-                <BookOpen size={13} /> Muc tieu
+                <BookOpen size={13} /> Mục tiêu
               </div>
-              <p className="lab-objective-text">{lab.objective}</p>
+              <p className="lab-objective-text">{lab.objective || 'Chưa có mô tả mục tiêu'}</p>
             </div>
 
             <div className="lab-sidebar-section">
