@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import {
   Plus,
   Trash2,
@@ -26,9 +26,22 @@ import {
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
+import CustomSelect from '../Components/CustomSelect';
 import '../../../css/Admin/AdminViews.css';
 
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+
+const difficultyOptions = [
+  { value: '', label: 'Không chọn' },
+  { value: 'EASY', label: 'Dễ' },
+  { value: 'MEDIUM', label: 'Trung bình' },
+  { value: 'HARD', label: 'Khó' }
+];
+
+const correctAnswerOptions = OPTION_LABELS.map((lbl, i) => ({
+  value: i,
+  label: `Đáp án ${lbl}`
+}));
 
 const defaultFormData = {
   title: '',
@@ -212,6 +225,11 @@ const Exams = () => {
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const statusFilterRef = useRef(null);
   const bulkImportInputRef = useRef(null);
+
+  const courseOptions = React.useMemo(() => [
+    { value: '', label: 'Chọn khóa học' },
+    ...courses.map((c) => ({ value: c.id, label: `${c.code} – ${c.title}` }))
+  ], [courses]);
 
   useEffect(() => {
     fetchExams();
@@ -937,16 +955,11 @@ const Exams = () => {
 
               <label className="efb-field efb-flex-12">
                 <span>Chuyên môn</span>
-                <select
-                  className="efb-input"
+                <CustomSelect
                   value={formData.courseId}
-                  onChange={(e) => handleCourseChange(e.target.value)}
-                >
-                  <option value="">Chọn khóa học</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.code} – {c.title}</option>
-                  ))}
-                </select>
+                  onChange={(val) => handleCourseChange(val)}
+                  options={courseOptions}
+                />
               </label>
 
               <label className="efb-field efb-flex-07">
@@ -1075,15 +1088,11 @@ const Exams = () => {
                 <div className="efb-draft-footer">
                   <label className="efb-field efb-flex-1">
                     <span>Đáp án Đúng</span>
-                    <select
-                      className="efb-input"
+                    <CustomSelect
                       value={questionDraft.correctAnswer}
-                      onChange={(e) => setQuestionDraft((p) => ({ ...p, correctAnswer: parseInt(e.target.value, 10) || 0 }))}
-                    >
-                      {OPTION_LABELS.map((lbl, i) => (
-                        <option key={lbl} value={i}>Đáp án {lbl}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setQuestionDraft((p) => ({ ...p, correctAnswer: val }))}
+                      options={correctAnswerOptions}
+                    />
                   </label>
                   <label className="efb-field efb-flex-2">
                     <span>Giải thích / Ghi chú điểm số</span>
@@ -1180,16 +1189,11 @@ const Exams = () => {
               </label>
               <label className="efb-field">
                 <span>Độ khó</span>
-                <select
-                  className="efb-input"
+                <CustomSelect
                   value={formData.difficulty}
-                  onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
-                >
-                  <option value="">Không chọn</option>
-                  <option value="EASY">Dễ</option>
-                  <option value="MEDIUM">Trung bình</option>
-                  <option value="HARD">Khó</option>
-                </select>
+                  onChange={(val) => setFormData({ ...formData, difficulty: val })}
+                  options={difficultyOptions}
+                />
               </label>
             </div>
 

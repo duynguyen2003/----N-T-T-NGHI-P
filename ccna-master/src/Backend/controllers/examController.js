@@ -1,21 +1,19 @@
 const { getPrisma } = require('../config/database');
 const { uploadBufferToCloudinary } = require('../config/cloudinary');
+const { ValidationError } = require('../errors/validation-error');
 
 const prisma = getPrisma();
 
 const sanitizeQuestionsInput = (questions) => {
   if (!Array.isArray(questions)) {
-    return { error: 'Danh sach cau hoi khong hop le' };
+    throw new ValidationError('Danh sách câu hỏi không hợp lệ');
   }
 
   if (questions.length === 0) {
-    return { error: 'Can it nhat 1 cau hoi cho bai thi' };
+    throw new ValidationError('Cần ít nhất 1 câu hỏi cho bài thi');
   }
 
-  const sanitizedQuestions = [];
-
-  for (let index = 0; index < questions.length; index += 1) {
-    const questionItem = questions[index] || {};
+  return questions.map((questionItem, index) => {
     const rawOptions = Array.isArray(questionItem.options) ? questionItem.options : [];
     const normalizedOptions = [0, 1, 2, 3].map((optionIndex) => `${rawOptions[optionIndex] || ''}`.trim());
     const questionText = `${questionItem.question || ''}`.trim();
@@ -23,28 +21,26 @@ const sanitizeQuestionsInput = (questions) => {
     const imageUrl = `${questionItem.imageUrl || ''}`.trim() || null;
 
     if (!questionText) {
-      return { error: `Cau hoi ${index + 1} khong duoc de trong` };
+      throw new ValidationError(`Câu hỏi ${index + 1} không được để trống`);
     }
 
     if (normalizedOptions.some((option) => !option)) {
-      return { error: `Cau hoi ${index + 1} can du 4 dap an` };
+      throw new ValidationError(`Câu hỏi ${index + 1} cần đủ 4 đáp án`);
     }
 
     if (Number.isNaN(correctAnswer) || correctAnswer < 0 || correctAnswer > 3) {
-      return { error: `Cau hoi ${index + 1} co dap an dung khong hop le` };
+      throw new ValidationError(`Câu hỏi ${index + 1} có đáp án đúng không hợp lệ`);
     }
 
-    sanitizedQuestions.push({
+    return {
       question: questionText,
       options: normalizedOptions,
       correctAnswer,
       explanation: `${questionItem.explanation || ''}`.trim() || null,
       imageUrl,
       orderIndex: index + 1
-    });
-  }
-
-  return { data: sanitizedQuestions };
+    };
+  });
 };
 
 module.exports.getExams = async (req, res, next) => {
@@ -82,7 +78,6 @@ module.exports.createExam = async (req, res, next) => {
     const {
       title,
       examCode,
-      totalQuestions,
       durationMinutes,
       passingScore,
       difficulty,
@@ -91,23 +86,19 @@ module.exports.createExam = async (req, res, next) => {
       questions
     } = req.body;
 
-    if (!title || !totalQuestions || !durationMinutes) {
+    if (!title || !durationMinutes) {
       return res.status(400).json({
-        message: 'Vui long nhap day du: Ten, So cau hoi, Thoi gian'
+        message: 'Vui lòng nhập đầy đủ: Tên và Thời gian thi'
       });
     }
 
-    const questionsResult = sanitizeQuestionsInput(questions || []);
-    if (questionsResult.error) {
-      return res.status(400).json({ message: questionsResult.error });
-    }
-    const sanitizedQuestions = questionsResult.data;
+    const sanitizedQuestions = sanitizeQuestionsInput(questions || []);
 
     const exam = await prisma.exam.create({
       data: {
         title,
         examCode: examCode || null,
-        totalQuestions: sanitizedQuestions.length || parseInt(totalQuestions, 10),
+        totalQuestions: sanitizedQuestions.length,
         durationMinutes: parseInt(durationMinutes, 10),
         passingScore: parseInt(passingScore, 10) || 70,
         difficulty: difficulty || null,
@@ -122,8 +113,11 @@ module.exports.createExam = async (req, res, next) => {
       }
     });
 
-    res.status(201).json({ message: 'Tao bai thi thanh cong', exam });
+    res.status(201).json({ message: 'Tạo bài thi thành công', exam });
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(error.statusCode || 400).json({ message: error.message });
+    }
     next(error);
   }
 };
@@ -132,7 +126,7 @@ module.exports.getExamById = async (req, res, next) => {
   try {
     const examId = parseInt(req.params.id, 10);
     if (Number.isNaN(examId)) {
-      return res.status(400).json({ message: 'ID bai thi khong hop le' });
+      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
     }
 
     const exam = await prisma.exam.findFirst({
@@ -151,7 +145,7 @@ module.exports.getExamById = async (req, res, next) => {
     });
 
     if (!exam) {
-      return res.status(404).json({ message: 'Khong tim thay bai thi' });
+      return res.status(404).json({ message: 'Không tìm thấy bài thi' });
     }
 
     res.json({ exam });
@@ -164,13 +158,12 @@ module.exports.updateExam = async (req, res, next) => {
   try {
     const examId = parseInt(req.params.id, 10);
     if (Number.isNaN(examId)) {
-      return res.status(400).json({ message: 'ID bai thi khong hop le' });
+      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
     }
 
     const {
       title,
       examCode,
-      totalQuestions,
       durationMinutes,
       passingScore,
       difficulty,
@@ -180,13 +173,8 @@ module.exports.updateExam = async (req, res, next) => {
     } = req.body;
 
     let sanitizedQuestions = null;
-
     if (questions !== undefined) {
-      const questionsResult = sanitizeQuestionsInput(questions);
-      if (questionsResult.error) {
-        return res.status(400).json({ message: questionsResult.error });
-      }
-      sanitizedQuestions = questionsResult.data;
+      sanitizedQuestions = sanitizeQuestionsInput(questions);
     }
 
     const exam = await prisma.exam.update({
@@ -194,9 +182,7 @@ module.exports.updateExam = async (req, res, next) => {
       data: {
         title,
         examCode: examCode || null,
-        totalQuestions: sanitizedQuestions
-          ? sanitizedQuestions.length
-          : (totalQuestions !== undefined ? parseInt(totalQuestions, 10) : undefined),
+        totalQuestions: sanitizedQuestions ? sanitizedQuestions.length : undefined,
         durationMinutes: durationMinutes !== undefined ? parseInt(durationMinutes, 10) : undefined,
         passingScore: passingScore !== undefined ? parseInt(passingScore, 10) : undefined,
         difficulty: difficulty || null,
@@ -218,20 +204,38 @@ module.exports.updateExam = async (req, res, next) => {
       }
     });
 
-    res.json({ message: 'Cap nhat bai thi thanh cong', exam });
+    res.json({ message: 'Cập nhật bài thi thành công', exam });
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'Không tìm thấy bài thi' });
+    }
     next(error);
   }
 };
 
 module.exports.deleteExam = async (req, res, next) => {
   try {
-    const { id } = req.params;
+    const examId = parseInt(req.params.id, 10);
+    if (Number.isNaN(examId)) {
+      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
+    }
+
+    const existing = await prisma.exam.findFirst({
+      where: { id: examId, deletedAt: null }
+    });
+    if (!existing) {
+      return res.status(404).json({ message: 'Không tìm thấy bài thi' });
+    }
+
     await prisma.exam.update({
-      where: { id: parseInt(id, 10) },
+      where: { id: examId },
       data: { deletedAt: new Date() }
     });
-    res.json({ message: 'Xoa bai thi thanh cong' });
+
+    res.json({ message: 'Xóa bài thi thành công' });
   } catch (error) {
     next(error);
   }
@@ -240,11 +244,7 @@ module.exports.deleteExam = async (req, res, next) => {
 module.exports.uploadQuestionImage = async (req, res, next) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: 'Vui long chon anh de tai len.' });
-    }
-
-    if (!req.file.mimetype || !req.file.mimetype.startsWith('image/')) {
-      return res.status(400).json({ message: 'File tai len phai la hinh anh.' });
+      return res.status(400).json({ message: 'Vui lòng chọn ảnh để tải lên.' });
     }
 
     const uploadResult = await uploadBufferToCloudinary(req.file, {
@@ -253,7 +253,7 @@ module.exports.uploadQuestionImage = async (req, res, next) => {
     });
 
     res.status(201).json({
-      message: 'Tai anh cau hoi thanh cong',
+      message: 'Tải ảnh câu hỏi thành công',
       imageUrl: uploadResult.secure_url
     });
   } catch (error) {

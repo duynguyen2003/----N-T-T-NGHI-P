@@ -356,7 +356,7 @@
   gap: 7px;
 }
 
-.acm-field > span {
+.acm-field>span {
   font-size: 12px;
   color: #475569;
   font-weight: 600;
@@ -411,6 +411,289 @@
 .acm-field-hint {
   color: #64748b;
   font-size: 11px;
+}
+
+/* Redesigned Modal Styles */
+.acm-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.acm-modal-top-row {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+}
+
+.acm-modal-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.acm-modal-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Thumbnail Upload Area */
+.acm-thumbnail-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acm-upload-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.acm-upload-dropzone {
+  flex: 1;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.acm-upload-dropzone:hover {
+  border-color: #3b82f6;
+  background-color: #f0f7ff;
+}
+
+.acm-upload-icon {
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.acm-upload-dropzone:hover .acm-upload-icon {
+  color: #3b82f6;
+}
+
+.acm-upload-text {
+  text-align: center;
+}
+
+.acm-upload-text strong {
+  display: block;
+  font-size: 14px;
+  color: #1e293b;
+  margin-bottom: 4px;
+}
+
+.acm-upload-text p {
+  margin: 0;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.acm-upload-preview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+/* Radio Group */
+.acm-radio-group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 4px;
+}
+
+.acm-radio-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #334155;
+  font-weight: 500;
+}
+
+.acm-radio-option input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #2563eb;
+}
+
+/* New Input Style */
+.acm-input,
+.acm-textarea,
+.acm-select {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  color: #1e293b !important;
+  transition: all 0.2s;
+}
+
+.acm-input:focus,
+.acm-textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+}
+
+.acm-field>span {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+
+.acm-radio-group {
+  margin-top: 8px;
+}
+
+.acm-modal-form {
+  padding-top: 10px;
+}
+
+/* Override AdminModal primary button for this modal if needed, 
+   but it's better to update global if it benefits all. 
+   Here I'll add a specific class to the modal if needed, 
+   or just target the primary button inside. */
+
+.admin-btn-primary {
+  background-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  padding: 10px 24px !important;
+  font-weight: 600 !important;
+}
+
+.admin-btn-primary:hover {
+  background-color: #1d4ed8 !important;
+  transform: translateY(-1px);
+}
+
+/* Custom Select Component Styles */
+.acm-custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.acm-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #1e293b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.acm-select-trigger:hover {
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.acm-select-trigger.active {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.acm-select-icon {
+  color: #64748b;
+  transition: transform 0.2s;
+}
+
+.acm-select-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.acm-select-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  padding: 6px;
+  animation: acmSelectFadeIn 0.2s ease-out;
+}
+
+@keyframes acmSelectFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.acm-select-option {
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.acm-select-option:hover {
+  background-color: #f1f5f9;
+}
+
+.acm-select-option.selected {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* EFB (Exam Builder) specific overrides for CustomSelect */
+.efb-shell .acm-select-trigger {
+  height: 40px;
+  background-color: #f9fafb;
+  border-color: #e5e7eb;
+  border-radius: 10px;
+  padding: 0 12px;
+}
+
+.efb-shell .acm-select-trigger.active {
+  background-color: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.efb-shell .acm-select-dropdown {
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .acm-detail-layout {
@@ -1124,4 +1407,3 @@
     justify-content: center;
   }
 }
-

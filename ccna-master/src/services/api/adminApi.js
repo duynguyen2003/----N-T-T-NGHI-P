@@ -44,7 +44,7 @@ export const adminApi = {
     if (options.status && options.status !== 'ALL') params.set('status', options.status);
     return request(`${API_URL}/admin/users?${params}`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách người dùng');
   },
-
+                       
   createUser: (token, payload) =>
     request(`${API_URL}/admin/users`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
@@ -105,11 +105,13 @@ export const adminApi = {
 
   // --- MODULES (CHƯƠNG) ---
   getModules: (token, courseId) =>
-    request(`${API_URL}/learning/courses/${courseId}/modules`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách chương'),
+    request(`${API_URL}/learning/courses/${courseId}/modules`, 
+      { headers: getHeaders(token) }, 'Lỗi lấy danh sách chương'),
 
   createModule: (token, courseId, payload) =>
     request(`${API_URL}/learning/courses/${courseId}/modules`, {
-      method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)
+      method: 'POST',
+       headers: getHeaders(token), body: JSON.stringify(payload)
     }, 'Lỗi tạo chương'),
 
   updateModule: (token, moduleId, payload) =>
@@ -124,7 +126,8 @@ export const adminApi = {
 
   // --- LESSONS (BÀI HỌC) ---
   getLessons: (token, moduleId) =>
-    request(`${API_URL}/learning/modules/${moduleId}/lessons`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách bài học'),
+    request(`${API_URL}/learning/modules/${moduleId}/lessons`, 
+      { headers: getHeaders(token) }, 'Lỗi lấy danh sách bài học'),
 
   createLesson: (token, moduleId, payload) =>
     request(`${API_URL}/learning/modules/${moduleId}/lessons`, {
