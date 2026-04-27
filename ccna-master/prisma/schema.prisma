@@ -167,7 +167,7 @@ model Lesson {
 
 model Lab {
   id              Int        @id @default(autoincrement())
-  title           String     @db.VarChar(200)
+  title           String     @db.VarChar(1000)
   category        String?    @db.VarChar(50)
   difficulty      Difficulty @default(EASY)
   duration        String?    @db.VarChar(20)
