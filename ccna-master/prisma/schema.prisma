@@ -39,7 +39,7 @@ model User {
   fullName       String?   @map("full_name") @db.VarChar(100)
   email          String    @unique @db.VarChar(150)
   passwordHash   String    @map("password_hash") @db.VarChar(255)
-  avatarUrl      String?   @map("avatar_url") @db.VarChar(500)
+  avatarUrl      String?   @map("avatar_url") @db.Text
   role           Role      @default(STUDENT)
   level          Int       @default(1)
   streak         Int       @default(0)
@@ -99,7 +99,7 @@ model Course {
   code          String    @db.VarChar(10)     // vđ: ITN, SRWE
   title         String    @db.VarChar(200)
   description   String?   @db.Text
-  thumbnailUrl  String?   @map("thumbnail_url") @db.VarChar(500)
+  thumbnailUrl  String?   @map("thumbnail_url") @db.Text
   level         String    @default("BEGINNER") @db.VarChar(50)
   status        String    @default("DRAFT") @db.VarChar(50)
   orderIndex    Int       @default(0) @map("order_index")
@@ -152,7 +152,7 @@ model Lesson {
   title         String    @db.VarChar(200)
   sectionNumber String?   @map("section_number") @db.VarChar(20)
   contentHtml   String?   @map("content_html") @db.Text
-  videoUrl      String?   @map("video_url") @db.VarChar(500)
+  videoUrl      String?   @map("video_url") @db.Text
   videoDuration String?   @map("video_duration") @db.VarChar(20)
   orderIndex    Int       @map("order_index")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -171,13 +171,14 @@ model Lab {
   category        String?    @db.VarChar(50)
   difficulty      Difficulty @default(EASY)
   duration        String?    @db.VarChar(20)
-  imageUrl        String?    @map("image_url") @db.VarChar(500) // Ảnh đại diện bài Lab
-  topologyImgUrl  String?    @map("topology_img_url") @db.VarChar(500) // Ảnh sơ đồ mạng
+  imageUrl        String?    @map("image_url") @db.Text // Ảnh đại diện bài Lab
+  topologyImgUrl  String?    @map("topology_img_url") @db.Text // Ảnh sơ đồ mạng
   objective       String?    @db.Text // Mục tiêu bài tập
   tools           Json?      // Danh sách công cụ (Packet Tracer...)
-  fileUrl         String?    @map("file_url") @db.VarChar(500) // File bài tập .pka/.pkt
+  fileUrl         String?    @map("file_url") @db.Text // File bài tập .pka/.pkt
   steps           Json?      // Các bước hướng dẫn (Array of objects)
   guideContent    String?    @map("guide_content") @db.Text // Mô tả/Hướng dẫn chung
+  status          String     @default("DRAFT") @db.VarChar(50)
   courseId        String?    @map("course_id") @db.VarChar(10)
   moduleId        String?    @map("module_id") @db.VarChar(10)
   createdAt       DateTime   @default(now()) @map("created_at")
@@ -206,6 +207,7 @@ model Exam {
   moduleId        String?   @map("module_id") @db.VarChar(10)
   createdAt       DateTime  @default(now()) @map("created_at")
   deletedAt       DateTime? @map("deleted_at")
+  status          String    @default("DRAFT") @db.VarChar(20)
 
   course          Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   module          Module?   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
@@ -219,7 +221,7 @@ model ExamQuestion {
   id            Int       @id @default(autoincrement())
   examId        Int       @map("exam_id")
   question      String    @db.Text
-  imageUrl      String?   @map("image_url") @db.VarChar(500)
+  imageUrl      String?   @map("image_url") @db.Text
   options       Json      // Các đáp án (Lưu dạng mảng JSON)
   correctAnswer Int       @map("correct_answer") // Index đáp án đúng
   explanation   String?   @db.Text
@@ -278,7 +280,7 @@ model Resource {
   title     String    @db.VarChar(300)
   type      String    @db.VarChar(20)
   size      String?   @db.VarChar(20)
-  fileUrl   String    @map("file_url") @db.VarChar(500)
+  fileUrl   String?   @map("file_url") @db.Text
   courseId  String?   @map("course_id") @db.VarChar(10)
   createdAt DateTime  @default(now()) @map("created_at")
 
@@ -349,7 +351,7 @@ model Tool {
   title       String    @db.VarChar(100)       // Tên công cụ (vd: Trình tính toán Subnet)
   description String?   @db.Text               // Mô tả ngắn
   iconName    String?   @map("icon_name") @db.VarChar(50) // Tên icon để React hiển thị
-  linkUrl     String?   @map("link_url") @db.VarChar(200) // Đường dẫn khi click vào
+  linkUrl     String?   @map("link_url") @db.Text // Đường dẫn khi click vào
   isActive    Boolean   @default(true) @map("is_active")
   orderIndex  Int       @default(0) @map("order_index") // Vị trí sắp xếp
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -363,7 +365,7 @@ model QuestionBank {
   title           String    @db.VarChar(200)
   type            String    @db.VarChar(50)  // Ví dụ: "MULTIPLE_CHOICE", "CLI_SIMULATION", "AI_PROMPT"
   content         String    @db.Text         // Nội dung câu hỏi / kịch bản CLI
-  topologyImgUrl  String?   @map("topology_img_url") @db.VarChar(500) // Hình ảnh sơ đồ mạng (tuỳ chọn)
+  topologyImgUrl  String?   @map("topology_img_url") @db.Text // Hình ảnh sơ đồ mạng (tuỳ chọn)
   configData      Json?     // Cấu hình mạng mẫu (dành cho CLI simulation)
   aiPromptContext String?   @map("ai_prompt_context") @db.Text // Context hoặc prompt cho trợ lý AI
   options         Json?     // Đáp án hoặc data mở rộng

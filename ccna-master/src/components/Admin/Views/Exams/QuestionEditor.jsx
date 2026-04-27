@@ -1,195 +1,196 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
-  Zap,
-  ListChecks,
-  AlignLeft,
+  X,
   Upload,
   CheckCircle2,
-  Plus,
+  FileText,
   PencilLine,
   Trash2,
-  FileText
+  Image as ImageIcon,
+  Download
 } from 'lucide-react';
-import CustomSelect from '../../Components/CustomSelect';
-import { OPTION_LABELS, correctAnswerOptions } from './constants';
+import { OPTION_LABELS } from './constants';
+import SimpleRTE from './SimpleRTE';
 
-const TYPE_CARDS = [
-  {
-    key: 'mc',
-    iconCls: 'efb-type-icon-purple',
-    Icon: ListChecks,
-    label: 'Trắc nghiệm',
-    desc: 'Nhiều lựa chọn, tự động chấm điểm',
-    active: true,
-  },
-  {
-    key: 'essay',
-    iconCls: 'efb-type-icon-blue',
-    Icon: AlignLeft,
-    label: 'Tự luận',
-    desc: 'Dạng văn bản, giáo viên chấm điểm',
-  },
-  {
-    key: 'import',
-    iconCls: 'efb-type-icon-cyan',
-    Icon: Upload,
-    label: 'Nhập từ File',
-    desc: 'Nhập hàng loạt từ Excel / CSV',
-    onClick: true, // handled by parent
-  },
-];
+// ─── QuestionDrawer ───────────────────────────────────────────────────────────
 
-// ─── Single option row ────────────────────────────────────────────────────────
-
-const OptionRow = ({ index, value, isCorrect, onChange, onSelect }) => (
-  <div className={`efb-option-item ${isCorrect ? 'efb-option-correct' : ''}`}>
-    <button type="button" className="efb-option-radio" onClick={() => onSelect(index)}>
-      {isCorrect ? <CheckCircle2 size={16} /> : <span className="efb-radio-dot" />}
-    </button>
-    <input
-      className="efb-option-input"
-      placeholder={`Đáp án ${OPTION_LABELS[index]}`}
-      value={value}
-      onChange={(e) => onChange(index, e.target.value)}
-    />
-  </div>
-);
-
-// ─── QuestionEditor ───────────────────────────────────────────────────────────
-
-/**
- * The full "add / edit question" panel inside the exam form modal.
- */
-const QuestionEditor = ({
+export const QuestionDrawer = ({
+  isOpen,
+  onClose,
   isEditMode,
-  importMessage,
   draft,
-  onDraftChange,        // (field, value) => void
-  onOptionChange,       // (index, value) => void
+  onDraftChange,
+  onOptionChange,
   onImageUpload,
   onRemoveImage,
   uploadingImage,
-  onBulkImportClick,
-  onDownloadTemplate,
   onSave,
-  onCancel,             // only shown when editing a question
-  onReset,
-  editingIdx,
-  error,
-}) => (
-  <section className="efb-card efb-card-blue">
-    <div className="efb-card-header">
-      <div className="efb-card-badge efb-bg-blue"><Zap size={15} /></div>
-      <span>{isEditMode ? 'Chỉnh Sửa Câu Hỏi' : 'Thêm Câu Hỏi Nhanh'}</span>
-      {!isEditMode && <span className="efb-header-right">TIẾN NHANH THÔNG MINH</span>}
-    </div>
+  error
+}) => {
+  if (!isOpen) return null;
 
-    {/* Type cards */}
-    <div className="efb-type-grid">
-      {TYPE_CARDS.map(({ key, iconCls, Icon, label, desc, active, onClick }) => (
-        <button
-          key={key}
-          type="button"
-          className={`efb-type-card ${active ? 'efb-type-active' : ''}`}
-          onClick={onClick ? onBulkImportClick : undefined}
-        >
-          <div className={`efb-type-icon ${iconCls}`}><Icon size={20} /></div>
-          <strong>{label}</strong>
-          <span>{desc}</span>
-        </button>
-      ))}
-    </div>
-
-    {/* Import helper */}
-    <div className="efb-import-helper">
-      <span>Định dạng: `question,optionA,optionB,optionC,optionD,correctAnswer,explanation,imageUrl`.</span>
-      <button type="button" className="efb-btn-ghost" onClick={onDownloadTemplate}>
-        Tải mẫu CSV
-      </button>
-    </div>
-    {importMessage && <p className="exam-builder-success">{importMessage}</p>}
-
-    {/* Draft editor */}
-    <div className="efb-draft">
-      {/* Question text */}
-      <label className="efb-field efb-field-full">
-        <input
-          className="efb-input efb-question-input"
-          placeholder="Nhập nội dung câu hỏi..."
-          value={draft.question}
-          onChange={(e) => onDraftChange('question', e.target.value)}
-        />
-      </label>
-
-      {/* Image upload */}
-      <div className="efb-image-upload-wrap">
-        <label className="efb-btn-secondary efb-image-upload-btn">
-          <Upload size={14} />
-          {uploadingImage ? 'Đang tải ảnh...' : 'Tải ảnh sơ đồ mạng'}
-          <input type="file" accept="image/*" disabled={uploadingImage} onChange={onImageUpload} hidden />
-        </label>
-
-        {draft.imageUrl && (
-          <div className="efb-image-preview">
-            <img src={draft.imageUrl} alt="Sơ đồ mạng câu hỏi" />
-            <button type="button" className="efb-btn-ghost" onClick={onRemoveImage}>Gỡ ảnh</button>
+  return (
+    <div className={`efb-drawer-overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
+      <div className="efb-drawer-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="efb-drawer-header">
+          <div>
+            <h3>{isEditMode ? 'Chỉnh Sửa Câu Hỏi' : 'Thêm Câu Hỏi Mới'}</h3>
+            <span style={{ fontSize: '13px', color: '#64748b' }}>Trắc nghiệm 4 đáp án</span>
           </div>
-        )}
-      </div>
+          <button type="button" className="efb-drawer-close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
 
-      {/* Options grid */}
-      <div className="efb-options-grid">
-        {draft.options.map((opt, i) => (
-          <OptionRow
-            key={i}
-            index={i}
-            value={opt}
-            isCorrect={draft.correctAnswer === i}
-            onChange={onOptionChange}
-            onSelect={(idx) => onDraftChange('correctAnswer', idx)}
-          />
-        ))}
-      </div>
+        <div className="efb-drawer-body">
+          {error && <div className="exam-builder-error">{error}</div>}
 
-      {/* Footer: correct answer select + explanation */}
-      <div className="efb-draft-footer">
-        <label className="efb-field efb-flex-1">
-          <span>Đáp án Đúng</span>
-          <CustomSelect
-            value={draft.correctAnswer}
-            onChange={(val) => onDraftChange('correctAnswer', val)}
-            options={correctAnswerOptions}
-          />
-        </label>
-        <label className="efb-field efb-flex-2">
-          <span>Giải thích / Ghi chú điểm số</span>
-          <input
-            className="efb-input"
-            placeholder="Nhập gợi ý hoặc giải thích đáp án..."
-            value={draft.explanation}
-            onChange={(e) => onDraftChange('explanation', e.target.value)}
-          />
-        </label>
-      </div>
+          {/* RTE for Question */}
+          <div className="efb-field">
+            <span style={{ fontWeight: 600 }}>Nội dung câu hỏi *</span>
+            <SimpleRTE
+              value={draft.question}
+              onChange={(val) => onDraftChange('question', val)}
+              placeholder="Nhập nội dung câu hỏi tại đây..."
+            />
+          </div>
 
-      {/* Actions */}
-      <div className="efb-draft-actions">
-        <button type="button" className="efb-btn-ghost" onClick={onReset}>
-          Thêm câu hỏi mới theo cách thủ công
-        </button>
-        <div className="efb-gap-8">
-          {editingIdx !== null && (
-            <button type="button" className="efb-btn-secondary" onClick={onCancel}>Hủy</button>
-          )}
+          {/* Network Diagram Image */}
+          <div className="efb-field">
+            {!draft.imageUrl ? (
+              <label className="efb-dnd-zone">
+                <ImageIcon size={28} color="#6366f1" />
+                <div>
+                  <p style={{ color: '#6366f1', fontWeight: 600 }}>Tải ảnh sơ đồ mạng</p>
+                  <span>Định dạng JPG, PNG, tối đa 5MB</span>
+                </div>
+                <input type="file" accept="image/*" disabled={uploadingImage} onChange={onImageUpload} hidden />
+              </label>
+            ) : (
+              <div className="efb-image-preview" style={{ position: 'relative', display: 'inline-block' }}>
+                <img src={draft.imageUrl} alt="Sơ đồ mạng" style={{ width: '100%', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
+                <button
+                  type="button"
+                  className="efb-btn-secondary"
+                  onClick={onRemoveImage}
+                  style={{ position: 'absolute', top: '10px', right: '10px', background: 'white' }}
+                >
+                  <Trash2 size={14} color="#ef4444" /> Xóa ảnh
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Options vertically stacked */}
+          <div className="efb-field">
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontWeight: 600 }}>Đáp án & Đáp án đúng *</span>
+              <span style={{ fontSize: '12px', color: '#6366f1' }}>Chọn radio cho đáp án đúng</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {draft.options.map((opt, i) => {
+                const isCorrect = draft.correctAnswer === i;
+                return (
+                  <div key={i} className={`efb-option-item ${isCorrect ? 'efb-option-correct' : ''}`} style={{ padding: '12px 14px' }}>
+                    <button type="button" className="efb-option-radio" onClick={() => onDraftChange('correctAnswer', i)}>
+                      {isCorrect ? <CheckCircle2 size={18} color="#4f46e5" /> : <span className="efb-radio-dot" />}
+                    </button>
+                    <div style={{ fontWeight: 600, color: '#64748b', width: '20px' }}>{OPTION_LABELS[i]}</div>
+                    <input
+                      className="efb-option-input"
+                      placeholder={`Nội dung đáp án ${OPTION_LABELS[i]}`}
+                      value={opt}
+                      onChange={(e) => onOptionChange(i, e.target.value)}
+                      style={{ fontSize: '14px' }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Explanation with RTE */}
+          <div className="efb-field">
+            <span style={{ fontWeight: 600 }}>Giải thích đáp án</span>
+            <SimpleRTE
+              value={draft.explanation}
+              onChange={(val) => onDraftChange('explanation', val)}
+              placeholder="Nhập giải thích cho học sinh sau khi xem kết quả..."
+            />
+          </div>
+        </div>
+
+        <div className="efb-drawer-footer">
+          <button type="button" className="efb-btn-ghost" onClick={onClose} style={{ padding: '0 16px', color: '#64748b', textDecoration: 'none' }}>
+            Hủy
+          </button>
           <button type="button" className="efb-btn-primary" onClick={onSave}>
-            <Plus size={15} />
-            {editingIdx !== null ? 'Cập nhật' : 'Thêm câu hỏi'}
+            Lưu câu hỏi
           </button>
         </div>
       </div>
     </div>
-  </section>
-);
+  );
+};
+
+// ─── ImportModal ──────────────────────────────────────────────────────────────
+
+export const ImportModal = ({
+  isOpen,
+  onClose,
+  onDownloadTemplate,
+  onFileChange,
+  importMessage
+}) => {
+  const fileInputRef = useRef(null);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={`efb-modal-overlay ${isOpen ? 'open' : ''}`} onClick={onClose}>
+      <div className="efb-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="efb-modal-header">
+          <div>
+            <h3>Nhập Câu Hỏi Hàng Loạt</h3>
+            <p>Tải lên file CSV chứa danh sách câu hỏi</p>
+          </div>
+          <button type="button" className="efb-drawer-close" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="efb-modal-body">
+          {importMessage && <p className="exam-builder-success">{importMessage}</p>}
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '12px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+            <span style={{ fontSize: '13px', color: '#475569' }}>Cấu trúc: question, optionA..D, correctAnswer...</span>
+            <button type="button" className="efb-btn-secondary" onClick={onDownloadTemplate} style={{ height: '32px' }}>
+              <Download size={14} /> Tải file mẫu
+            </button>
+          </div>
+
+          <label className="efb-dnd-zone" style={{ padding: '40px 20px' }}>
+            <Upload size={32} color="#6366f1" />
+            <div>
+              <p style={{ color: '#0f172a', fontWeight: 600 }}>Kéo thả hoặc nhấp để chọn file</p>
+              <span>Chỉ hỗ trợ file .csv</span>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(e) => {
+                onFileChange(e);
+                onClose(); // Auto close after file selection
+              }}
+              hidden
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ─── QuestionList ─────────────────────────────────────────────────────────────
 
@@ -197,17 +198,17 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
   if (!questions.length) return null;
 
   return (
-    <div className="efb-qlist">
+    <div className="efb-qlist" style={{ marginTop: '20px' }}>
       <div className="efb-qlist-header">
-        <FileText size={15} />
-        <span>Danh Sách Câu Hỏi ({questions.length})</span>
+        <FileText size={16} color="#6366f1" />
+        <span style={{ color: '#0f172a', fontSize: '16px' }}>Danh Sách Câu Hỏi ({questions.length})</span>
       </div>
 
       {questions.map((q, idx) => (
         <div key={idx} className="efb-qcard">
           <div className="efb-qcard-top">
             <span className="efb-qnum">{idx + 1}</span>
-            <p className="efb-qtext">{q.question}</p>
+            <div className="efb-qtext" dangerouslySetInnerHTML={{ __html: q.question }} />
             <div className="efb-qcard-actions">
               <button type="button" className="efb-icon-btn" onClick={() => onEdit(idx)}>
                 <PencilLine size={14} />
@@ -222,9 +223,10 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
             {q.options.map((opt, oi) => (
               <div key={oi} className={`efb-qoption ${q.correctAnswer === oi ? 'correct' : ''}`}>
                 {q.correctAnswer === oi
-                  ? <CheckCircle2 size={13} className="efb-qoption-correct-icon" />
+                  ? <CheckCircle2 size={15} className="efb-qoption-correct-icon" />
                   : <span className="efb-qoption-dot" />}
-                <span>{opt || `(Đáp án ${OPTION_LABELS[oi]} trống)`}</span>
+                <span style={{ fontWeight: 600, marginRight: '4px', color: q.correctAnswer === oi ? '#15803d' : '#64748b' }}>{OPTION_LABELS[oi]}.</span>
+                <span>{opt || `(Trống)`}</span>
               </div>
             ))}
           </div>
@@ -237,7 +239,7 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
 
           {q.explanation && (
             <div className="efb-qexplan">
-              <span>Giải thích:</span> {q.explanation}
+              <span>Giải thích:</span> <div dangerouslySetInnerHTML={{ __html: q.explanation }} style={{ display: 'inline' }} />
             </div>
           )}
         </div>
@@ -245,4 +247,5 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
     </div>
   );
 };
-export default QuestionEditor;
+
+export default QuestionDrawer;

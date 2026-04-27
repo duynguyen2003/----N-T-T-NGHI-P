@@ -20,7 +20,8 @@ export const defaultFormData = {
   passingScore: 70,
   difficulty: '',
   courseId: '',
-  moduleId: ''
+  moduleId: '',
+  status: 'DRAFT'
 };
 
 export const defaultQuestionDraft = {

@@ -1,6 +1,6 @@
 import { OPTION_LABELS } from './constants';
 
-export const getStatusFromExam = (exam) => ((exam?._count?.questions || 0) > 0 ? 'OPEN' : 'DRAFT');
+export const getStatusFromExam = (exam) => exam?.status || 'DRAFT';
 
 export const getDifficultyLabel = (difficulty) => {
   const mapping = {

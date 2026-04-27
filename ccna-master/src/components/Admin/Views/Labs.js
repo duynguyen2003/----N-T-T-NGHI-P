@@ -23,13 +23,13 @@ import CustomSelect from '../Components/CustomSelect';
 import '../../../css/Admin/AdminViews.css';
 
 const LAB_TABS = [
-  { id: 'basic', label: 'Thong tin co ban' },
-  { id: 'content', label: 'Noi dung & Cac buoc' },
-  { id: 'media', label: 'Tai nguyen & Cong cu' }
+  { id: 'basic', label: 'Thông tin cơ bản' },
+  { id: 'content', label: 'Nội dung & Các bước' },
+  { id: 'media', label: 'Tài nguyên & Công cụ' }
 ];
 
 const CATEGORY_OPTIONS = [
-  { value: '', label: '-- Chon danh muc --' },
+  { value: '', label: '-- Chọn danh mục --' },
   { value: 'Routing', label: 'Routing' },
   { value: 'Switching', label: 'Switching' },
   { value: 'Security', label: 'Security' },
@@ -39,27 +39,27 @@ const CATEGORY_OPTIONS = [
 ];
 
 const DIFFICULTY_OPTIONS = [
-  { value: 'EASY', label: 'De (EASY)' },
-  { value: 'MEDIUM', label: 'Trung binh (MEDIUM)' },
-  { value: 'HARD', label: 'Kho (HARD)' }
+  { value: 'EASY', label: 'Dễ (EASY)' },
+  { value: 'MEDIUM', label: 'Trung bình (MEDIUM)' },
+  { value: 'HARD', label: 'Khó (HARD)' }
 ];
 
 const DIFFICULTY_LABEL_MAP = {
-  EASY: 'De',
-  MEDIUM: 'Trung binh',
-  HARD: 'Kho'
+  EASY: 'Dễ',
+  MEDIUM: 'Trung bình',
+  HARD: 'Khó'
 };
 
 const STATUS_OPTIONS = [
-  { value: 'DRAFT', label: 'Nhap' },
-  { value: 'PUBLISHED', label: 'Da xuat ban' },
-  { value: 'ARCHIVED', label: 'Luu tru' }
+  { value: 'DRAFT', label: 'Nháp' },
+  { value: 'PUBLISHED', label: 'Đã xuất bản' },
+  { value: 'ARCHIVED', label: 'Lưu trữ' }
 ];
 
 const STATUS_BADGE_MAP = {
-  DRAFT: { label: 'Nhap', className: 'inactive' },
-  PUBLISHED: { label: 'Da xuat ban', className: 'active' },
-  ARCHIVED: { label: 'Luu tru', className: 'student' }
+  DRAFT: { label: 'Nháp', className: 'inactive' },
+  PUBLISHED: { label: 'Đã xuất bản', className: 'active' },
+  ARCHIVED: { label: 'Lưu trữ', className: 'student' }
 };
 
 const createInitialFormData = () => ({
@@ -148,7 +148,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
   };
 
   const handleLink = () => {
-    const url = window.prompt('Nhap URL lien ket');
+    const url = window.prompt('Nhập URL liên kết');
     if (!url) return;
     runCommand('createLink', url);
   };
@@ -161,7 +161,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           className="labm-rte-btn"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => runCommand('bold')}
-          title="In dam"
+          title="In đậm"
         >
           <Bold size={14} />
         </button>
@@ -170,7 +170,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           className="labm-rte-btn"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => runCommand('italic')}
-          title="In nghieng"
+          title="In nghiêng"
         >
           <Italic size={14} />
         </button>
@@ -179,7 +179,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           className="labm-rte-btn"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => runCommand('underline')}
-          title="Gach chan"
+          title="Gạch chân"
         >
           <Underline size={14} />
         </button>
@@ -188,7 +188,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           className="labm-rte-btn"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => runCommand('insertUnorderedList')}
-          title="Danh sach cham"
+          title="Danh sách chấm"
         >
           <List size={14} />
         </button>
@@ -197,7 +197,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           className="labm-rte-btn"
           onMouseDown={(event) => event.preventDefault()}
           onClick={() => runCommand('insertOrderedList')}
-          title="Danh sach so"
+          title="Danh sách số"
         >
           <ListOrdered size={14} />
         </button>
@@ -206,7 +206,7 @@ const RichTextEditor = ({ value, onChange, placeholder }) => {
           className="labm-rte-btn"
           onMouseDown={(event) => event.preventDefault()}
           onClick={handleLink}
-          title="Chen lien ket"
+          title="Chèn liên kết"
         >
           <Link2 size={14} />
         </button>
@@ -374,7 +374,7 @@ const Labs = () => {
     if (!file) return;
 
     if (field === 'filePka' && !/\.(pkt|pka)$/i.test(file.name)) {
-      setError('File Packet Tracer phai co duoi .pkt hoac .pka');
+      setError('File Packet Tracer phải có đuôi .pkt hoặc .pka');
       event.target.value = '';
       return;
     }
@@ -398,12 +398,12 @@ const Labs = () => {
     const title = formData.title.trim();
     if (!title) {
       setActiveTab('basic');
-      setError('Vui long nhap tieu de bai Lab');
+      setError('Vui lòng nhập tiêu đề bài Lab');
       return;
     }
 
     if (editorMode === 'edit' && !editingLabId) {
-      setError('Khong xac dinh duoc bai Lab can cap nhat');
+      setError('Không xác định được bài Lab cần cập nhật');
       return;
     }
 
@@ -450,14 +450,14 @@ const Labs = () => {
       resetFormState();
       fetchLabs(currentPage);
     } catch (submitError) {
-      setError(submitError.message || 'Khong the luu bai Lab');
+      setError(submitError.message || 'Không thể lưu bài Lab');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Ban co chac muon xoa bai Lab nay?')) return;
+    if (!window.confirm('Bạn có chắc muốn xóa bài Lab này?')) return;
     try {
       await adminApi.deleteLab(token, id);
       fetchLabs(currentPage);
@@ -473,10 +473,10 @@ const Labs = () => {
           <div className="labm-editor-header">
             <button type="button" className="labm-back-btn" onClick={closeEditor}>
               <ArrowLeft size={14} />
-              <span>TRO LAI DANH SACH</span>
+              <span>TRỞ LẠI DANH SÁCH</span>
             </button>
-            <h2>{editorMode === 'edit' ? 'Chinh sua bai Lab' : 'Tao bai Lab moi'}</h2>
-            <p>Nhap thong tin theo tung tab, bo cuc giong man quan ly bai kiem tra.</p>
+            <h2>{editorMode === 'edit' ? 'Chỉnh sửa bài Lab' : 'Tạo bài Lab mới'}</h2>
+            <p>Nhập thông tin theo từng tab, bố cục giống màn quản lý bài kiểm tra.</p>
           </div>
 
           <div className="labm-tabs">
@@ -498,10 +498,10 @@ const Labs = () => {
             {activeTab === 'basic' ? (
               <div className="labm-tab-panel">
                 <div className="acm-field">
-                  <span>Tieu de bai Lab *</span>
+                  <span>Tiêu đề bài Lab *</span>
                   <input
                     className="acm-input"
-                    placeholder="Nhap ten bai Lab..."
+                    placeholder="Nhập tên bài Lab..."
                     value={formData.title}
                     onChange={(event) => setFormData((prev) => ({ ...prev, title: event.target.value }))}
                   />
@@ -509,7 +509,7 @@ const Labs = () => {
 
                 <div className="labm-grid-3">
                   <div className="acm-field">
-                    <span>Danh muc</span>
+                    <span>Danh mục</span>
                     <CustomSelect
                       value={formData.category}
                       onChange={(value) => setFormData((prev) => ({ ...prev, category: value }))}
@@ -518,7 +518,7 @@ const Labs = () => {
                   </div>
 
                   <div className="acm-field">
-                    <span>Do kho</span>
+                    <span>Độ khó</span>
                     <CustomSelect
                       value={formData.difficulty}
                       onChange={(value) => setFormData((prev) => ({ ...prev, difficulty: value }))}
@@ -527,10 +527,10 @@ const Labs = () => {
                   </div>
 
                   <div className="acm-field">
-                    <span>Thoi luong</span>
+                    <span>Thời lượng</span>
                     <input
                       className="acm-input"
-                      placeholder="VD: 30 phut"
+                      placeholder="VD: 30 phút"
                       value={formData.duration}
                       onChange={(event) => setFormData((prev) => ({ ...prev, duration: event.target.value }))}
                     />
@@ -539,7 +539,7 @@ const Labs = () => {
 
                 <div className="labm-grid-3">
                   <div className="acm-field">
-                    <span>Trang thai</span>
+                    <span>Trạng thái</span>
                     <CustomSelect
                       value={formData.status}
                       onChange={(value) => setFormData((prev) => ({ ...prev, status: value }))}
@@ -550,32 +550,32 @@ const Labs = () => {
 
                 <div className="labm-grid-2">
                   <div className="acm-field">
-                    <span>Khoa hoc</span>
+                    <span>Khóa học</span>
                     <CustomSelect
                       value={formData.courseId}
                       onChange={(value) => setFormData((prev) => ({ ...prev, courseId: value, moduleId: '' }))}
                       options={[
-                        { value: '', label: '-- Khong chon --' },
+                        { value: '', label: '-- Không chọn --' },
                         ...courses.map((course) => ({ value: course.id, label: `${course.code} - ${course.title}` }))
                       ]}
                     />
                   </div>
 
                   <div className={`acm-field ${!formData.courseId ? 'labm-field-muted' : ''}`}>
-                    <span>Module {loadingModules ? <small>(Dang tai...)</small> : null}</span>
+                    <span>Module {loadingModules ? <small>(Đang tải...)</small> : null}</span>
                     <div className={!formData.courseId ? 'labm-select-disabled' : ''}>
                       <CustomSelect
                         value={formData.moduleId}
                         onChange={(value) => setFormData((prev) => ({ ...prev, moduleId: value }))}
                         options={[
-                          { value: '', label: '-- Khong chon --' },
+                          { value: '', label: '-- Không chọn --' },
                           ...courseModules.map((moduleItem) => ({ value: moduleItem.id, label: moduleItem.title }))
                         ]}
-                        placeholder={formData.courseId ? 'Chon module...' : 'Chon khoa hoc truoc'}
+                        placeholder={formData.courseId ? 'Chọn module...' : 'Chọn khóa học trước'}
                       />
                     </div>
                     {!formData.courseId ? (
-                      <p className="acm-field-hint">Chon khoa hoc truoc de chon module.</p>
+                      <p className="acm-field-hint">Chọn khóa học trước để chọn module.</p>
                     ) : null}
                   </div>
                 </div>
@@ -585,30 +585,30 @@ const Labs = () => {
             {activeTab === 'content' ? (
               <div className="labm-tab-panel">
                 <div className="acm-field">
-                  <span>Muc tieu</span>
+                  <span>Mục tiêu</span>
                   <textarea
                     className="acm-textarea"
                     rows="2"
-                    placeholder="Neu muc tieu chinh cua bai thuc hanh..."
+                    placeholder="Nêu mục tiêu chính của bài thực hành..."
                     value={formData.objective}
                     onChange={(event) => setFormData((prev) => ({ ...prev, objective: event.target.value }))}
                   />
                 </div>
 
                 <div className="acm-field">
-                  <span>Noi dung huong dan (Rich Text)</span>
+                  <span>Nội dung hướng dẫn (Rich Text)</span>
                   <RichTextEditor
                     value={formData.guideContent}
                     onChange={(value) => setFormData((prev) => ({ ...prev, guideContent: value }))}
-                    placeholder="Nhap noi dung huong dan tong quan..."
+                    placeholder="Nhập nội dung hướng dẫn tổng quan..."
                   />
                 </div>
 
                 <div className="acm-field">
                   <div className="labm-step-header">
-                    <span>Cac buoc</span>
+                    <span>Các bước</span>
                     <button type="button" className="acm-secondary-btn" onClick={handleAddStep}>
-                      <Plus size={14} /> Them buoc
+                      <Plus size={14} /> Thêm bước
                     </button>
                   </div>
 
@@ -616,13 +616,13 @@ const Labs = () => {
                     {formData.steps.map((step, index) => (
                       <div key={index} className="labm-step-card">
                         <div className="labm-step-card-head">
-                          <strong>Buoc {index + 1}</strong>
+                          <strong>Bước {index + 1}</strong>
                           {formData.steps.length > 1 ? (
                             <button
                               type="button"
                               className="labm-step-remove"
                               onClick={() => handleRemoveStep(index)}
-                              title="Xoa buoc"
+                              title="Xóa bước"
                             >
                               <Trash2 size={15} />
                             </button>
@@ -632,20 +632,20 @@ const Labs = () => {
                         <div className="labm-step-fields">
                           <input
                             className="acm-input"
-                            placeholder="Tieu de buoc..."
+                            placeholder="Tiêu đề bước..."
                             value={step.title}
                             onChange={(event) => handleStepChange(index, 'title', event.target.value)}
                           />
                           <textarea
                             className="acm-textarea labm-code-input"
                             rows="3"
-                            placeholder="Moi lenh mot dong"
+                            placeholder="Mỗi lệnh một dòng"
                             value={step.commands}
                             onChange={(event) => handleStepChange(index, 'commands', event.target.value)}
                           />
                           <input
                             className="acm-input"
-                            placeholder="Ghi chu them (neu co)..."
+                            placeholder="Ghi chú thêm (nếu có)..."
                             value={step.note}
                             onChange={(event) => handleStepChange(index, 'note', event.target.value)}
                           />
@@ -670,7 +670,7 @@ const Labs = () => {
                     {previews.thumbnail ? (
                       <img src={previews.thumbnail} alt="Thumbnail preview" className="labm-upload-preview" />
                     ) : (
-                      <p>Bam de tai anh len</p>
+                      <p>Bấm để tải ảnh lên</p>
                     )}
                     <input
                       id="lab-thumb"
@@ -691,7 +691,7 @@ const Labs = () => {
                     {previews.topology ? (
                       <img src={previews.topology} alt="Topology preview" className="labm-upload-preview" />
                     ) : (
-                      <p>Bam de tai anh topology</p>
+                      <p>Bấm để tải ảnh topology</p>
                     )}
                     <input
                       id="lab-topology"
@@ -746,7 +746,7 @@ const Labs = () => {
               onClick={closeEditor}
               disabled={submitting}
             >
-              Huy
+              Hủy
             </button>
             <button
               type="button"
@@ -754,7 +754,7 @@ const Labs = () => {
               onClick={handleSubmit}
               disabled={submitting}
             >
-              {submitting ? 'Dang luu...' : editorMode === 'edit' ? 'Cap nhat bai Lab' : 'Luu bai Lab'}
+              {submitting ? 'Đang lưu...' : editorMode === 'edit' ? 'Cập nhật bài Lab' : 'Lưu bài Lab'}
             </button>
           </div>
         </div>
@@ -765,10 +765,10 @@ const Labs = () => {
   return (
     <div className="users-wrapper">
       <div className="admin-table-header" style={{ padding: '0 0 20px 0', border: 'none' }}>
-        <h3>Quan ly Bai Lab (.pkt)</h3>
+        <h3>Quản lý Bài Lab (.pkt)</h3>
         <div className="admin-table-actions">
           <button className="admin-btn-primary" onClick={openCreateEditor}>
-            <Plus size={18} /> Them Bai Lab
+            <Plus size={18} /> Thêm Bài Lab
           </button>
         </div>
       </div>
@@ -777,27 +777,27 @@ const Labs = () => {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Bai Lab</th>
-              <th>Danh muc</th>
-              <th>Do kho</th>
-              <th>Trang thai</th>
-              <th>Thoi luong</th>
-              <th>Thuoc khoa hoc</th>
-              <th>Hanh dong</th>
+              <th className="text-center">ID</th>
+              <th>Bài Lab</th>
+              <th className="text-center">Danh mục</th>
+              <th className="text-center">Độ khó</th>
+              <th className="text-center">Trạng thái</th>
+              <th className="text-center">Thời lượng</th>
+              <th>Thuộc khóa học</th>
+              <th className="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>Dang tai...</td>
+                <td colSpan="8" style={{ textAlign: 'center' }}>Đang tải...</td>
               </tr>
             ) : labs.length > 0 ? (
               labs.map((lab) => {
                 const statusMeta = STATUS_BADGE_MAP[lab.status] || STATUS_BADGE_MAP.DRAFT;
                 return (
                   <tr key={lab.id}>
-                    <td>{lab.id}</td>
+                    <td className="text-center">{lab.id}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div
@@ -809,12 +809,13 @@ const Labs = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            borderRadius: '4px'
+                            borderRadius: '4px',
+                            flexShrink: 0
                           }}
                         >
                           <FileCode2 size={20} />
                         </div>
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <div className="labm-lab-title" title={lab.title}>{lab.title}</div>
                           {lab.fileUrl ? (
                             <div className="labm-lab-file" title={lab.fileUrl.split('/').pop()}>
@@ -824,8 +825,8 @@ const Labs = () => {
                         </div>
                       </div>
                     </td>
-                    <td>{lab.category || '-'}</td>
-                    <td>
+                    <td className="text-center">{lab.category || '-'}</td>
+                    <td className="text-center">
                       <span
                         className={`admin-badge ${
                           lab.difficulty === 'EASY'
@@ -838,40 +839,42 @@ const Labs = () => {
                         {DIFFICULTY_LABEL_MAP[lab.difficulty] || lab.difficulty}
                       </span>
                     </td>
-                    <td>
+                    <td className="text-center">
                       <span className={`admin-badge ${statusMeta.className}`}>{statusMeta.label}</span>
                     </td>
-                    <td>{lab.duration || '-'}</td>
-                    <td>{lab.course?.title || '-'}</td>
-                    <td>
-                      <button
-                        className="admin-action-btn"
-                        title="Xem"
-                        onClick={() => openViewModal(lab)}
-                      >
-                        <Eye size={16} />
-                      </button>
-                      <button
-                        className="admin-action-btn"
-                        title="Sua"
-                        onClick={() => openEditEditor(lab)}
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button
-                        className="admin-action-btn delete"
-                        title="Xoa"
-                        onClick={() => handleDelete(lab.id)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                    <td className="text-center">{lab.duration || '-'}</td>
+                    <td className="labm-course-title" title={lab.course?.title || '-'}>{lab.course?.title || '-'}</td>
+                    <td className="text-center">
+                      <div className="admin-row-actions" style={{ justifyContent: 'center', display: 'flex', gap: '4px' }}>
+                        <button
+                          className="admin-action-btn"
+                          title="Xem"
+                          onClick={() => openViewModal(lab)}
+                        >
+                          <Eye size={16} />
+                        </button>
+                        <button
+                          className="admin-action-btn"
+                          title="Sửa"
+                          onClick={() => openEditEditor(lab)}
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          className="admin-action-btn delete"
+                          title="Xóa"
+                          onClick={() => handleDelete(lab.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan="8" style={{ textAlign: 'center' }}>Chua co bai Lab nao</td>
+                <td colSpan="8" style={{ textAlign: 'center' }}>Chưa có bài Lab nào</td>
               </tr>
             )}
           </tbody>
@@ -887,26 +890,26 @@ const Labs = () => {
       />
 
       <AdminModal
-        title="Chi tiet bai Lab"
+        title="Chi tiết bài Lab"
         isOpen={isViewModalOpen}
         onClose={() => setIsViewModalOpen(false)}
         onConfirm={() => setIsViewModalOpen(false)}
-        confirmText="Dong"
+        confirmText="Đóng"
       >
         {selectedLabForView ? (
           <div className="exam-view-details">
-            <div><b>Tieu de:</b> {selectedLabForView.title}</div>
-            <div><b>Danh muc:</b> {selectedLabForView.category || '-'}</div>
-            <div><b>Do kho:</b> {DIFFICULTY_LABEL_MAP[selectedLabForView.difficulty] || selectedLabForView.difficulty || '-'}</div>
-            <div><b>Thoi luong:</b> {selectedLabForView.duration || '-'}</div>
-            <div><b>Khoa hoc:</b> {selectedLabForView.course?.title || '-'}</div>
+            <div><b>Tiêu đề:</b> {selectedLabForView.title}</div>
+            <div><b>Danh mục:</b> {selectedLabForView.category || '-'}</div>
+            <div><b>Độ khó:</b> {DIFFICULTY_LABEL_MAP[selectedLabForView.difficulty] || selectedLabForView.difficulty || '-'}</div>
+            <div><b>Thời lượng:</b> {selectedLabForView.duration || '-'}</div>
+            <div><b>Khóa học:</b> {selectedLabForView.course?.title || '-'}</div>
             <div><b>Module:</b> {selectedLabForView.module?.title || selectedLabForView.moduleId || '-'}</div>
-            <div><b>Muc tieu:</b> {selectedLabForView.objective || '-'}</div>
-            <div><b>So buoc:</b> {Array.isArray(selectedLabForView.steps) ? selectedLabForView.steps.length : 0}</div>
-            <div><b>Cong cu:</b> {Array.isArray(selectedLabForView.tools) ? selectedLabForView.tools.join(', ') : '-'}</div>
-            <div><b>Anh dai dien:</b> {selectedLabForView.imageUrl ? <a href={selectedLabForView.imageUrl} target="_blank" rel="noreferrer">Mo anh</a> : '-'}</div>
-            <div><b>Anh topology:</b> {selectedLabForView.topologyImgUrl ? <a href={selectedLabForView.topologyImgUrl} target="_blank" rel="noreferrer">Mo anh</a> : '-'}</div>
-            <div><b>File bai tap:</b> {selectedLabForView.fileUrl ? <a href={selectedLabForView.fileUrl} target="_blank" rel="noreferrer">Mo file</a> : '-'}</div>
+            <div><b>Mục tiêu:</b> {selectedLabForView.objective || '-'}</div>
+            <div><b>Số bước:</b> {Array.isArray(selectedLabForView.steps) ? selectedLabForView.steps.length : 0}</div>
+            <div><b>Công cụ:</b> {Array.isArray(selectedLabForView.tools) ? selectedLabForView.tools.join(', ') : '-'}</div>
+            <div><b>Ảnh đại diện:</b> {selectedLabForView.imageUrl ? <a href={selectedLabForView.imageUrl} target="_blank" rel="noreferrer">Mở ảnh</a> : '-'}</div>
+            <div><b>Ảnh topology:</b> {selectedLabForView.topologyImgUrl ? <a href={selectedLabForView.topologyImgUrl} target="_blank" rel="noreferrer">Mở ảnh</a> : '-'}</div>
+            <div><b>File bài tập:</b> {selectedLabForView.fileUrl ? <a href={selectedLabForView.fileUrl} target="_blank" rel="noreferrer">Mở file</a> : '-'}</div>
           </div>
         ) : null}
       </AdminModal>

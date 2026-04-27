@@ -126,18 +126,18 @@ const ReviewExam = () => {
               >
                 {isCorrect ? '✓ CÂU HỎI ' : '✕ CÂU HỎI '}{currentQ + 1}: {isCorrect ? 'ĐÚNG' : 'SAI'}
               </span>
-              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Domain: {question.domain}</span>
+              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>Lĩnh vực: {question.domain}</span>
             </div>
           </div>
 
-          {/* Image placeholder */}
+          {/* Image placeholder (nếu có) */}
           {question.hasImage && (
             <div className="take-exam__q-image-placeholder">
               <div style={{ textAlign: 'center' }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🖧</div>
-                <div>Network Topology Diagram</div>
+                <div>Sơ đồ cấu trúc mạng (Topology)</div>
                 <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: '#94a3b8' }}>
-                  SOURCE: Router A &nbsp;→&nbsp; DESTINATION: 192.168.1.0/24
+                  NGUỒN: Router A &nbsp;→&nbsp; ĐÍCH: 192.168.1.0/24
                 </div>
               </div>
             </div>

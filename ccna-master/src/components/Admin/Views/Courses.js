@@ -224,19 +224,19 @@ const Courses = () => {
               <table className="acm-course-table">
                 <thead>
                   <tr>
-                    <th>Mã</th>
+                    <th className="text-center">Mã</th>
                     <th>Khóa học</th>
                     <th>Mô tả</th>
-                    <th>Mức độ</th>
-                    <th>Trạng thái</th>
-                    <th>Thứ tự</th>
-                    <th>Hành động</th>
+                    <th className="text-center">Mức độ</th>
+                    <th className="text-center">Trạng thái</th>
+                    <th className="text-center">Thứ tự</th>
+                    <th className="text-center">Hành động</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCourses.map((course) => (
                     <tr key={course.id}>
-                      <td>
+                      <td className="text-center">
                         <span className="acm-code-pill">{course.code}</span>
                       </td>
                       <td>
@@ -258,17 +258,17 @@ const Courses = () => {
                             : course.description
                           : '—'}
                       </td>
-                      <td>
+                      <td className="text-center">
                         <span className="acm-level-pill">{course.level || '—'}</span>
                       </td>
-                      <td>
+                      <td className="text-center">
                         <span className={`acm-status-badge ${course.status === 'PUBLISHED' ? 'published' : 'draft'}`}>
                           {course.status || 'DRAFT'}
                         </span>
                       </td>
-                      <td>{course.orderIndex ?? 0}</td>
-                      <td>
-                        <div className="acm-row-actions">
+                      <td className="text-center">{course.orderIndex ?? 0}</td>
+                      <td className="text-center">
+                        <div className="acm-row-actions" style={{ justifyContent: 'center' }}>
                           <button
                             className="acm-action-btn"
                             title="Sửa khóa học"

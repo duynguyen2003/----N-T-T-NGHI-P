@@ -87,7 +87,8 @@ export const useExamForm = (token, onSuccess) => {
       passingScore: exam.passingScore || 70,
       difficulty: exam.difficulty || '',
       courseId: exam.courseId || '',
-      moduleId: exam.moduleId || ''
+      moduleId: exam.moduleId || '',
+      status: exam.status || 'DRAFT'
     });
     setIsModalOpen(true);
     try {
@@ -104,7 +105,8 @@ export const useExamForm = (token, onSuccess) => {
         passingScore: examDetail.passingScore || 70,
         difficulty: examDetail.difficulty || '',
         courseId: examDetail.courseId || '',
-        moduleId: examDetail.moduleId || ''
+        moduleId: examDetail.moduleId || '',
+        status: examDetail.status || 'DRAFT'
       });
       syncQuestions(mappedQuestions);
 
@@ -278,6 +280,7 @@ export const useExamForm = (token, onSuccess) => {
         difficulty: formData.difficulty || null,
         courseId: formData.courseId || null,
         moduleId: formData.moduleId || null,
+        status: formData.status || 'DRAFT',
         questions
       };
 

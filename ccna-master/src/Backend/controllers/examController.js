@@ -49,9 +49,14 @@ module.exports.getExams = async (req, res, next) => {
     const limit = parseInt(req.query.limit, 10) || 10;
     const skip = (page - 1) * limit;
 
+    const whereClause = { deletedAt: null };
+    if (req.user && req.user.role !== 'ADMIN') {
+      whereClause.status = 'OPEN';
+    }
+
     const [exams, total] = await Promise.all([
       prisma.exam.findMany({
-        where: { deletedAt: null },
+        where: whereClause,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -61,7 +66,7 @@ module.exports.getExams = async (req, res, next) => {
           module: { select: { id: true, title: true } }
         }
       }),
-      prisma.exam.count({ where: { deletedAt: null } })
+      prisma.exam.count({ where: whereClause })
     ]);
 
     res.json({
@@ -129,11 +134,17 @@ module.exports.getExamById = async (req, res, next) => {
       return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
     }
 
+    const whereClause = {
+      id: examId,
+      deletedAt: null
+    };
+
+    if (req.user && req.user.role !== 'ADMIN') {
+      whereClause.status = 'OPEN';
+    }
+
     const exam = await prisma.exam.findFirst({
-      where: {
-        id: examId,
-        deletedAt: null
-      },
+      where: whereClause,
       include: {
         questions: {
           orderBy: { orderIndex: 'asc' }

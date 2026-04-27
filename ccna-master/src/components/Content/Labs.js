@@ -49,7 +49,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
       <div className="lab-modal" onClick={(e) => e.stopPropagation()}>
         <div className="lab-modal-topbar">
           <div className="lab-modal-dots">
-            <span className="dot-red" onClick={onClose} title="Dong" />
+            <span className="dot-red" onClick={onClose} title="Đóng" />
             <span className="dot-yellow" />
             <span className="dot-green" />
           </div>
@@ -86,7 +86,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
 
             <div className="lab-sidebar-section">
               <div className="lab-sidebar-label">
-                <Zap size={13} /> Cong cu
+                <Zap size={13} /> Công cụ
               </div>
               <div className="lab-tool-tags">
                 {lab.tools?.map((t) => (
@@ -101,7 +101,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                   key={i}
                   className={`lab-step-dot ${i === step ? "active" : i < step ? "done" : ""}`}
                   onClick={() => setStep(i)}
-                  title={`Buoc ${i + 1}`}
+                  title={`Bước ${i + 1}`}
                 />
               ))}
             </div>
@@ -118,27 +118,27 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
               }}
             >
               <div style={{ fontSize: "0.75rem", color: "#58a6ff", fontWeight: "bold", display: "flex", alignItems: "center", gap: "4px" }}>
-                <Check size={12} /> CHAM DIEM TU DONG
+                <Check size={12} /> CHẤM ĐIỂM TỰ ĐỘNG
               </div>
               <p style={{ fontSize: "0.7rem", color: "#8b949e", margin: "4px 0 0 0", lineHeight: 1.5 }}>
-                Guest chi duoc xem thong tin huong dan. Dang nhap de tai file va thuc hanh lab.
+                Guest chỉ được xem thông tin hướng dẫn. Đăng nhập để tải file và thực hành lab.
               </p>
             </div>
 
             {isGuestView ? (
               <button type="button" className="lab-download-btn" onClick={onGuestBlocked}>
-                <Download size={14} /> Tai file bai tap (.pka)
+                <Download size={14} /> Tải file bài tập (.pka)
               </button>
             ) : (
               <a href={lab.fileUrl || "#"} className="lab-download-btn" download>
-                <Download size={14} /> Tai file bai tap (.pka)
+                <Download size={14} /> Tải file bài tập (.pka)
               </a>
             )}
           </div>
 
           <div className="lab-modal-terminal">
             <div className="lab-step-header">
-              <span className="lab-step-badge">Buoc {step + 1}/{totalSteps}</span>
+              <span className="lab-step-badge">Bước {step + 1}/{totalSteps}</span>
               <h3 className="lab-step-title">{currentStep?.title}</h3>
             </div>
 
@@ -165,23 +165,23 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
                 disabled={step === 0}
               >
-                <ChevronLeft size={16} /> Buoc truoc
+                <ChevronLeft size={16} /> Bước trước
               </button>
 
               {step < totalSteps - 1 ? (
                 <button className="lab-nav-btn primary" onClick={() => setStep((s) => s + 1)}>
-                  Buoc tiep theo <ChevronRight size={16} />
+                  Bước tiếp theo <ChevronRight size={16} />
                 </button>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
                   <div style={{ fontSize: "0.7rem", color: "#d29922", paddingBottom: "6px" }}>
-                    * Dam bao ban da dat 100% completion truoc khi xac nhan.
+                    * Đảm bảo bạn đã đạt 100% completion trước khi xác nhận.
                   </div>
                   <button
                     className="lab-nav-btn success"
                     onClick={() => (isGuestView ? onGuestBlocked() : onComplete(lab.id))}
                   >
-                    <Check size={16} /> Xac nhan hoan thanh lab
+                    <Check size={16} /> Xác nhận hoàn thành lab
                   </button>
                 </div>
               )}
@@ -194,9 +194,9 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
 };
 
 const difficultyConfig = {
-  Easy: { label: "De", cls: "badge-easy" },
-  Medium: { label: "Trung binh", cls: "badge-medium" },
-  Hard: { label: "Kho", cls: "badge-hard" }
+  Easy: { label: "Dễ", cls: "badge-easy" },
+  Medium: { label: "Trung bình", cls: "badge-medium" },
+  Hard: { label: "Khó", cls: "badge-hard" }
 };
 
 const LabCard = ({ lab, isCompleted, onSelect, isGuestView, onGuestBlocked }) => {
@@ -209,7 +209,7 @@ const LabCard = ({ lab, isCompleted, onSelect, isGuestView, onGuestBlocked }) =>
         <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: "8px" }}>
           {isCompleted && (
             <span className="lab-badge badge-easy" style={{ position: "relative", top: 0, right: 0, display: "flex", alignItems: "center", gap: "4px" }}>
-              <Check size={10} /> DA XONG
+              <Check size={10} /> ĐÃ XONG
             </span>
           )}
           <span className={`lab-badge ${diff.cls}`} style={{ position: "relative", top: 0, right: 0 }}>
@@ -231,16 +231,16 @@ const LabCard = ({ lab, isCompleted, onSelect, isGuestView, onGuestBlocked }) =>
         <div className="lab-card-actions">
           {isGuestView ? (
             <button type="button" className="lab-btn-outline" onClick={onGuestBlocked}>
-              <Download size={14} /> Tai file
+              <Download size={14} /> Tải file
             </button>
           ) : (
             <a href={lab.fileUrl || "#"} className="lab-btn-outline" download>
-              <Download size={14} /> Tai file
+              <Download size={14} /> Tải file
             </a>
           )}
 
           <button className="lab-btn-primary" onClick={() => onSelect(lab)}>
-            <BookOpen size={14} /> Xem huong dan
+            <BookOpen size={14} /> Xem hướng dẫn
           </button>
         </div>
       </div>
@@ -276,7 +276,7 @@ export const Labs = () => {
   });
 
   const notifyGuestBlocked = useCallback(() => {
-    showToast("Guest chi duoc xem thong tin lab. Vui long dang nhap de thuc hanh.", "info");
+    showToast("Guest chỉ được xem thông tin lab. Vui lòng đăng nhập để thực hành.", "info");
   }, [showToast]);
 
   return (
@@ -285,8 +285,8 @@ export const Labs = () => {
 
       <div className="labs-header">
         <div className="labs-header-text">
-          <h1 className="labs-main-title">Phong Lab Thuc Hanh</h1>
-          <p className="labs-main-desc">Kho bai lab chuan Cisco - topology, CLI step-by-step, file Packet Tracer.</p>
+          <h1 className="labs-main-title">Phòng Lab Thực Hành</h1>
+          <p className="labs-main-desc">Kho bài lab chuẩn Cisco - topology, CLI step-by-step, file Packet Tracer.</p>
         </div>
 
         <div className="labs-search-wrap">
@@ -294,7 +294,7 @@ export const Labs = () => {
           <input
             type="text"
             className="labs-search-input"
-            placeholder="Tim kiem bai lab..."
+            placeholder="Tìm kiếm bài lab..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -316,12 +316,12 @@ export const Labs = () => {
       {loading ? (
         <div className="labs-loading">
           <Loader2 className="labs-spinner" size={32} />
-          <p>Dang tai danh sach lab...</p>
+          <p>Đang tải danh sách lab...</p>
         </div>
       ) : filteredLabs.length === 0 ? (
         <div className="labs-empty">
           <Terminal size={40} />
-          <p>Khong tim thay bai lab phu hop.</p>
+          <p>Không tìm thấy bài lab phù hợp.</p>
         </div>
       ) : (
         <div className="lab-grid">

@@ -222,7 +222,19 @@
 .acm-course-name-cell {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.acm-course-name-cell span:last-child {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--admin-text-heading);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .acm-thumbnail {
@@ -331,6 +343,10 @@
   margin: 0;
   color: var(--admin-text-secondary);
   font-size: 13px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .acm-empty-state.compact {

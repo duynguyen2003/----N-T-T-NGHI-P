@@ -8,14 +8,19 @@ module.exports.getCourses = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    const whereClause = { deletedAt: null };
+    if (req.user && req.user.role !== 'ADMIN') {
+      whereClause.status = 'PUBLISHED';
+    }
+
     const [courses, total] = await Promise.all([
       prisma.course.findMany({
-        where: { deletedAt: null },
+        where: whereClause,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' }
       }),
-      prisma.course.count({ where: { deletedAt: null } })
+      prisma.course.count({ where: whereClause })
     ]);
 
     res.json({
@@ -47,8 +52,8 @@ module.exports.createCourse = async (req, res, next) => {
     const courseId = id || code.toLowerCase().replace(/\s/g, '');
     const course = await prisma.course.create({
       data: {
-        id: courseId.substring(0, 10),
-        code: code.substring(0, 10),
+        id: courseId,
+        code: code,
         title,
         description: description || null,
         level: level || 'BEGINNER',
@@ -77,7 +82,7 @@ module.exports.updateCourse = async (req, res, next) => {
     }
 
     const dataToUpdate = {};
-    if (code !== undefined) dataToUpdate.code = String(code).trim().substring(0, 10);
+    if (code !== undefined) dataToUpdate.code = String(code).trim();
     if (title !== undefined) dataToUpdate.title = String(title).trim();
     if (description !== undefined) dataToUpdate.description = description ? String(description) : null;
     if (level !== undefined) dataToUpdate.level = level;
@@ -129,14 +134,20 @@ module.exports.getLabs = async (req, res, next) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    const whereClause = {};
+    if (req.user && req.user.role !== 'ADMIN') {
+      whereClause.status = 'PUBLISHED';
+    }
+
     const [labs, total] = await Promise.all([
       prisma.lab.findMany({
+        where: whereClause,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: { course: true }
       }),
-      prisma.lab.count()
+      prisma.lab.count({ where: whereClause })
     ]);
 
     res.json({

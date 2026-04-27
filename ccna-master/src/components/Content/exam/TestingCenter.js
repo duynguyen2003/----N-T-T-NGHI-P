@@ -12,10 +12,10 @@ const MODULES = [
     color: '#2563eb',
     bg: '#eff6ff',
     title: 'Module 1: Network Fundamentals',
-    meta: '4 Quizzes • 65 Questions Total',
+    meta: '4 Bài tập • 65 Câu hỏi tổng cộng',
     quizzes: [
-      { id: 'q1', code: 'OSI', label: 'Quiz 1.1: OSI Model & TCP/IP', info: '10 questions · 15 mins', score: '8/10', scoreLabel: 'ĐIỂM CAO NHẤT' },
-      { id: 'q2', code: 'CAB', label: 'Quiz 1.2: Cabling & Interfaces', info: '15 questions · 20 mins', score: null, scoreLabel: 'TRẠNG THÁI', scoreSub: 'Chưa làm' },
+      { id: 'q1', code: 'OSI', label: 'Quiz 1.1: OSI Model & TCP/IP', info: '10 câu hỏi · 15 phút', score: '8/10', scoreLabel: 'ĐIỂM CAO NHẤT' },
+      { id: 'q2', code: 'CAB', label: 'Quiz 1.2: Cabling & Interfaces', info: '15 câu hỏi · 20 phút', score: null, scoreLabel: 'TRẠNG THÁI', scoreSub: 'Chưa làm' },
     ],
   },
   {
@@ -24,7 +24,7 @@ const MODULES = [
     color: '#059669',
     bg: '#ecfdf5',
     title: 'Module 2: IP Connectivity',
-    meta: '6 Quizzes • 120 Questions Total',
+    meta: '6 Bài tập • 120 Câu hỏi tổng cộng',
     quizzes: [],
   },
   {
@@ -33,16 +33,16 @@ const MODULES = [
     color: '#94a3b8',
     bg: '#f1f5f9',
     title: 'Module 3: IP Services & Security',
-    meta: '5 Quizzes • 85 Questions Total',
+    meta: '5 Bài tập • 85 Câu hỏi tổng cộng',
     locked: true,
     quizzes: [],
   },
 ];
 
 const MOCK_EXAMS = [
-  { id: 'mock-01', title: 'Mock Exam 01', badge: 'HARD', badgeClass: 'badge-hard', icon: '⚙️', meta: ['120 mins', '100 questions', 'Simulated Labs Included'] },
-  { id: 'mock-02', title: 'Mock Exam 02', badge: 'INTERMEDIATE', badgeClass: 'badge-intermediate', icon: '📄', meta: ['120 mins', '100 questions', 'Focus: IP Connectivity'] },
-  { id: 'mock-03', title: 'Mock Exam 03', badge: 'HARD', badgeClass: 'badge-hard', icon: '🛡️', meta: ['120 mins', '100 questions', 'Focus: Security Fundamentals'] },
+  { id: 'mock-01', title: 'Mock Exam 01', badge: 'KHÓ', badgeClass: 'badge-hard', icon: '⚙️', meta: ['120 phút', '100 câu hỏi', 'Bao gồm bài thực hành mô phỏng'] },
+  { id: 'mock-02', title: 'Mock Exam 02', badge: 'TRUNG BÌNH', badgeClass: 'badge-intermediate', icon: '📄', meta: ['120 phút', '100 câu hỏi', 'Trọng tâm: Kết nối IP'] },
+  { id: 'mock-03', title: 'Mock Exam 03', badge: 'KHÓ', badgeClass: 'badge-hard', icon: '🛡️', meta: ['120 phút', '100 câu hỏi', 'Trọng tâm: Bảo mật cơ bản'] },
 ];
 
 const MOCK_HISTORY_DATA = {
@@ -230,8 +230,8 @@ const TestingCenter = () => {
             {/* Coming Soon Card */}
             <div className="tc-soon-card">
               <span style={{ fontSize: '2rem', color: '#94a3b8' }}>⊕</span>
-              <h4>More exams coming soon</h4>
-              <p>We update our question bank every 2 weeks to match current CCNA standards.</p>
+              <h4>Thêm nhiều kỳ thi sắp ra mắt</h4>
+              <p>Chúng tôi cập nhật ngân hàng câu hỏi 2 tuần một lần để phù hợp với các tiêu chuẩn CCNA hiện hành.</p>
             </div>
           </div>
         )}

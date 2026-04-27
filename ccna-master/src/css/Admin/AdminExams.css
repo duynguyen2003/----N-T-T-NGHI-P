@@ -301,21 +301,29 @@
 .exam-hub-list-head,
 .exam-hub-list-row {
   display: grid;
-  grid-template-columns: minmax(320px, 2.4fr) minmax(110px, 0.9fr) minmax(220px, 1.45fr) minmax(140px, 0.9fr) minmax(120px, 0.8fr);
-  column-gap: 12px;
+  grid-template-columns: 2.5fr 1fr 1.5fr 1fr 0.8fr;
+  column-gap: 16px;
+  align-items: center;
 }
 
 .exam-hub-list-head {
-  padding: 16px 18px;
+  padding: 16px 20px;
   border-bottom: 1px solid #e8eef6;
   background: #fbfcfe;
 }
 
 .exam-hub-list-head span {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #5f7698;
   letter-spacing: 0.04em;
+}
+
+.exam-hub-list-head span:nth-child(2),
+.exam-hub-list-head span:nth-child(3),
+.exam-hub-list-head span:nth-child(4),
+.exam-hub-list-head span:nth-child(5) {
+  text-align: center;
 }
 
 .exam-hub-list-body {
@@ -426,7 +434,7 @@
   gap: 8px 10px;
 }
 
-.exam-hub-col-detail > div {
+.exam-hub-col-detail>div {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -438,7 +446,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .exam-hub-status {
@@ -474,8 +482,8 @@
 .exam-hub-col-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
+  justify-content: center;
+  gap: 12px;
 }
 
 .exam-hub-col-actions .icon {
@@ -563,7 +571,7 @@
   gap: 10px;
 }
 
-.exam-hub-mini-stats > div {
+.exam-hub-mini-stats>div {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 10px;
@@ -574,17 +582,17 @@
   min-height: 86px;
 }
 
-.exam-hub-mini-stats > div svg {
+.exam-hub-mini-stats>div svg {
   color: #66758f;
 }
 
-.exam-hub-mini-stats > div strong {
+.exam-hub-mini-stats>div strong {
   font-size: 18px;
   color: #111827;
   line-height: 1.15;
 }
 
-.exam-hub-mini-stats > div span {
+.exam-hub-mini-stats>div span {
   font-size: 12px;
   color: #66758f;
 }
@@ -648,6 +656,7 @@
 }
 
 @media (max-width: 1200px) {
+
   .exam-hub-list-head,
   .exam-hub-list-row {
     grid-template-columns: minmax(280px, 2.2fr) minmax(100px, 0.8fr) minmax(210px, 1.35fr) minmax(120px, 0.8fr) minmax(110px, 0.7fr);

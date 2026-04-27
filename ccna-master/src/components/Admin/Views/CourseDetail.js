@@ -47,6 +47,27 @@ const isValidUrl = (value) => {
   }
 };
 
+const getNextSectionNumber = (moduleItem) => {
+  if (!moduleItem || !moduleItem.lessons || moduleItem.lessons.length === 0) return '';
+  const lessons = [...moduleItem.lessons].sort((a, b) => {
+    // Basic numeric sort if possible, otherwise keep order
+    const aNum = parseFloat(a.sectionNumber) || 0;
+    const bNum = parseFloat(b.sectionNumber) || 0;
+    return aNum - bNum;
+  });
+  const lastLesson = lessons[lessons.length - 1];
+  const lastNum = lastLesson.sectionNumber;
+  if (!lastNum) return '';
+  const parts = lastNum.split('.');
+  const lastPart = parts[parts.length - 1];
+  const num = parseInt(lastPart, 10);
+  if (!isNaN(num)) {
+    parts[parts.length - 1] = (num + 1).toString();
+    return parts.join('.');
+  }
+  return lastNum;
+};
+
 function Stepper({ current, total }) {
   return (
     <div className="acm-stepper">
@@ -309,7 +330,10 @@ const CourseDetail = () => {
     setEditingLessonId(null);
     setStep(1);
     setLessonErrors({});
-    setLessonForm(initialLessonForm);
+    setLessonForm({
+      ...initialLessonForm,
+      sectionNumber: getNextSectionNumber(moduleItem)
+    });
     setOpenModules((prev) => ({ ...prev, [moduleItem.id]: true }));
   };
 
@@ -345,7 +369,11 @@ const CourseDetail = () => {
   };
 
   const handleLessonChange = (field, value) => {
-    setLessonForm((prev) => ({ ...prev, [field]: value }));
+    let finalValue = value;
+    if (field === 'sectionNumber') {
+      finalValue = value.replace(/[^0-9.]/g, '');
+    }
+    setLessonForm((prev) => ({ ...prev, [field]: finalValue }));
     if (lessonErrors[field]) {
       setLessonErrors((prev) => ({ ...prev, [field]: '' }));
     }
@@ -471,7 +499,11 @@ const CourseDetail = () => {
       await fetchData(true);
 
       if (!editingLessonId && andAddAnother) {
-        setLessonForm(initialLessonForm);
+        const updatedModule = (await adminApi.getModules(token, courseId)).data?.find(m => String(m.id) === String(activeModuleId));
+        setLessonForm({
+          ...initialLessonForm,
+          sectionNumber: getNextSectionNumber(updatedModule)
+        });
         setLessonErrors({});
         setStep(1);
         return;
