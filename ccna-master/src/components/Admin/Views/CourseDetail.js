@@ -30,6 +30,45 @@ import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
 import '../../../css/Admin/AdminViews.css';
+import '../../../css/Lesson.css';
+import { marked } from 'marked';
+
+// Configure custom markdown renderer
+const renderer = new marked.Renderer();
+renderer.code = function({ text, lang }) {
+  // Nếu không chỉ định ngôn ngữ hoặc là cli/cisco, mặc định dùng khung CLI màu đen
+  if (!lang || lang === 'cli' || lang === 'cisco') {
+    return `<pre class="lc-code-block">\n${text}\n</pre>\n`;
+  }
+  return `<pre><code>${text}</code></pre>\n`;
+};
+renderer.blockquote = function({ text, tokens }) {
+  if (text && (text.includes('[!NOTE]') || text.includes('[!WARNING]') || text.includes('[!BEST-PRACTICE]'))) {
+    const isWarning = text.includes('[!WARNING]');
+    const title = isWarning ? 'Lưu ý quan trọng' : 'Best Practice / Ghi chú';
+    const icon = isWarning ? '⚠️' : '💡';
+    
+    // Parse the inner tokens to HTML
+    const bodyHtml = this.parser.parse(tokens);
+    
+    const cleanedText = bodyHtml
+      .replace(/<p>\[!(?:NOTE|WARNING|BEST-PRACTICE)\]/g, '<p>')
+      .replace(/<\/p>\s*$/, '</p>');
+
+    return `<div class="lc-alert-box ${isWarning ? 'warning' : ''}" style="margin-top: 1rem; margin-bottom: 1rem;">
+              <h4 class="lc-alert-title" style="display:flex; align-items:center; gap:0.5rem; font-weight:700;">${icon} ${title}</h4>
+              <div class="lc-alert-text">${cleanedText}</div>
+            </div>`;
+  }
+  const bodyHtml = this.parser.parse(tokens);
+  return `<blockquote>\n${bodyHtml}</blockquote>\n`;
+};
+
+marked.setOptions({
+  renderer,
+  breaks: true,
+  gfm: true
+});
 
 const stepLabels = ['Cơ bản', 'Nội dung', 'Rà soát'];
 
@@ -710,27 +749,39 @@ const CourseDetail = () => {
 
                     <label className="acm-field">
                       <span>
-                        <AlignLeft size={12} /> Nội dung bài học (HTML)
+                        <AlignLeft size={12} /> Nội dung bài học (Markdown)
                       </span>
-                      <div className="acm-editor-box">
-                        <div className="acm-editor-toolbar">
-                          <button type="button">B</button>
-                          <button type="button">I</button>
-                          <button type="button">U</button>
-                          <span>
-                            <Clock size={11} /> Auto save
-                          </span>
+                      <div className="acm-editor-split" style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                        <div className="acm-editor-box" style={{ flex: 1 }}>
+                          <div className="acm-editor-toolbar" style={{ borderBottom: '1px solid #e2e8f0', padding: '0.5rem', background: '#f8fafc', display: 'flex', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>Soạn thảo Markdown</span>
+                            </div>
+                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <Clock size={11} /> Auto save
+                            </span>
+                          </div>
+                          <textarea
+                            className="acm-editor-textarea"
+                            style={{ width: '100%', minHeight: '350px', padding: '1rem', border: 'none', outline: 'none', resize: 'vertical', fontFamily: 'monospace', fontSize: '14px', lineHeight: 1.6 }}
+                            value={lessonForm.contentHtml}
+                            onChange={(e) => handleLessonChange('contentHtml', e.target.value)}
+                            placeholder="Sử dụng Markdown. VD: &#10;# Tiêu đề&#10;```cli&#10;Switch> enable&#10;```&#10;> [!NOTE]&#10;> Nội dung chú ý"
+                          />
                         </div>
-                        <textarea
-                          className="acm-editor-textarea"
-                          rows={10}
-                          value={lessonForm.contentHtml}
-                          onChange={(e) => handleLessonChange('contentHtml', e.target.value)}
-                          placeholder="Nhập nội dung bài học tại đây"
-                        />
+                        <div className="acm-editor-preview" style={{ flex: 1, border: '1px solid #e2e8f0', borderRadius: '0.5rem', background: '#fff', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ borderBottom: '1px solid #e2e8f0', padding: '0.5rem 1rem', background: '#f8fafc', fontSize: '0.75rem', fontWeight: 600, color: '#64748b' }}>
+                            Xem trước (Live Preview)
+                          </div>
+                          <div 
+                            className="acm-preview-content" 
+                            style={{ padding: '1rem', overflowY: 'auto', maxHeight: '400px' }}
+                            dangerouslySetInnerHTML={{ __html: marked.parse(lessonForm.contentHtml || '') }}
+                          />
+                        </div>
                       </div>
                     </label>
-                    <small className="acm-field-hint">{lessonForm.contentHtml.length} ký tự</small>
+                    <small className="acm-field-hint">{lessonForm.contentHtml.length} ký tự (Lưu dạng Markdown)</small>
                   </div>
                 ) : null}
 

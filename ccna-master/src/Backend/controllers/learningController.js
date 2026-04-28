@@ -169,11 +169,16 @@ module.exports.createLab = async (req, res, next) => {
 
     if (req.files) {
       if (req.files.filePka) {
-        const uploadResult = await uploadBufferToCloudinary(req.files.filePka[0], {
-          folder: 'ccna/labs/files',
-          resourceType: 'auto'
-        });
-        fileUrl = uploadResult.secure_url;
+        const fs = require('fs');
+        const pathMod = require('path');
+        const { v4: uuidv4pkt } = require('uuid');
+        const pktFile = req.files.filePka[0];
+        const pktExt = pathMod.extname(pktFile.originalname || '').toLowerCase();
+        const pktName = `${uuidv4pkt()}${pktExt}`;
+        const pktDir = pathMod.join(__dirname, '../../uploads/labs');
+        if (!fs.existsSync(pktDir)) fs.mkdirSync(pktDir, { recursive: true });
+        fs.writeFileSync(pathMod.join(pktDir, pktName), pktFile.buffer);
+        fileUrl = `/uploads/labs/${pktName}`;
       }
       if (req.files.thumbnailImg) {
         const uploadResult = await uploadBufferToCloudinary(req.files.thumbnailImg[0], {
@@ -239,11 +244,16 @@ module.exports.updateLab = async (req, res, next) => {
 
     if (req.files) {
       if (req.files.filePka) {
-        const uploadResult = await uploadBufferToCloudinary(req.files.filePka[0], {
-          folder: 'ccna/labs/files',
-          resourceType: 'auto'
-        });
-        dataToUpdate.fileUrl = uploadResult.secure_url;
+        const fs = require('fs');
+        const pathMod = require('path');
+        const { v4: uuidv4pkt } = require('uuid');
+        const pktFile = req.files.filePka[0];
+        const pktExt = pathMod.extname(pktFile.originalname || '').toLowerCase();
+        const pktName = `${uuidv4pkt()}${pktExt}`;
+        const pktDir = pathMod.join(__dirname, '../../uploads/labs');
+        if (!fs.existsSync(pktDir)) fs.mkdirSync(pktDir, { recursive: true });
+        fs.writeFileSync(pathMod.join(pktDir, pktName), pktFile.buffer);
+        dataToUpdate.fileUrl = `/uploads/labs/${pktName}`;
       }
       if (req.files.thumbnailImg) {
         const uploadResult = await uploadBufferToCloudinary(req.files.thumbnailImg[0], {
@@ -533,15 +543,23 @@ module.exports.createResource = async (req, res, next) => {
     const { title, type, size, courseId } = req.body;
     if (!title || !req.file) return res.status(400).json({ message: 'Vui lòng nhập tên và chọn file' });
 
+    // Lưu file lên disk server — tránh phụ thuộc Cloudinary cho tài liệu
+    const fs = require('fs');
+    const pathMod = require('path');
+    const { v4: uuidv4local } = require('uuid');
+
+    const ext = pathMod.extname(req.file.originalname || '').toLowerCase();
+    const fileName = `${uuidv4local()}${ext}`;
+    const uploadDir = pathMod.join(__dirname, '../../uploads/resources');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    fs.writeFileSync(pathMod.join(uploadDir, fileName), req.file.buffer);
+
     const resource = await prisma.resource.create({
       data: {
         title,
-        type: type || req.file.mimetype.split('/')[1] || 'file',
+        type: type || ext.replace('.', '').toUpperCase() || 'FILE',
         size: size || `${(req.file.size / 1024).toFixed(0)} KB`,
-        fileUrl: (await uploadBufferToCloudinary(req.file, {
-          folder: 'ccna/resources/files',
-          resourceType: 'auto'
-        })).secure_url,
+        fileUrl: `/uploads/resources/${fileName}`,  // Lưu đường dẫn nội bộ
         courseId: courseId || null
       }
     });
@@ -554,5 +572,27 @@ module.exports.deleteResource = async (req, res, next) => {
     const { id } = req.params;
     await prisma.resource.delete({ where: { id: parseInt(id) } });
     res.json({ message: 'Xóa tài liệu thành công' });
+  } catch (error) { next(error); }
+};
+
+module.exports.downloadResource = async (req, res, next) => {
+  try {
+    const resource = await prisma.resource.findUnique({ where: { id: parseInt(req.params.id) } });
+    if (!resource || !resource.fileUrl) {
+      return res.status(404).json({ message: 'Không tìm thấy tài liệu' });
+    }
+
+    const pathMod = require('path');
+
+    // Nếu là file local (mới), dùng res.download()
+    if (resource.fileUrl.startsWith('/uploads/')) {
+      const ext = pathMod.extname(resource.fileUrl);
+      const downloadName = `${resource.title}${ext}`;
+      const filePath = pathMod.join(__dirname, '../../', resource.fileUrl);
+      return res.download(filePath, downloadName);
+    }
+
+    // Fallback cho file cũ trên Cloudinary: mở trong tab mới
+    return res.redirect(resource.fileUrl);
   } catch (error) { next(error); }
 };

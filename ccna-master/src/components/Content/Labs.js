@@ -8,6 +8,14 @@ import { api } from "../../services/Api.js";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../Toast";
 
+// Giải quyết URL file lab: local path hoặc Cloudinary URL
+const getLabFileUrl = (fileUrl) => {
+  if (!fileUrl || fileUrl === '#') return '#';
+  if (fileUrl.startsWith('http')) return fileUrl;
+  // File local: trỏ tới backend server
+  return `http://localhost:5000${fileUrl}`;
+};
+
 const CopyButton = ({ text }) => {
   const [copied, setCopied] = useState(false);
 
@@ -130,7 +138,7 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
                 <Download size={14} /> Tải file bài tập (.pka)
               </button>
             ) : (
-              <a href={lab.fileUrl || "#"} className="lab-download-btn" download>
+              <a href={getLabFileUrl(lab.fileUrl)} className="lab-download-btn" download>
                 <Download size={14} /> Tải file bài tập (.pka)
               </a>
             )}
@@ -237,7 +245,7 @@ const LabCard = ({ lab, isCompleted, onSelect, isGuestView, onGuestBlocked }) =>
               <Download size={14} /> Tải file
             </button>
           ) : (
-            <a href={lab.fileUrl || "#"} className="lab-btn-outline" download>
+            <a href={getLabFileUrl(lab.fileUrl)} className="lab-btn-outline" download>
               <Download size={14} /> Tải file
             </a>
           )}

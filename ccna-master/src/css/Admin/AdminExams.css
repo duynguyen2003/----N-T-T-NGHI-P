@@ -30,11 +30,11 @@
 
 .exam-hub-create-btn {
   border: none;
-  background: #1145d7;
+  background: #2563eb !important;
   color: #ffffff;
-  height: 50px;
+  height: 40px;
   border-radius: 13px;
-  padding: 0 20px;
+  padding: 0 15px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -47,7 +47,7 @@
 }
 
 .exam-hub-create-btn:hover {
-  background: #0f3fca;
+  background: #457bf3 !important;
 }
 
 .exam-hub-stats-grid {

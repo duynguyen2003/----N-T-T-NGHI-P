@@ -8,6 +8,7 @@ const upload = require('../middleware/upload');
 router.get('/courses', verifyToken, learningController.getCourses);
 router.get('/labs', verifyToken, learningController.getLabs);
 router.get('/resources', verifyToken, learningController.getResources);
+router.get('/resources/:id/download', verifyToken, learningController.downloadResource);
 
 // Admin Restricted
 router.use(verifyToken);

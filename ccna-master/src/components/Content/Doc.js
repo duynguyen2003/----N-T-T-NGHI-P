@@ -55,10 +55,14 @@ export const Resources = () => {
     fetchResources();
   }, [token]);
 
-  const getFileUrl = (url) => {
-    if (!url) return "#";
-    if (url.startsWith("http")) return url;
-    return `http://localhost:5000${url}`;
+  const getFileUrl = (item) => {
+    if (!item || !item.fileUrl) return "#";
+    // Nếu là mock data (id bắt đầu bằng 'm')
+    if (typeof item.id === 'string' && item.id.startsWith("m")) {
+      return item.fileUrl;
+    }
+    // File mới lưu local: dùng backend proxy download để đặt tên đúng
+    return `http://localhost:5000/api/learning/resources/${item.id}/download?token=${token}`;
   };
 
   // Hàm lấy Icon tương ứng với loại tài liệu
@@ -164,7 +168,7 @@ export const Resources = () => {
                 </div>
                 <div className="pinned-actions">
                   <span className="pinned-size">{item.size || "Unknown"}</span>
-                  <a href={getFileUrl(item.fileUrl)} target="_blank" rel="noreferrer" className="download-btn-icon">
+                  <a href={getFileUrl(item)} target="_blank" rel="noreferrer" className="download-btn-icon">
                     <Download size={16} />
                   </a>
                 </div>
@@ -206,7 +210,7 @@ export const Resources = () => {
                   </div>
                   <div className="col-size cell-flex-end">
                     <span className="item-size">{item.size || "N/A"}</span>
-                    <a href={getFileUrl(item.fileUrl)} target="_blank" rel="noreferrer" className="row-download-btn">
+                    <a href={getFileUrl(item)} target="_blank" rel="noreferrer" className="row-download-btn">
                       <Download size={18} />
                     </a>
                   </div>
