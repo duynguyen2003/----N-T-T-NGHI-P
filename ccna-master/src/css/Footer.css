@@ -4,14 +4,15 @@
 
 /* ── CSS Variables ─────────────────────────────────────────── */
 :root {
-  --footer-bg:           #181821;
-  --footer-border:       #2a2a38;
+  --footer-bg: #181821;
+  --footer-border: #2a2a38;
   --footer-text-primary: #ffffff;
-  --footer-text-muted:   #a9b3bb;
-  --footer-text-subtle:  #5a6370;
-  --footer-link-hover:   #1d9bf0; /* Cisco Blue */
-  --footer-logo-bg:      #2563eb;
-  --footer-divider:      #2a2a38;
+  --footer-text-muted: #a9b3bb;
+  --footer-text-subtle: #5a6370;
+  --footer-link-hover: #1d9bf0;
+  /* Cisco Blue */
+  --footer-logo-bg: #2563eb;
+  --footer-divider: #2a2a38;
 }
 
 /* ── Base ──────────────────────────────────────────────────── */

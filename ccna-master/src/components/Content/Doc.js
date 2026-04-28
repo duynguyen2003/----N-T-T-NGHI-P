@@ -29,7 +29,7 @@ export const Resources = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("Tất cả");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 3;
   const { token } = useAuth();
 
   useEffect(() => {

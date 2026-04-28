@@ -194,6 +194,9 @@ const LabGuideModal = ({ lab, onClose, onComplete, isGuestView, onGuestBlocked }
 };
 
 const difficultyConfig = {
+  EASY: { label: "Dễ", cls: "badge-easy" },
+  MEDIUM: { label: "Trung bình", cls: "badge-medium" },
+  HARD: { label: "Khó", cls: "badge-hard" },
   Easy: { label: "Dễ", cls: "badge-easy" },
   Medium: { label: "Trung bình", cls: "badge-medium" },
   Hard: { label: "Khó", cls: "badge-hard" }

@@ -1486,7 +1486,8 @@
 .efb-sticky-actions {
   position: fixed;
   bottom: 0;
-  left: 260px; /* Assuming sidebar width */
+  left: 260px;
+  /* Assuming sidebar width */
   right: 0;
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
@@ -1497,6 +1498,7 @@
   gap: 12px;
   z-index: 50;
 }
+
 @media (max-width: 992px) {
   .efb-sticky-actions {
     left: 0;
@@ -1527,4 +1529,4 @@
   border-color: #6366f1;
   color: #4f46e5;
   box-shadow: 0 1px 2px rgba(99, 102, 241, 0.1);
-}
+}
