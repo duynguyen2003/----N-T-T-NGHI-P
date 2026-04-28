@@ -88,12 +88,11 @@ const Resources = () => {
               <th>Tài liệu</th>
               <th>Loại</th>
               <th>Kích thước</th>
-              <th>Khóa học</th>
               <th>Hành động</th>
             </tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan="6" style={{textAlign: 'center'}}>Đang tải...</td></tr> :
+            {loading ? <tr><td colSpan="5" style={{textAlign: 'center'}}>Đang tải...</td></tr> :
              resources.length > 0 ? resources.map(r => (
               <tr key={r.id}>
                 <td>{r.id}</td>
@@ -110,10 +109,9 @@ const Resources = () => {
                 </td>
                 <td><span className="admin-badge student" style={{textTransform: 'uppercase'}}>{r.type}</span></td>
                 <td>{r.size || '—'}</td>
-                <td>{r.course?.code || '—'}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '5px' }}>
-                    <a href={`http://localhost:5000${r.fileUrl}`} target="_blank" rel="noreferrer" className="admin-action-btn" title="Tải xuống" style={{color: 'var(--admin-primary)'}}>
+                    <a href={r.fileUrl?.startsWith('http') ? r.fileUrl : `http://localhost:5000${r.fileUrl}`} target="_blank" rel="noreferrer" className="admin-action-btn" title="Tải xuống" style={{color: 'var(--admin-primary)'}}>
                       <FileDown size={16} />
                     </a>
                     <button className="admin-action-btn delete" title="Xóa" onClick={() => handleDelete(r.id)}>
@@ -123,7 +121,7 @@ const Resources = () => {
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan="6" style={{textAlign: 'center'}}>Chưa có tài liệu nào</td></tr>
+              <tr><td colSpan="5" style={{textAlign: 'center'}}>Chưa có tài liệu nào</td></tr>
             )}
           </tbody>
         </table>
@@ -144,25 +142,17 @@ const Resources = () => {
             <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Tên tài liệu *</label>
             <input className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} placeholder="VD: Slide Bài giảng Chương 1" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Loại file</label>
-              <select className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
-                <option value="">Tự nhận diện</option>
-                <option value="pdf">PDF</option>
-                <option value="doc">Word (doc/docx)</option>
-                <option value="pptx">PowerPoint</option>
-                <option value="xlsx">Excel</option>
-                <option value="png">Hình ảnh</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Thuộc khóa học</label>
-              <select className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} value={formData.courseId} onChange={e => setFormData({...formData, courseId: e.target.value})}>
-                <option value="">— Không chọn —</option>
-                {courses.map(c => <option key={c.id} value={c.id}>{c.code} — {c.title}</option>)}
-              </select>
-            </div>
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Loại file</label>
+            <select className="admin-search-input" style={{ width: '100%', boxSizing: 'border-box' }} value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})}>
+              <option value="">Tự nhận diện</option>
+              <option value="pdf">PDF</option>
+              <option value="Packet Tracer">Packet Tracer (.pkt)</option>
+              <option value="Slides">Slides (.pptx, .ppt)</option>
+              <option value="Video">Video (.mp4)</option>
+              <option value="doc">Word (.doc, .docx)</option>
+              <option value="xlsx">Excel (.xlsx)</option>
+            </select>
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '5px', color: 'var(--admin-text-secondary)' }}>Chọn file *</label>

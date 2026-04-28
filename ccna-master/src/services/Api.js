@@ -453,7 +453,23 @@ export const api = {
     }
   },
 
-  // 3. Lấy thông tin User (Profile)
+  // 3. Lấy danh sách tài liệu
+  getResources: async (token) => {
+    try {
+      const response = await fetch(`${API_URL}/learning/resources`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch resources');
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+      return { data: [] };
+    }
+  },
+
+  // 4. Lấy thông tin User (Profile)
   getUserProfile: async () => {
     try {
       // const response = await fetch(`${API_URL}/user/profile`);

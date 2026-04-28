@@ -17,6 +17,7 @@ import {
 import { adminApi } from '../../../services/api/adminApi';
 import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
+import UserProfileModal from './Components/UserProfileModal';
 import '../../../css/Admin/AdminViews.css';
 import '../../../css/Admin/AdminUsers.css';
 
@@ -58,6 +59,8 @@ const Users = () => {
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', role: 'STUDENT' });
   const [error, setError] = useState('');
   const [openFilter, setOpenFilter] = useState(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const filterMenuRef = useRef(null);
 
   useEffect(() => {
@@ -135,6 +138,15 @@ const Users = () => {
       fetchUsers();
     } catch (err) {
       setError(err.message);
+    }
+  };
+  const openUserProfile = async (userId) => {
+    try {
+      const userDetail = await adminApi.getUser(token, userId);
+      setSelectedUserProfile(userDetail);
+      setIsProfileModalOpen(true);
+    } catch (err) {
+      alert(err.message);
     }
   };
 
@@ -403,7 +415,7 @@ const Users = () => {
                   <td className="admin-users-id-cell">{user.id}</td>
 
                   <td>
-                    <div className="admin-users-user">
+                    <div className="admin-users-user" onClick={() => openUserProfile(user.id)} style={{ cursor: 'pointer' }}>
                       <div className="admin-users-avatar">{getInitials(user.fullName)}</div>
                       <div className="admin-users-user-meta">
                         <div className="admin-users-user-name">{user.fullName || 'Chưa có tên'}</div>
@@ -571,6 +583,13 @@ const Users = () => {
           </div>
         </div>
       </AdminModal>
+      <UserProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+        user={selectedUserProfile}
+        onArchive={handleToggleActive}
+        onEdit={(u) => alert('Chức năng chỉnh sửa thông tin đang được cập nhật')}
+      />
     </div>
   );
 };

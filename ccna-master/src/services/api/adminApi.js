@@ -45,6 +45,9 @@ export const adminApi = {
     return request(`${API_URL}/admin/users?${params}`, { headers: getHeaders(token) }, 'Lỗi lấy danh sách người dùng');
   },
 
+  getUser: (token, id) =>
+    request(`${API_URL}/admin/users/${id}`, { headers: getHeaders(token) }, 'Lỗi lấy thông tin người dùng'),
+
   createUser: (token, payload) =>
     request(`${API_URL}/admin/users`, {
       method: 'POST', headers: getHeaders(token), body: JSON.stringify(payload)

@@ -63,7 +63,17 @@ module.exports.getById = async (req, res, next) => {
       select: {
         id: true, fullName: true, email: true, role: true, 
         isActive: true, createdAt: true, lastLogin: true,
-        level: true, streak: true, totalStudyTime: true
+        level: true, streak: true, totalStudyTime: true,
+        progress: {
+          select: {
+            id: true,
+            progressPercent: true,
+            course: {
+              select: { id: true, title: true, level: true }
+            }
+          }
+        },
+        examResults: true
       }
     });
     if (!user || user.deletedAt) return res.status(404).json({ message: 'User not found' });

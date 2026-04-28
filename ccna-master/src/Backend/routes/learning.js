@@ -7,6 +7,7 @@ const upload = require('../middleware/upload');
 // Public (Requires Login)
 router.get('/courses', verifyToken, learningController.getCourses);
 router.get('/labs', verifyToken, learningController.getLabs);
+router.get('/resources', verifyToken, learningController.getResources);
 
 // Admin Restricted
 router.use(verifyToken);
@@ -49,7 +50,6 @@ router.post('/courses/:courseId/topics', learningController.createTopic);
 router.delete('/topics/:id', learningController.deleteTopic);
 
 // Resource (Tài liệu) management
-router.get('/resources', learningController.getResources);
 router.post('/resources', upload.single('file'), learningController.createResource);
 router.delete('/resources/:id', learningController.deleteResource);
 
