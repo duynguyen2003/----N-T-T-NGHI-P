@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Code2, Router, Shield, TerminalSquare } from 'lucide-react';
-import { A1, A4, A5 } from '../../image';
+import { A1, A2 } from '../../image';
 import course1 from '../../image/course1.jpg';
 import course2 from '../../image/course2.jpg';
 import course3 from '../../image/course3.jpg';
@@ -12,30 +12,7 @@ import { api } from '../../services/Api';
    STATIC DATA
 ================================= */
 
-const bannerData = [
-  {
-    image: A1,
-    title: "Chinh phục CCNA 200-301 cùng chúng tôi",
-    subtitle: "Bắt đầu hành trình trở thành Network Engineer.",
-    buttonText: "Bắt đầu ngay",
-    buttonLink: "/roadmap"
-  },
-  {
-    image: A4,
-    title: "Mô phỏng Cisco CLI Trực quan",
-    subtitle: "Thực hành gõ lệnh IOS chuẩn xác ngay trên trình duyệt mà không cần cài đặt.",
-    buttonText: "Vào phòng Lab",
-    buttonLink: "/labs"
-  },
-  {
-    image: A5,
-    title: "Luyện đề thi CCNA sát thực tế",
-    subtitle: "Hệ thống ngân hàng câu hỏi đa dạng kèm lời giải thích chi tiết.",
-    buttonText: "Thi thử ngay",
-    buttonLink: "/exam"
-  }
-];
-
+const bannerImages = [A1, A2,];
 const courseBackgrounds = [course1, course2, course3];
 
 // Icon mapping theo code khóa học
@@ -214,7 +191,7 @@ export const Home = () => {
   // Tự động chuyển banner
   useEffect(() => {
     const timer = setInterval(
-      () => setCurrent((prev) => (prev + 1) % bannerData.length),
+      () => setCurrent((prev) => (prev + 1) % bannerImages.length),
       5000
     );
     return () => clearInterval(timer);
@@ -245,11 +222,11 @@ export const Home = () => {
   }, []);
 
   const next = () =>
-    setCurrent((prev) => (prev + 1) % bannerData.length);
+    setCurrent((prev) => (prev + 1) % bannerImages.length);
 
   const prev = () =>
     setCurrent((prev) =>
-      (prev - 1 + bannerData.length) % bannerData.length
+      (prev - 1 + bannerImages.length) % bannerImages.length
     );
 
   const handleResumeLearning = () => {
@@ -280,29 +257,29 @@ export const Home = () => {
             <ChevronRight size={24} />
           </button>
 
-          {bannerData.map((item, i) => (
+          {bannerImages.map((img, i) => (
             <div
               key={i}
               className={`banner-slide ${i === current ? "active" : ""}`}
             >
               <div className="banner-text-content">
                 <h1 className="banner-title">
-                  {item.title}
+                  Chinh phục CCNA 200-301 cùng chúng tôi
                 </h1>
-                <p className="banner-subtitle">{item.subtitle}</p>
-                <Link to={item.buttonLink} className="btn-primary-compact">
-                  {item.buttonText} <ArrowRight size={18} style={{ marginLeft: '8px' }} />
+                <p className="banner-subtitle">Bắt đầu hành trình trở thành Network Engineer.</p>
+                <Link to="/roadmap" className="btn-primary-compact">
+                  Bắt đầu ngay <ArrowRight size={18} style={{ marginLeft: '8px' }} />
                 </Link>
               </div>
               <div
                 className="banner-image-content"
-                style={{ backgroundImage: `url(${item.image})` }}
+                style={{ backgroundImage: `url(${img})` }}
               ></div>
             </div>
           ))}
- 
+
           <div className="banner-indicators">
-            {bannerData.map((_, i) => (
+            {bannerImages.map((_, i) => (
               <button
                 key={i}
                 className={`indicator-dot ${i === current ? "active" : ""}`}
