@@ -9,6 +9,9 @@ router.get('/courses', verifyToken, learningController.getCourses);
 router.get('/labs', verifyToken, learningController.getLabs);
 router.get('/resources', verifyToken, learningController.getResources);
 router.get('/resources/:id/download', verifyToken, learningController.downloadResource);
+router.get('/courses/:courseId/modules', verifyToken, learningController.getModulesByCourse);
+router.get('/modules/:moduleId/lessons', verifyToken, learningController.getLessonsByModule);
+router.get('/courses/:courseId/topics', verifyToken, learningController.getTopicsByCourse);
 
 // Admin Restricted
 router.use(verifyToken);
@@ -34,19 +37,16 @@ router.put('/labs/:id', upload.fields([
 router.delete('/labs/:id', learningController.deleteLab);
 
 // Module (Chương) management
-router.get('/courses/:courseId/modules', learningController.getModulesByCourse);
 router.post('/courses/:courseId/modules', learningController.createModule);
 router.put('/modules/:id', learningController.updateModule);
 router.delete('/modules/:id', learningController.deleteModule);
 
 // Lesson (Bài học) management
-router.get('/modules/:moduleId/lessons', learningController.getLessonsByModule);
 router.post('/modules/:moduleId/lessons', learningController.createLesson);
 router.put('/lessons/:id', learningController.updateLesson);
 router.delete('/lessons/:id', learningController.deleteLesson);
 
 // CourseTopic (Chủ đề) management
-router.get('/courses/:courseId/topics', learningController.getTopicsByCourse);
 router.post('/courses/:courseId/topics', learningController.createTopic);
 router.delete('/topics/:id', learningController.deleteTopic);
 

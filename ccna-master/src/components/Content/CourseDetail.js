@@ -21,18 +21,20 @@ const MODULE_STATUS = {
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const [searchParams] = useSearchParams();
   const from = searchParams.get('from') || 'roadmap';
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('curriculum');
+  const [expandedModule, setExpandedModule] = useState(null);
 
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const allCourses = await api.getCourses();
+        const allCourses = await api.getCourses(token);
         const found = allCourses.find((c) => c.id === courseId);
         if (!found) throw new Error('Không tìm thấy khóa học này.');
         setCourse(found);
@@ -43,7 +45,7 @@ const CourseDetail = () => {
       }
     };
     fetchCourse();
-  }, [courseId]);
+  }, [courseId, token]);
 
   if (loading) {
     return (
@@ -168,12 +170,17 @@ const CourseDetail = () => {
                   const isNavigable = isAuthenticated && !isLocked;
                   const isCompleted = module.status === 'completed';
 
+                   const isExpanded = expandedModule === module.id;
+
                   return (
                     <div key={module.id} className="cdp-module-row" id={`module-row-${module.id}`}>
                       <div
                         className="cdp-module-row-header"
-                        style={{ opacity: isLocked ? 0.6 : 1, cursor: isNavigable ? 'pointer' : 'not-allowed' }}
-                        onClick={() => isNavigable && navigate(`/lesson?course=${courseId}`)}
+                        style={{ opacity: isLocked ? 0.6 : 1, cursor: isNavigable ? 'pointer' : 'default' }}
+                        onClick={() => {
+                          if (!isNavigable) return;
+                          setExpandedModule(isExpanded ? null : module.id);
+                        }}
                       >
                         {/* Number / status icon */}
                         <div
@@ -205,9 +212,39 @@ const CourseDetail = () => {
                           >
                             {st.label}
                           </span>
-                          {isNavigable && <ChevronRight size={15} color="#94a3b8" />}
+                          {isNavigable && (
+                            <div className={`cdp-chevron-icon ${isExpanded ? 'expanded' : ''}`}>
+                              <ChevronRight size={15} color="#94a3b8" />
+                            </div>
+                          )}
                         </div>
                       </div>
+
+                      {/* Lesson List (Accordion Content) */}
+                      {isExpanded && module.lessons && module.lessons.length > 0 && (
+                        <div className="cdp-lesson-list">
+                          {module.lessons.map((lesson, lIdx) => (
+                            <div 
+                              key={lesson.id} 
+                              className="cdp-lesson-item"
+                              onClick={() => navigate(`/lesson?course=${courseId}&lesson=${lesson.id}`)}
+                            >
+                              <div className="cdp-lesson-item-left">
+                                <span className="material-icons-round">play_circle</span>
+                                <span className="cdp-lesson-item-title">
+                                  {lesson.sectionNumber ? `${lesson.sectionNumber}. ` : `${lIdx + 1}. `}
+                                  {lesson.title}
+                                </span>
+                              </div>
+                              <div className="cdp-lesson-item-right">
+                                {lesson.videoDuration && (
+                                  <span className="cdp-lesson-duration">{lesson.videoDuration}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

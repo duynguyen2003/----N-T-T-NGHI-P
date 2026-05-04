@@ -73,6 +73,17 @@ export const AuthProvider = ({ children }) => {
     });
   }, []);
 
+  // Lắng nghe sự kiện token hết hạn từ Api.js
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+      // Tuỳ chọn: show toast (phụ thuộc vào implementation Toast ở UI)
+    };
+
+    window.addEventListener('unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('unauthorized', handleUnauthorized);
+  }, [logout]);
+
   const value = {
     user,
     token,

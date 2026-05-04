@@ -273,12 +273,14 @@ export const Labs = () => {
   const [selectedLab, setSelectedLab] = useState(null);
   const [completedLabs, setCompletedLabs] = useState([]);
 
+  const { token } = useAuth();
+
   useEffect(() => {
-    api.getLabs()
+    api.getLabs(token)
       .then((data) => setLabs(data))
       .catch((err) => console.error("Failed to load labs", err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   const filteredLabs = labs.filter((lab) => {
     const matchCat = filter === "All" || lab.category === filter;

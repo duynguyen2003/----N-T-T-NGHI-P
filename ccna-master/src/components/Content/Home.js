@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ChevronLeft, ChevronRight, Code2, Router, Shield, TerminalSquare } from 'lucide-react';
-import { A1, A2 } from '../../image';
+import { A1, A5, A4 } from '../../image';
 import course1 from '../../image/course1.jpg';
 import course2 from '../../image/course2.jpg';
 import course3 from '../../image/course3.jpg';
@@ -12,13 +12,34 @@ import { api } from '../../services/Api';
    STATIC DATA
 ================================= */
 
-const bannerImages = [A1, A2,];
+const bannerData = [
+  {
+    image: A1,
+    title: "Chinh phục CCNA 200-301 cùng chúng tôi",
+    subtitle: "Bắt đầu hành trình trở thành Network Engineer chuyên nghiệp.",
+    link: "/roadmap"
+  },
+  {
+    image: A5,
+    title: "Hệ thống luyện thi trắc nghiệm thông minh",
+    subtitle: "Ngân hàng câu hỏi cập nhật liên tục, sát với đề thi thực tế.",
+    link: "/exam"
+  },
+  {
+    image: A4,
+    title: "Thực hành Lab không giới hạn",
+    subtitle: "Rèn luyện kỹ năng cấu hình thực tế với hàng trăm bài Lab chất lượng.",
+    link: "/labs"
+  }
+];
 const courseBackgrounds = [course1, course2, course3];
 
 // Icon mapping theo code khóa học
 const COURSE_ICONS = {
   ITN: Code2,
+  SRW: Router,
   SRWE: Router,
+  ENA: Shield,
   ENSA: Shield,
 };
 const FALLBACK_ICON = TerminalSquare;
@@ -182,7 +203,7 @@ const StatsSection = () => {
  ================================= */
 
 export const Home = () => {
-  const { isAuthenticated } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
   const [courses, setCourses] = useState([]);
@@ -191,42 +212,47 @@ export const Home = () => {
   // Tự động chuyển banner
   useEffect(() => {
     const timer = setInterval(
-      () => setCurrent((prev) => (prev + 1) % bannerImages.length),
+      () => setCurrent((prev) => (prev + 1) % bannerData.length),
       5000
     );
     return () => clearInterval(timer);
   }, []);
 
-  // Lấy dữ liệu khóa học thực từ API (cùng nguồn với Roadmap)
+  // Lấy dữ liệu khóa học thực từ API và tiến độ người dùng
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
-        const data = await api.getCourses();
-        // Map sang định dạng Home cần
-        const mapped = data.map((c, idx) => ({
-          id: idx + 1,
-          courseId: c.id,          // ID thực để navigate
-          icon: COURSE_ICONS[c.code] || FALLBACK_ICON,
-          title: c.title,
-          desc: c.description,
-          progress: c.progress,
-          statusText: getStatusText(c.progress),
-          backgroundImage: courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
-        }));
+        const [data, progressMap] = await Promise.all([
+          api.getCourses(token),
+          isAuthenticated && token ? api.getUserProgress(token) : Promise.resolve({})
+        ]);
+        const mapped = data.map((c, idx) => {
+          const progress = progressMap[c.id] ?? c.progress ?? 0;
+          return {
+            id: idx + 1,
+            courseId: c.id,
+            icon: COURSE_ICONS[c.code] || FALLBACK_ICON,
+            title: c.title,
+            desc: c.description,
+            progress: progress,
+            statusText: getStatusText(progress),
+            backgroundImage: courseBackgrounds[idx] || courseBackgrounds[courseBackgrounds.length - 1],
+          };
+        });
         setCourses(mapped);
       } catch (err) {
-        console.error('Home: không thể tải dữ liệu khóa học', err);
+        console.error('Home: không thể tải dữ liệu', err);
       }
     };
-    fetchCourses();
-  }, []);
+    fetchData();
+  }, [token, isAuthenticated]);
 
   const next = () =>
-    setCurrent((prev) => (prev + 1) % bannerImages.length);
+    setCurrent((prev) => (prev + 1) % bannerData.length);
 
   const prev = () =>
     setCurrent((prev) =>
-      (prev - 1 + bannerImages.length) % bannerImages.length
+      (prev - 1 + bannerData.length) % bannerData.length
     );
 
   const handleResumeLearning = () => {
@@ -257,29 +283,29 @@ export const Home = () => {
             <ChevronRight size={24} />
           </button>
 
-          {bannerImages.map((img, i) => (
+          {bannerData.map((slide, i) => (
             <div
               key={i}
               className={`banner-slide ${i === current ? "active" : ""}`}
             >
               <div className="banner-text-content">
                 <h1 className="banner-title">
-                  Chinh phục CCNA 200-301 cùng chúng tôi
+                  {slide.title}
                 </h1>
-                <p className="banner-subtitle">Bắt đầu hành trình trở thành Network Engineer.</p>
-                <Link to="/roadmap" className="btn-primary-compact">
+                <p className="banner-subtitle">{slide.subtitle}</p>
+                <Link to={slide.link} className="btn-primary-compact">
                   Bắt đầu ngay <ArrowRight size={18} style={{ marginLeft: '8px' }} />
                 </Link>
               </div>
               <div
                 className="banner-image-content"
-                style={{ backgroundImage: `url(${img})` }}
+                style={{ backgroundImage: `url(${slide.image})` }}
               ></div>
             </div>
           ))}
 
           <div className="banner-indicators">
-            {bannerImages.map((_, i) => (
+            {bannerData.map((_, i) => (
               <button
                 key={i}
                 className={`indicator-dot ${i === current ? "active" : ""}`}

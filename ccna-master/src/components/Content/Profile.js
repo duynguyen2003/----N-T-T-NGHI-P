@@ -15,10 +15,45 @@ import {
   Flame,
   Target,
   BarChart2,
+  Loader2,
 } from "lucide-react";
-import api from "../../services/Api.js";
+import { api } from "../../services/Api.js";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Profile() {
+  const { token } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await api.getUserProfile(token);
+        setProfile(data);
+      } catch (error) {
+        console.error("Failed to fetch profile", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (token) fetchProfile();
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div className="profile-loading" style={{ minHeight: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Loader2 className="spin" size={32} color="#2563eb" />
+      </div>
+    );
+  }
+
+  if (!profile) return null;
+
+  // Giả lập hoặc tính toán các thông số chưa có trực tiếp từ profile API nếu cần
+  const recentActivities = profile.activities || [];
+  const badges = profile.badges || [];
+  const courseProgress = profile.progress || [];
+
   return (
     <div className="app">
       <div className="container">
@@ -29,15 +64,21 @@ export default function Profile() {
 
           <div className="header-content">
             <div className="user-info">
-              <div className="avatar">NM</div>
+              <div className="avatar">
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="avatar" />
+                ) : (
+                  profile.fullName?.charAt(0).toUpperCase() || "U"
+                )}
+              </div>
               <div>
                 <h1>
-                  Xin chào, Nguyễn Văn Mạng <span>👋</span>
+                  Xin chào, {profile.fullName} <span>👋</span>
                 </h1>
-                <p className="subtitle">Học viên CCNA • Level 5</p>
+                <p className="subtitle">Học viên CCNA • Level {profile.level || 1}</p>
                 <div className="streak">
                   <Flame size={16} />
-                  12 ngày streak
+                  {profile.streak || 0} ngày streak
                 </div>
               </div>
             </div>
@@ -46,14 +87,14 @@ export default function Profile() {
               <div className="progress-top">
                 <div>
                   <p>Tiến độ tổng thể</p>
-                  <div className="percent">45%</div>
+                  <div className="percent">{profile.totalProgress || 0}%</div>
                 </div>
                 <button className="primary-btn">
                   Tiếp tục học <ChevronRight size={18} />
                 </button>
               </div>
               <div className="progress-bar">
-                <div className="progress-fill" style={{ width: "45%" }}></div>
+                <div className="progress-fill" style={{ width: `${profile.totalProgress || 0}%` }}></div>
               </div>
             </div>
           </div>
@@ -68,35 +109,19 @@ export default function Profile() {
                 <h2>Tiến độ theo khóa học</h2>
               </div>
 
-              <div className="course">
-                <div className="course-row">
-                  <span>Introduction to Networks (ITN)</span>
-                  <span className="green">100%</span>
+              {courseProgress.length > 0 ? courseProgress.map((cp, idx) => (
+                <div className="course" key={idx}>
+                  <div className="course-row">
+                    <span>{cp.courseName || cp.courseId}</span>
+                    <span className="blue">{cp.progressPercent}%</span>
+                  </div>
+                  <div className="bar">
+                    <div className="fill blue-bg" style={{ width: `${cp.progressPercent}%` }}></div>
+                  </div>
                 </div>
-                <div className="bar">
-                  <div className="fill green-bg" style={{ width: "100%" }}></div>
-                </div>
-              </div>
-
-              <div className="course">
-                <div className="course-row">
-                  <span>Switching, Routing, Wireless (SRWE)</span>
-                  <span className="blue">35%</span>
-                </div>
-                <div className="bar">
-                  <div className="fill blue-bg" style={{ width: "35%" }}></div>
-                </div>
-              </div>
-
-              <div className="course">
-                <div className="course-row">
-                  <span>Enterprise, Security, Automation (ENSA)</span>
-                  <span className="gray">0%</span>
-                </div>
-                <div className="bar">
-                  <div className="fill gray-bg" style={{ width: "0%" }}></div>
-                </div>
-              </div>
+              )) : (
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Chưa có tiến độ khóa học nào.</p>
+              )}
             </div>
 
             {/* Recent Activity */}
@@ -106,23 +131,18 @@ export default function Profile() {
                 <h2>Hoạt động gần đây</h2>
               </div>
 
-              <div className="activity">
-                <FileText size={24} />
-                <div>
-                  <h3>Lab: OSPF Configuration</h3>
-                  <p>2 hours ago</p>
+              {recentActivities.length > 0 ? recentActivities.map((act) => (
+                <div className="activity" key={act.id}>
+                  {act.type === 'Lesson' ? <MonitorPlay size={24} /> : <FileText size={24} />}
+                  <div>
+                    <h3>{act.title}</h3>
+                    <p>{new Date(act.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <button>Xem lại</button>
                 </div>
-                <button>Xem lại</button>
-              </div>
-
-              <div className="activity">
-                <MonitorPlay size={24} />
-                <div>
-                  <h3>Lesson: VLAN Concepts</h3>
-                  <p>1 day ago</p>
-                </div>
-                <button>Xem lại</button>
-              </div>
+              )) : (
+                <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Chưa có hoạt động gần đây.</p>
+              )}
             </div>
           </div>
 
@@ -135,18 +155,14 @@ export default function Profile() {
               </div>
 
               <div className="achievement-grid">
-                <div className="achievement">
-                  <Zap size={20} />
-                  <span>Early Bird</span>
-                </div>
-                <div className="achievement">
-                  <Award size={20} />
-                  <span>Lab Master</span>
-                </div>
-                <div className="achievement">
-                  <Target size={20} />
-                  <span>Subnetting Hero</span>
-                </div>
+                {badges.length > 0 ? badges.map((badge, idx) => (
+                  <div className="achievement" key={idx}>
+                    <Zap size={20} />
+                    <span>{badge.badgeName}</span>
+                  </div>
+                )) : (
+                  <p style={{ color: '#64748b', fontSize: '0.9rem', gridColumn: 'span 3' }}>Chưa có thành tích.</p>
+                )}
               </div>
             </div>
 
@@ -160,19 +176,19 @@ export default function Profile() {
               <div className="stat">
                 <Clock size={20} />
                 <span>Thời gian học</span>
-                <strong>45h 20m</strong>
+                <strong>{Math.floor((profile.totalStudyTime || 0) / 60)}h {(profile.totalStudyTime || 0) % 60}m</strong>
               </div>
 
               <div className="stat">
                 <CheckCircle2 size={20} />
                 <span>Lab hoàn thành</span>
-                <strong>18/50</strong>
+                <strong>{profile.completedLabs || 0}/{profile.totalLabs || 50}</strong>
               </div>
 
               <div className="stat">
                 <Star size={20} />
                 <span>Điểm trung bình</span>
-                <strong className="blue">8.5</strong>
+                <strong className="blue">{profile.averageScore || 0}</strong>
               </div>
             </div>
           </div>

@@ -18,13 +18,54 @@ module.exports.getCourses = async (req, res, next) => {
         where: whereClause,
         skip,
         take: limit,
-        orderBy: { createdAt: 'desc' }
+        orderBy: { orderIndex: 'asc' },
+        include: {
+          modules: {
+            where: { deletedAt: null },
+            orderBy: { orderIndex: 'asc' },
+            include: {
+              lessons: {
+                where: { deletedAt: null },
+                orderBy: { orderIndex: 'asc' },
+                select: { id: true, title: true, videoDuration: true, sectionNumber: true, orderIndex: true }
+              },
+              exams: {
+                where: { status: 'OPEN', deletedAt: null },
+                include: {
+                  _count: { select: { questions: true } }
+                }
+              }
+            }
+          }
+        }
       }),
       prisma.course.count({ where: whereClause })
     ]);
 
+    // Tính toán tổng thời lượng cho từng khóa học
+    const coursesWithDuration = courses.map(course => {
+      let totalSeconds = 0;
+      course.modules.forEach(module => {
+        module.lessons.forEach(lesson => {
+          if (lesson.videoDuration) {
+            const parts = lesson.videoDuration.split(':').map(Number);
+            if (parts.length === 2) { // MM:SS
+              totalSeconds += (parts[0] || 0) * 60 + (parts[1] || 0);
+            } else if (parts.length === 3) { // HH:MM:SS
+              totalSeconds += (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+            }
+          }
+        });
+      });
+      
+      return {
+        ...course,
+        totalHours: totalSeconds > 0 ? Math.round((totalSeconds / 3600) * 10) / 10 : 0
+      };
+    });
+
     res.json({
-      data: courses,
+      data: coursesWithDuration,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {
@@ -50,6 +91,18 @@ module.exports.createCourse = async (req, res, next) => {
     }
 
     const courseId = id || code.toLowerCase().replace(/\s/g, '');
+
+    // Kiểm tra xem ID đã tồn tại chưa để tránh lỗi Unique constraint
+    const existingCourse = await prisma.course.findUnique({
+      where: { id: courseId }
+    });
+
+    if (existingCourse) {
+      return res.status(400).json({ 
+        message: `Mã khóa học "${code}" (ID: ${courseId}) đã tồn tại trong hệ thống. Vui lòng sử dụng mã khác hoặc chỉnh sửa khóa học hiện có.` 
+      });
+    }
+
     const course = await prisma.course.create({
       data: {
         id: courseId,

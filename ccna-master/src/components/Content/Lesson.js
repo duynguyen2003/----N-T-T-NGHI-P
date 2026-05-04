@@ -5,53 +5,30 @@ import {
    ChevronLeft, ChevronRight, Menu, FileText,
    AlertCircle, Download, CheckCircle, MessageSquare, Play, ArrowLeft
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { api } from '../../services/Api';
 
 const MOBILE_BREAKPOINT = 1024;
 const RESOURCE_BREAKPOINT = 1280;
-
-const initialLessons = [
-   {
-      id: 1,
-      section: 'Section 3.1',
-      title: 'Overview of VLANs',
-      videoUrl: 'https://www.youtube.com/watch?v=qiQR5rTSshw',
-      completed: true
-   },
-   {
-      id: 2,
-      section: 'Section 3.2',
-      title: 'VLAN Definitions',
-      videoUrl: 'https://www.youtube.com/embed/H8W9oMNSuwo?list=PLxbwE86jKRgMpuZuLBivzlM8s2Dk5lXBQ',
-      completed: false
-   },
-   {
-      id: 3,
-      section: 'Section 3.3',
-      title: 'Benefits of VLAN Design',
-      videoUrl: 'https://www.youtube.com/watch?v=qiQR5rTSshw',
-      completed: false
-   },
-   {
-      id: 4,
-      section: 'Section 3.4',
-      title: 'Knowledge Check',
-      videoUrl: 'https://www.youtube.com/watch?v=qiQR5rTSshw',
-      completed: false
-   }
-];
 
 const getViewportWidth = () => (
    typeof window === 'undefined' ? RESOURCE_BREAKPOINT : window.innerWidth
 );
 
 const extractIframeSrc = (value) => {
-   const match = value.match(/src=["']([^"']+)["']/i);
+   const match = value?.match(/src=["']([^"']+)["']/i);
    return match ? match[1] : value;
 };
 
 const normalizeVideoUrl = (value) => {
    if (!value) return '';
-   return extractIframeSrc(value.trim());
+   const trimmed = value.trim();
+   // Nếu là iframe embed code thì lấy src ra
+   if (trimmed.includes('<iframe')) {
+      return extractIframeSrc(trimmed);
+   }
+   // Trả về link YouTube trực tiếp (youtu.be, youtube.com)
+   return trimmed;
 };
 
 const defaultProgressState = () => ({
@@ -66,21 +43,20 @@ const Lesson = () => {
    const navigate = useNavigate();
    const [searchParams] = useSearchParams();
    const courseId = searchParams.get('course');
+   const { token } = useAuth();
 
    const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
    const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= MOBILE_BREAKPOINT);
    const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
-   const [selectedLessonId, setSelectedLessonId] = useState(2);
-   const [lessons, setLessons] = useState(initialLessons);
-   const [lessonProgress, setLessonProgress] = useState(() =>
-      initialLessons.reduce((accumulator, lesson) => {
-         accumulator[lesson.id] = {
-            ...defaultProgressState(),
-            completed: lesson.completed
-         };
-         return accumulator;
-      }, {})
-   );
+   
+   const [course, setCourse] = useState(null);
+   const [modules, setModules] = useState([]);
+   const [activeModule, setActiveModule] = useState(null);
+   const [lessons, setLessons] = useState([]);
+   const [selectedLessonId, setSelectedLessonId] = useState(null);
+   const [loading, setLoading] = useState(true);
+
+   const [lessonProgress, setLessonProgress] = useState({});
 
    const isMobile = viewportWidth < MOBILE_BREAKPOINT;
    const isCompact = viewportWidth < RESOURCE_BREAKPOINT;
@@ -92,12 +68,38 @@ const Lesson = () => {
    }, []);
 
    useEffect(() => {
-      setLeftOpen(!isMobile);
-   }, [isMobile]);
+      const initLesson = async () => {
+         if (!courseId || !token) return;
+         try {
+            setLoading(true);
+            // 1. Fetch Course & Modules
+            const courses = await api.getCourses(token);
+            const currentCourse = courses.find(c => c.id === courseId);
+            setCourse(currentCourse);
 
-   useEffect(() => {
-      setRightOpen(!isCompact);
-   }, [isCompact]);
+            const courseModules = await api.getModulesByCourse(token, courseId);
+            setModules(courseModules);
+
+            if (courseModules.length > 0) {
+               const firstModule = courseModules[0];
+               setActiveModule(firstModule);
+               
+               // 2. Fetch Lessons for the first module
+               const moduleLessons = await api.getLessonsByModule(token, firstModule.id);
+               setLessons(moduleLessons);
+               
+               if (moduleLessons.length > 0) {
+                  setSelectedLessonId(moduleLessons[0].id);
+               }
+            }
+         } catch (error) {
+            console.error("Error initializing lesson view:", error);
+         } finally {
+            setLoading(false);
+         }
+      };
+      initLesson();
+   }, [courseId, token]);
 
    const selectedLesson = useMemo(
       () => lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0],
@@ -178,7 +180,8 @@ const Lesson = () => {
    };
 
    const handleProgress = (lessonId, state) => {
-      const completed = state.played >= 0.95;
+      const playedRatio = state.played || 0;
+      const completed = playedRatio >= 0.95;
 
       setLessonProgress((currentProgress) => ({
          ...currentProgress,
@@ -192,16 +195,42 @@ const Lesson = () => {
       if (completed) {
          updateLessonCompletion(lessonId, true);
       }
-
-      console.log('onProgress', {
-         lessonId,
-         played: state.played,
-         playedSeconds: state.playedSeconds,
-         loaded: state.loaded,
-         loadedSeconds: state.loadedSeconds,
-         completed
-      });
    };
+
+   // Logic điều hướng bài học
+   const currentIndex = lessons.findIndex(l => l.id === selectedLessonId);
+   const hasPrev = currentIndex > 0;
+   const hasNext = currentIndex < lessons.length - 1;
+
+   const currentProgress = lessonProgress[selectedLessonId]?.played || 0;
+   const isNextDisabled = !hasNext || currentProgress < 0.7;
+
+   const handleNext = () => {
+      if (hasNext && !isNextDisabled) {
+         const nextLesson = lessons[currentIndex + 1];
+         handleSelectLesson(nextLesson.id);
+      }
+   };
+
+   const handlePrev = () => {
+      if (hasPrev) {
+         const prevLesson = lessons[currentIndex - 1];
+         handleSelectLesson(prevLesson.id);
+      }
+   };
+
+   if (loading) {
+      return <div className="lesson-loading">Đang tải nội dung bài học...</div>;
+   }
+
+   if (!selectedLesson) {
+      return (
+         <div className="lesson-error">
+            <h2>Không tìm thấy bài học</h2>
+            <button onClick={() => navigate('/roadmap')}>Quay lại Lộ trình</button>
+         </div>
+      );
+   }
 
    return (
       <div className="lesson-layout">
@@ -216,8 +245,8 @@ const Lesson = () => {
 
          <div className="lesson-sidebar" style={{ display: leftOpen ? 'block' : 'none' }}>
             <div className="ls-header">
-               <small className="ls-course-label">SRWE Course</small>
-               <h3 className="ls-module-title">Module 3: VLANs & Inter-VLAN Routing</h3>
+               <small className="ls-course-label">{course?.code} Course</small>
+               <h3 className="ls-module-title">{activeModule?.title}</h3>
                <div className="ls-progress-bg">
                   <div
                      className="ls-progress-bar"
@@ -233,7 +262,7 @@ const Lesson = () => {
 
                   return (
                      <div key={lesson.id} className="ls-section-item">
-                        <div className="ls-section-label">{lesson.section}</div>
+                        <div className="ls-section-label">Section {lesson.sectionNumber || lesson.orderIndex}</div>
                         <button
                            type="button"
                            className={`ls-section-btn ${isActive ? 'active' : ''}`}
@@ -244,9 +273,14 @@ const Lesson = () => {
                                  isActive ? <Play size={16} fill="currentColor" /> :
                                     <div className="ls-section-btn-icon-empty"></div>}
                            </div>
-                           <span className={`ls-section-btn-text ${isActive ? 'active' : ''}`}>
-                              {lesson.title}
-                           </span>
+                           <div className="ls-section-btn-content">
+                              <span className={`ls-section-btn-text ${isActive ? 'active' : ''}`}>
+                                 {lesson.title}
+                              </span>
+                              {lesson.videoDuration && (
+                                 <span className="ls-section-btn-duration">{lesson.videoDuration}</span>
+                              )}
+                           </div>
                         </button>
                      </div>
                   );
@@ -281,7 +315,9 @@ const Lesson = () => {
                            <span style={{ color: '#cbd5e1' }}>/</span>
                         </>
                      )}
-                     <span style={{ fontWeight: 500, color: '#0f172a' }}>{selectedLesson.section} — {selectedLesson.title}</span>
+                     <span style={{ fontWeight: 500, color: '#0f172a' }}>
+                        {selectedLesson.sectionNumber ? `Section ${selectedLesson.sectionNumber}` : `Lesson ${selectedLesson.orderIndex}`} — {selectedLesson.title}
+                     </span>
                   </div>
                </div>
                <div className="lc-topbar-right">
@@ -294,10 +330,22 @@ const Lesson = () => {
                   >
                      <FileText size={20} />
                   </button>
-                  <button type="button" className="btn lc-btn-prev">
+                  <button 
+                     type="button" 
+                     className="btn lc-btn-prev"
+                     onClick={handlePrev}
+                     disabled={!hasPrev}
+                     style={{ opacity: hasPrev ? 1 : 0.5, cursor: hasPrev ? 'pointer' : 'not-allowed' }}
+                  >
                      <ChevronLeft size={16} className="icon-mr-4" /> Trước
                   </button>
-                  <button type="button" className="btn btn-primary lc-btn-next">
+                  <button 
+                     type="button" 
+                     className={`btn btn-primary lc-btn-next ${isNextDisabled ? 'disabled' : ''}`}
+                     onClick={handleNext}
+                     disabled={isNextDisabled}
+                     title={!hasNext ? "Hết bài học" : (currentProgress < 0.7 ? "Bạn cần học ít nhất 70% để tiếp tục" : "")}
+                  >
                      Tiếp theo <ChevronRight size={16} className="icon-ml-4" />
                   </button>
                </div>
@@ -343,41 +391,11 @@ const Lesson = () => {
                   </div>
 
                   <div className="lc-text-content">
-                     <p className="lc-paragraph">
-                        VLAN (Virtual LAN) là một công nghệ cho phép chia một mạng vật lý thành nhiều mạng logic khác nhau. Điều này giúp tăng cường bảo mật, giảm kích thước miền broadcast và dễ dàng quản lý.
-                     </p>
-
-                     <h3 className="lc-heading">1. Default VLAN</h3>
-                     <p className="lc-sub-paragraph">
-                        VLAN mặc định trên Switch Cisco là VLAN 1. Tất cả các cổng của Switch mặc định thuộc về VLAN 1. Lưu ý: Không thể đổi tên hoặc xóa VLAN 1.
-                     </p>
-
-                     <h3 className="lc-heading">2. Data VLAN</h3>
-                     <p className="lc-sub-paragraph">
-                        Được cấu hình để mang lưu lượng người dùng (user generated traffic). Tách biệt thoại (Voice) và dữ liệu quản lý.
-                     </p>
-
-                     <div className="lc-alert-box">
-                        <h4 className="lc-alert-title">
-                           <AlertCircle size={20} className="icon-mr-8" />
-                           Best Practice
-                        </h4>
-                        <p className="lc-alert-text">
-                           Cisco khuyến nghị tách biệt lưu lượng Voice và Data. Voice traffic yêu cầu băng thông đảm bảo, ưu tiên (QoS) và độ trễ thấp dưới 150ms.
-                        </p>
-                     </div>
-
-                     <h3 className="lc-heading">Cấu hình mẫu (CLI)</h3>
-                     <pre className="lc-code-block">
-                        {`Switch > enable
-Switch# configure terminal
-Switch(config)# vlan 10
-Switch(config - vlan)# name Student
-Switch(config - vlan)# exit
-Switch(config)# interface range f0 / 1 - 10
-Switch(config -if-range)# switchport mode access
-Switch(config -if-range)# switchport access vlan 10`}
-                     </pre>
+                     {selectedLesson.contentHtml ? (
+                        <div dangerouslySetInnerHTML={{ __html: selectedLesson.contentHtml }} />
+                     ) : (
+                        <p className="lc-paragraph">Chưa có nội dung văn bản cho bài học này.</p>
+                     )}
                   </div>
                </div>
             </div>
@@ -390,22 +408,9 @@ Switch(config -if-range)# switchport access vlan 10`}
                <div>
                   <h4 className="rs-section-title">Tài liệu đính kèm</h4>
                   <div className="rs-resource-list">
-                     <button type="button" className="rs-resource-item">
-                        <FileText size={24} color="#ef4444" className="icon-mr-075" />
-                        <div className="rs-resource-info">
-                           <div className="rs-resource-name">Slide_VLANs.pdf</div>
-                           <div className="rs-resource-size">2.4 MB</div>
-                        </div>
-                        <Download size={16} color="#94a3b8" />
-                     </button>
-                     <button type="button" className="rs-resource-item">
-                        <div className="rs-pkt-icon">PKT</div>
-                        <div className="rs-resource-info">
-                           <div className="rs-resource-name">Lab_3.2_VLAN.pkt</div>
-                           <div className="rs-resource-size">156 KB</div>
-                        </div>
-                        <Download size={16} color="#94a3b8" />
-                     </button>
+                     <p style={{ fontSize: '0.85rem', color: '#64748b', padding: '0.5rem' }}>
+                        Chưa có tài liệu cho bài học này.
+                     </p>
                   </div>
                </div>
 
@@ -421,9 +426,9 @@ Switch(config -if-range)# switchport access vlan 10`}
                   <h4 className="rs-discussion-title">
                      <MessageSquare size={16} className="icon-mr-8" /> Thảo luận bài học
                   </h4>
-                  <p className="rs-discussion-text">Có 12 câu hỏi về bài học này.</p>
+                  <p className="rs-discussion-text">Bắt đầu thảo luận về bài học này.</p>
                   <button type="button" className="rs-discussion-btn">
-                     Xem thảo luận
+                     Gửi câu hỏi
                   </button>
                </div>
             </div>

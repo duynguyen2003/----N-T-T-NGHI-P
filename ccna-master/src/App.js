@@ -65,9 +65,9 @@ import VLSMCalculator from './components/Tools/VLSM_Calculator.js';
 import PortLookup from './components/Tools/PortLookup.js';
 import CiscoCliLookup from './components/Tools/CiscoCliLookup.js';
 
-// Global toast renderer - shows pending toasts from AuthContext after navigation
 function GlobalToastRenderer() {
   const { pendingToast, setPendingToast } = useAuth();
+  const [systemToast, setSystemToast] = React.useState(null);
 
   useEffect(() => {
     if (pendingToast) {
@@ -77,21 +77,68 @@ function GlobalToastRenderer() {
     }
   }, [pendingToast, setPendingToast]);
 
-  if (!pendingToast) return null;
+  useEffect(() => {
+    const handleOffline = () => setSystemToast({ type: 'error', message: 'Mất kết nối mạng. Ứng dụng có thể không hoạt động chính xác.' });
+    const handleOnline = () => setSystemToast({ type: 'success', message: 'Đã khôi phục kết nối mạng.' });
+    const handleApiError = (e) => setSystemToast({ type: 'error', message: e.detail || 'Lỗi máy chủ.' });
+
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('api_error', handleApiError);
+
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('api_error', handleApiError);
+    };
+  }, []);
+
+  const currentToast = pendingToast || systemToast;
+
+  if (!currentToast) return null;
 
   return (
     <Toast
-      key={pendingToast.message}
-      message={pendingToast.message}
-      type={pendingToast.type || 'success'}
-      duration={2500}
-      onClose={() => setPendingToast(null)}
+      key={currentToast.message + Date.now()}
+      message={currentToast.message}
+      type={currentToast.type || 'success'}
+      duration={3500}
+      onClose={() => {
+        if (pendingToast) setPendingToast(null);
+        if (systemToast) setSystemToast(null);
+      }}
     />
   );
 }
 
 
 function App() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ 
+        height: '100vh', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        flexDirection: 'column',
+        gap: '1rem',
+        color: '#64748b',
+        fontFamily: 'sans-serif'
+      }}>
+        <div className="acm-spin" style={{ 
+          width: '40px', 
+          height: '40px', 
+          border: '3px solid #e2e8f0', 
+          borderTopColor: '#2563eb', 
+          borderRadius: '50%' 
+        }}></div>
+        <p>Đang chuẩn bị dữ liệu...</p>
+      </div>
+    );
+  }
+
   return (
     <Router>
       <GlobalToastRenderer />

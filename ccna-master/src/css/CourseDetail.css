@@ -326,9 +326,79 @@
   color: #94a3b8;
 }
 
+/* Accordion Lesson List */
+.cdp-lesson-list {
+  background: #fdfdfd;
+  border-top: 1px solid #f1f5f9;
+  padding: 0.5rem 1.25rem 1rem 3.5rem; /* Indent to align with title */
+}
+
+.cdp-lesson-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0;
+  border-bottom: 1px dashed #f1f5f9;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.cdp-lesson-item:last-child {
+  border-bottom: none;
+}
+
+.cdp-lesson-item:hover {
+  color: #2563eb;
+}
+
+.cdp-lesson-item-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cdp-lesson-item-left .material-icons-round {
+  font-size: 18px;
+  color: #94a3b8;
+}
+
+.cdp-lesson-item:hover .cdp-lesson-item-left .material-icons-round {
+  color: #2563eb;
+}
+
+.cdp-lesson-item-title {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.cdp-lesson-item-right {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cdp-lesson-duration {
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.cdp-lesson-item-right .material-icons-round {
+  font-size: 16px;
+  color: #cbd5e1;
+}
+
+.cdp-chevron-icon {
+  transition: transform 0.3s;
+}
+
+.cdp-chevron-icon.expanded {
+  transform: rotate(90deg);
+}
+
 @media (max-width: 900px) {
   .cdp-layout { flex-direction: column; }
   .cdp-sidebar { width: 100%; position: static; }
   .cdp-competencies-grid { grid-template-columns: 1fr; }
   .cdp-hero-title { font-size: 1.5rem; }
+  .cdp-lesson-list { padding-left: 1.25rem; }
 }

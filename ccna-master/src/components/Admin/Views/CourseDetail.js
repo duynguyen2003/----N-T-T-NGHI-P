@@ -73,7 +73,7 @@ marked.setOptions({
 const stepLabels = ['Cơ bản', 'Nội dung', 'Rà soát'];
 
 const initialModuleForm = { title: '', description: '' };
-const initialLessonForm = { title: '', sectionNumber: '', contentHtml: '', videoUrl: '' };
+const initialLessonForm = { title: '', sectionNumber: '', contentHtml: '', videoUrl: '', videoDuration: '' };
 
 const isValidUrl = (value) => {
   if (!value) return true;
@@ -385,6 +385,7 @@ const CourseDetail = () => {
       title: lesson.title || '',
       sectionNumber: lesson.sectionNumber || '',
       videoUrl: lesson.videoUrl || '',
+      videoDuration: lesson.videoDuration || '',
       contentHtml: lesson.contentHtml || ''
     });
     setOpenModules((prev) => ({ ...prev, [moduleItem.id]: true }));
@@ -524,6 +525,7 @@ const CourseDetail = () => {
         title: lessonForm.title.trim(),
         sectionNumber: lessonForm.sectionNumber.trim(),
         videoUrl: lessonForm.videoUrl.trim(),
+        videoDuration: lessonForm.videoDuration.trim(),
         contentHtml: lessonForm.contentHtml
       };
 
@@ -749,6 +751,18 @@ const CourseDetail = () => {
 
                     <label className="acm-field">
                       <span>
+                        <Clock size={12} /> Thời lượng video
+                      </span>
+                      <input
+                        className="acm-input"
+                        value={lessonForm.videoDuration}
+                        onChange={(e) => handleLessonChange('videoDuration', e.target.value)}
+                        placeholder="VD: 10:30"
+                      />
+                    </label>
+
+                    <label className="acm-field">
+                      <span>
                         <AlignLeft size={12} /> Nội dung bài học (Markdown)
                       </span>
                       <div className="acm-editor-split" style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
@@ -795,6 +809,7 @@ const CourseDetail = () => {
                       <ReviewRow label="Section" value={lessonForm.sectionNumber || '(Tự sinh)'} mono />
                       <ReviewRow label="Module" value={activeModule.title} />
                       <ReviewRow label="Video URL" value={lessonForm.videoUrl || '—'} mono />
+                      <ReviewRow label="Thời lượng" value={lessonForm.videoDuration || '—'} />
                       <ReviewRow label="Độ dài nội dung" value={`${lessonForm.contentHtml.length} ký tự`} />
                     </div>
                     {!lessonForm.videoUrl && !lessonForm.contentHtml ? (

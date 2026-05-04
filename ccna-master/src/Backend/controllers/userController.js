@@ -101,6 +101,22 @@ module.exports.getProfileMe = async (req, res, next) => {
   }
 };
 
+module.exports.getUserProgress = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const progressList = await prisma.userProgress.findMany({
+      where: { userId: userId },
+      select: {
+        courseId: true,
+        progressPercent: true,
+      }
+    });
+    res.json({ data: progressList });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports.createUser = async (req, res, next) => {
   try {
     const { fullName, email, password, role } = req.body;

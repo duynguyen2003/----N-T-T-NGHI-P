@@ -11,12 +11,15 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { api } from '../../services/Api.js';
+import { useAuth } from '../../context/AuthContext';
 import '../../css/Roadmap.css';
 
 // Màu gradient cho từng khóa học
 const COURSE_GRADIENTS = {
   ITN:  { gradient: 'linear-gradient(135deg, #1d4ed8, #0ea5e9)', light: '#eff6ff', text: '#1d4ed8' },
+  SRW:  { gradient: 'linear-gradient(135deg, #6d28d9, #7c3aed)', light: '#f5f3ff', text: '#6d28d9' },
   SRWE: { gradient: 'linear-gradient(135deg, #6d28d9, #7c3aed)', light: '#f5f3ff', text: '#6d28d9' },
+  ENA:  { gradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', light: '#fdf4ff', text: '#7c3aed' },
   ENSA: { gradient: 'linear-gradient(135deg, #7c3aed, #a855f7)', light: '#fdf4ff', text: '#7c3aed' },
 };
 
@@ -24,23 +27,31 @@ const DEFAULT_GRADIENT = { gradient: 'linear-gradient(135deg, #2563eb, #60a5fa)'
 
 export const Roadmap = () => {
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
       try {
-        const data = await api.getCourses();
-        setCourses(data);
+        const [data, progressMap] = await Promise.all([
+          api.getCourses(token),
+          token ? api.getUserProgress(token) : Promise.resolve({})
+        ]);
+        const coursesWithProgress = data.map(course => ({
+          ...course,
+          progress: progressMap[course.id] ?? course.progress ?? 0
+        }));
+        setCourses(coursesWithProgress);
       } catch (err) {
         setError('Không thể tải dữ liệu lộ trình.');
       } finally {
         setLoading(false);
       }
     };
-    fetchCourses();
-  }, []);
+    fetchData();
+  }, [token]);
 
   const handleViewCourse = (courseId) => {
     navigate(`/course/${courseId}?from=roadmap`);

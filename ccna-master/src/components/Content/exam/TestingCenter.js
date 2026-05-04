@@ -1,72 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../Toast';
+import { api } from '../../../services/Api';
 import '../../../css/ExamFlow.css';
 
-// ─── Mock Data ────────────────────────────────────────────────
-const MODULES = [
-  {
-    id: 'm1',
-    icon: '⚙️',
-    color: '#2563eb',
-    bg: '#eff6ff',
-    title: 'Module 1: Network Fundamentals',
-    meta: '4 Bài tập • 65 Câu hỏi tổng cộng',
-    quizzes: [
-      { id: 'q1', code: 'OSI', label: 'Quiz 1.1: OSI Model & TCP/IP', info: '10 câu hỏi · 15 phút', score: '8/10', scoreLabel: 'ĐIỂM CAO NHẤT' },
-      { id: 'q2', code: 'CAB', label: 'Quiz 1.2: Cabling & Interfaces', info: '15 câu hỏi · 20 phút', score: null, scoreLabel: 'TRẠNG THÁI', scoreSub: 'Chưa làm' },
-    ],
-  },
-  {
-    id: 'm2',
-    icon: '🔌',
-    color: '#059669',
-    bg: '#ecfdf5',
-    title: 'Module 2: IP Connectivity',
-    meta: '6 Bài tập • 120 Câu hỏi tổng cộng',
-    quizzes: [],
-  },
-  {
-    id: 'm3',
-    icon: '🛡️',
-    color: '#94a3b8',
-    bg: '#f1f5f9',
-    title: 'Module 3: IP Services & Security',
-    meta: '5 Bài tập • 85 Câu hỏi tổng cộng',
-    locked: true,
-    quizzes: [],
-  },
-];
 
-const MOCK_EXAMS = [
-  { id: 'mock-01', title: 'Mock Exam 01', badge: 'KHÓ', badgeClass: 'badge-hard', icon: '⚙️', meta: ['120 phút', '100 câu hỏi', 'Bao gồm bài thực hành mô phỏng'] },
-  { id: 'mock-02', title: 'Mock Exam 02', badge: 'TRUNG BÌNH', badgeClass: 'badge-intermediate', icon: '📄', meta: ['120 phút', '100 câu hỏi', 'Trọng tâm: Kết nối IP'] },
-  { id: 'mock-03', title: 'Mock Exam 03', badge: 'KHÓ', badgeClass: 'badge-hard', icon: '🛡️', meta: ['120 phút', '100 câu hỏi', 'Trọng tâm: Bảo mật cơ bản'] },
-];
-
-const MOCK_HISTORY_DATA = {
-  'mock-01': [
-    { id: 'att-101', attempt: 1, date: '10/04/2026 - 14:30', score: 650, pass: false, timeUsed: '85:10' },
-    { id: 'att-102', attempt: 2, date: '12/04/2026 - 09:15', score: 850, pass: true, timeUsed: '72:45' },
-  ],
-  'mock-02': [
-    { id: 'att-201', attempt: 1, date: '13/04/2026 - 10:00', score: 920, pass: true, timeUsed: '45:00' },
-  ]
-};
 
 // ─── Component ────────────────────────────────────────────────
 const TestingCenter = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const { showToast, ToastComponent } = useToast();
   const isGuest = !isAuthenticated;
+
+  const [practiceModules, setPracticeModules] = useState([]);
+  const [exams, setExams] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('practice'); // 'practice' | 'mock'
-  const [expandedModule, setExpandedModule] = useState('m1');
+  const [expandedModule, setExpandedModule] = useState(null);
 
   // Modal State
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [selectedExamId, setSelectedExamId] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // 1. Lấy toàn bộ Course (đã bao gồm Modules và Exams theo chương)
+        const coursesData = await api.getCourses(token);
+        
+        // 2. Lấy toàn bộ Exams (cho tab Thi thử CCNA)
+        const examsData = await api.getExams(token);
+        setExams(examsData);
+
+        // 3. Chuyển đổi dữ liệu từ Course -> Modules -> Quizzes (Practice)
+        const allModules = [];
+        const colors = ['#2563eb', '#059669', '#8b5cf6', '#f59e0b', '#ef4444'];
+        const bgs = ['#eff6ff', '#ecfdf5', '#f5f3ff', '#fffbeb', '#fef2f2'];
+        
+        coursesData.forEach((course, cIdx) => {
+          (course.modules || []).forEach((mod, mIdx) => {
+            if (mod.exams && mod.exams.length > 0) {
+              allModules.push({
+                id: mod.id,
+                icon: '⚙️', // Có thể cải tiến lấy icon theo khóa học
+                color: colors[cIdx % colors.length],
+                bg: bgs[cIdx % bgs.length],
+                title: `${course.code} - ${mod.title}`,
+                meta: `${mod.exams.length} Bài tập ôn luyện`,
+                quizzes: mod.exams.map(ex => ({
+                  id: ex.id.toString(),
+                  code: ex.examCode || 'EX',
+                  label: ex.title,
+                  info: `${ex._count?.questions || ex.totalQuestions} câu hỏi · ${ex.durationMinutes} phút`,
+                  score: null, // Sẽ tích hợp lịch sử sau
+                  scoreLabel: 'TRẠNG THÁI',
+                  scoreSub: 'Chưa làm'
+                }))
+              });
+            }
+          });
+        });
+        
+        setPracticeModules(allModules);
+        if (allModules.length > 0) setExpandedModule(allModules[0].id);
+
+      } catch (error) {
+        console.error("Failed to fetch testing center data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [token]);
 
   const handleStartExam = (examId) => {
     if (isGuest) {
@@ -97,18 +105,25 @@ const TestingCenter = () => {
         total: 100,
         pass: attempt.pass,
         timeUsed: attempt.timeUsed,
-        examTitle: MOCK_EXAMS.find(e => e.id === selectedExamId)?.title,
+        examTitle: exams.find(e => e.id === selectedExamId)?.title,
       } 
     });
   };
 
-  const selectedExamData = MOCK_EXAMS.find(e => e.id === selectedExamId);
-  const currentHistoryList = selectedExamId ? (MOCK_HISTORY_DATA[selectedExamId] || []) : [];
+  const selectedExamData = exams.find(e => e.id === selectedExamId);
+  const currentHistoryList = []; // TODO: Fetch from API history
 
   return (
     <div className="tc-page">
       {ToastComponent}
       <div className="tc-container">
+        
+        {loading && (
+          <div className="tc-loading-overlay">
+            <div className="tc-spinner"></div>
+            <p>Đang tải danh sách kỳ thi...</p>
+          </div>
+        )}
 
         {/* Hero */}
         <div className="tc-hero">
@@ -137,24 +152,25 @@ const TestingCenter = () => {
         {/* ── Tab 1: Practice by Chapter ── */}
         {activeTab === 'practice' && (
           <div className="tc-module-list">
-            {MODULES.map((mod) => (
-              <div key={mod.id} className="tc-module-card">
-                <div className="tc-module-header" onClick={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <div className="tc-module-icon" style={{ background: mod.bg, color: mod.color }}>
-                      {mod.locked ? '🔒' : mod.icon}
+            {practiceModules.length > 0 ? (
+              practiceModules.map((mod) => (
+                <div key={mod.id} className="tc-module-card">
+                  <div className="tc-module-header" onClick={() => setExpandedModule(expandedModule === mod.id ? null : mod.id)}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div className="tc-module-icon" style={{ background: mod.bg, color: mod.color }}>
+                        {mod.locked ? '🔒' : mod.icon}
+                      </div>
+                      <div className="tc-module-info">
+                        <h3>{mod.title}</h3>
+                        <span>{mod.meta}</span>
+                      </div>
                     </div>
-                    <div className="tc-module-info">
-                      <h3>{mod.title}</h3>
-                      <span>{mod.meta}</span>
+                    <div className="tc-module-meta">
+                      <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>
+                        {expandedModule === mod.id ? '▲' : '▼'}
+                      </span>
                     </div>
                   </div>
-                  <div className="tc-module-meta">
-                    <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>
-                      {expandedModule === mod.id ? '▲' : '▼'}
-                    </span>
-                  </div>
-                </div>
 
                 {expandedModule === mod.id && !mod.locked && mod.quizzes.length > 0 && (
                   <div className="tc-quiz-list">
@@ -190,25 +206,29 @@ const TestingCenter = () => {
                     ))}
                   </div>
                 )}
+                </div>
+              ))
+            ) : (
+              <div className="tc-empty-state">
+                <div className="tc-empty-state-icon">📚</div>
+                <h3>Chưa có bài tập luyện tập</h3>
+                <p>Dữ liệu đang được cập nhật. Vui lòng quay lại sau!</p>
               </div>
-            ))}
+            )}
           </div>
         )}
 
         {/* ── Tab 2: Mock CCNA Exams ── */}
         {activeTab === 'mock' && (
           <div className="tc-mock-grid">
-            {MOCK_EXAMS.map((exam) => (
+            {exams.map((exam) => (
               <div key={exam.id} className="tc-mock-card">
-                <span className={`tc-mock-card__badge ${exam.badgeClass}`}>{exam.badge}</span>
-                <div className="tc-mock-card__icon">{exam.icon}</div>
+                <span className={`tc-mock-card__badge badge-${exam.difficulty?.toLowerCase()}`}>{exam.difficulty}</span>
+                <div className="tc-mock-card__icon">📄</div>
                 <h3>{exam.title}</h3>
                 <ul className="tc-mock-card__meta">
-                  {exam.meta.map((m, i) => (
-                    <li key={i}>
-                      <span>⏱</span>{m}
-                    </li>
-                  ))}
+                    <li><span>⏱</span>{exam.duration} phút</li>
+                    <li><span>❓</span>{exam.totalQuestions} câu hỏi</li>
                 </ul>
                 <div className="tc-mock-card__actions">
                   <button
