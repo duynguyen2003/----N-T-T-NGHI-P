@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/Api';
+import MarkdownRenderer from '../Common/MarkdownRenderer';
 
 const MOBILE_BREAKPOINT = 1024;
 const RESOURCE_BREAKPOINT = 1280;
@@ -80,11 +81,25 @@ const Lesson = () => {
             const courseModules = await api.getModulesByCourse(token, courseId);
             setModules(courseModules);
 
+            // 2. Fetch User Progress for this course
+            const progress = await api.getUserProgress(token);
+            const initialProgress = {};
+            (progress._raw || []).forEach(p => {
+               if (p.lessonId) {
+                  initialProgress[p.lessonId] = {
+                     played: (p.progressPercent || 0) / 100,
+                     playedSeconds: 0,
+                     completed: p.status === 'COMPLETED'
+                  };
+               }
+            });
+            setLessonProgress(initialProgress);
+
             if (courseModules.length > 0) {
                const firstModule = courseModules[0];
                setActiveModule(firstModule);
                
-               // 2. Fetch Lessons for the first module
+               // 3. Fetch Lessons for the first module
                const moduleLessons = await api.getLessonsByModule(token, firstModule.id);
                setLessons(moduleLessons);
                
@@ -100,6 +115,8 @@ const Lesson = () => {
       };
       initLesson();
    }, [courseId, token]);
+
+   const lastSyncRef = React.useRef({});
 
    const selectedLesson = useMemo(
       () => lessons.find((lesson) => lesson.id === selectedLessonId) ?? lessons[0],
@@ -176,7 +193,15 @@ const Lesson = () => {
          }
       }));
       updateLessonCompletion(lessonId, true);
-      console.log('onEnded', { lessonId, completed: true });
+      
+      // Sync completion to backend
+      api.updateUserProgress(token, {
+         courseId,
+         moduleId: activeModule?.id,
+         lessonId,
+         progressPercent: 100,
+         status: 'COMPLETED'
+      }).catch(err => console.error("Failed to sync final progress:", err));
    };
 
    const handleProgress = (lessonId, state) => {
@@ -194,6 +219,25 @@ const Lesson = () => {
 
       if (completed) {
          updateLessonCompletion(lessonId, true);
+      }
+
+      // Sync to backend every 10% or when completed, with at least 5s between syncs
+      const lastSync = lastSyncRef.current[lessonId] || { percent: 0, time: 0 };
+      const currentPercent = Math.round(playedRatio * 100);
+      const now = Date.now();
+
+      if (
+         (currentPercent >= lastSync.percent + 10 || (completed && !lastSync.completed)) && 
+         (now - lastSync.time > 5000)
+      ) {
+         lastSyncRef.current[lessonId] = { percent: currentPercent, time: now, completed };
+         api.updateUserProgress(token, {
+            courseId,
+            moduleId: activeModule?.id,
+            lessonId,
+            progressPercent: currentPercent,
+            status: completed ? 'COMPLETED' : 'ACTIVE'
+         }).catch(err => console.error("Failed to sync progress:", err));
       }
    };
 
@@ -392,7 +436,7 @@ const Lesson = () => {
 
                   <div className="lc-text-content">
                      {selectedLesson.contentHtml ? (
-                        <div dangerouslySetInnerHTML={{ __html: selectedLesson.contentHtml }} />
+                        <MarkdownRenderer content={selectedLesson.contentHtml} />
                      ) : (
                         <p className="lc-paragraph">Chưa có nội dung văn bản cho bài học này.</p>
                      )}

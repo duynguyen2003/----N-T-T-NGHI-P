@@ -64,9 +64,19 @@ export default function Profile() {
 
           <div className="header-content">
             <div className="user-info">
-              <div className="avatar">
+              <div className="profile-avatar">
                 {profile.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="avatar" />
+                  <img 
+                    src={profile.avatarUrl.startsWith('http') 
+                      ? profile.avatarUrl 
+                      : `http://localhost:5000${profile.avatarUrl.startsWith('/') ? '' : '/'}${profile.avatarUrl}`
+                    } 
+                    alt="avatar" 
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.parentElement.innerText = profile.fullName?.charAt(0).toUpperCase() || "U";
+                    }}
+                  />
                 ) : (
                   profile.fullName?.charAt(0).toUpperCase() || "U"
                 )}

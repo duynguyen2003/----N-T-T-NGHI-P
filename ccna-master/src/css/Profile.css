@@ -101,6 +101,29 @@ body {
   border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  background: #2563eb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  color: white;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
 /* PROGRESS BOX */
 .progress-box {
   background: rgba(30, 41, 59, 0.6);

@@ -219,7 +219,7 @@ export const api = {
 
   getUserProfile: async (token) => {
     try {
-      const json = await apiFetch("/users/profile", token);
+      const json = await apiFetch("/users/profile/me", token);
       return json.data;
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -230,14 +230,35 @@ export const api = {
   getUserProgress: async (token) => {
     try {
       const json = await apiFetch("/users/progress", token);
-      const progressMap = {};
+      const progressMap = { _raw: json.data || [] };
       (json.data || []).forEach(p => {
-        progressMap[p.courseId] = p.progressPercent || 0;
+        if (!p.moduleId && !p.lessonId && !p.labId) {
+          progressMap[p.courseId] = p.progressPercent || 0;
+        }
+        if (p.lessonId) {
+          progressMap[`lesson_${p.lessonId}`] = {
+            percent: p.progressPercent || 0,
+            status: p.status,
+            completedAt: p.completedAt
+          };
+        }
       });
       return progressMap;
     } catch (error) {
       console.error("Error fetching progress:", error);
-      return {};
+      return { _raw: [] };
+    }
+  },
+
+  updateUserProgress: async (token, progressData) => {
+    try {
+      return await apiFetch("/users/progress", token, {
+        method: "POST",
+        body: JSON.stringify(progressData),
+      });
+    } catch (error) {
+      console.error("Error updating progress:", error);
+      throw error;
     }
   },
 

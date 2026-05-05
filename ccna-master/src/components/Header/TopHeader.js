@@ -77,7 +77,17 @@ const TopHeader = () => {
                                     <img
                                         alt="User avatar"
                                         className="avatar"
-                                        src={user.avatarUrl}
+                                        src={user.avatarUrl.startsWith('http') 
+                                            ? user.avatarUrl 
+                                            : `http://localhost:5000${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}`
+                                        }
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            const fallback = document.createElement('div');
+                                            fallback.className = 'avatar avatar-initials';
+                                            fallback.innerText = getInitials(user?.fullName);
+                                            e.target.parentElement.appendChild(fallback);
+                                        }}
                                     />
                                 ) : (
                                     <div className="avatar avatar-initials">

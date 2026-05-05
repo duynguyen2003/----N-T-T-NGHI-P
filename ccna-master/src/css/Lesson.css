@@ -288,7 +288,7 @@
 }
 
 .lc-title {
-    font-size: 2rem;
+    font-size: 24px;
     font-weight: bold;
     color: #0f172a;
     margin-bottom: 1.5rem;
@@ -318,26 +318,73 @@
 }
 
 .lc-alert-box {
-    background: #eff6ff;
-    border-left: 4px solid #2563eb;
-    padding: 1.5rem;
+    background: #f8fafc;
+    border-left: 4px solid #64748b;
+    padding: 1.25rem 1.5rem;
     border-radius: 0.5rem;
-    margin: 2rem 0;
+    margin: 1.5rem 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
+
+/* NOTE - Blue */
+.lc-alert-box.note {
+    background: #eff6ff;
+    border-left-color: #3b82f6;
+}
+.lc-alert-box.note .lc-alert-title { color: #1d4ed8; }
+.lc-alert-box.note .lc-alert-text { color: #1e40af; }
+
+/* TIP - Green */
+.lc-alert-box.tip {
+    background: #f0fdf4;
+    border-left-color: #22c55e;
+}
+.lc-alert-box.tip .lc-alert-title { color: #15803d; }
+.lc-alert-box.tip .lc-alert-text { color: #166534; }
+
+/* WARNING - Amber */
+.lc-alert-box.warning {
+    background: #fffbeb;
+    border-left-color: #f59e0b;
+}
+.lc-alert-box.warning .lc-alert-title { color: #b45309; }
+.lc-alert-box.warning .lc-alert-text { color: #92400e; }
+
+/* IMPORTANT - Purple */
+.lc-alert-box.important {
+    background: #faf5ff;
+    border-left-color: #a855f7;
+}
+.lc-alert-box.important .lc-alert-title { color: #7e22ce; }
+.lc-alert-box.important .lc-alert-text { color: #6b21a8; }
+
+/* CAUTION - Red */
+.lc-alert-box.caution {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+}
+.lc-alert-box.caution .lc-alert-title { color: #b91c1c; }
+.lc-alert-box.caution .lc-alert-text { color: #991b1b; }
 
 .lc-alert-title {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    color: #1e3a8a;
-    font-weight: bold;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
     margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .lc-alert-text {
     margin: 0;
-    color: #1e40af;
-    font-size: 0.9rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.lc-alert-text p:last-child {
+    margin-bottom: 0;
 }
 
 .lc-code-block {

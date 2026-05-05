@@ -31,44 +31,7 @@ import { AuthContext } from '../../../context/AuthContext';
 import AdminModal from '../Components/AdminModal';
 import '../../../css/Admin/AdminViews.css';
 import '../../../css/Lesson.css';
-import { marked } from 'marked';
-
-// Configure custom markdown renderer
-const renderer = new marked.Renderer();
-renderer.code = function({ text, lang }) {
-  // Nếu không chỉ định ngôn ngữ hoặc là cli/cisco, mặc định dùng khung CLI màu đen
-  if (!lang || lang === 'cli' || lang === 'cisco') {
-    return `<pre class="lc-code-block">\n${text}\n</pre>\n`;
-  }
-  return `<pre><code>${text}</code></pre>\n`;
-};
-renderer.blockquote = function({ text, tokens }) {
-  if (text && (text.includes('[!NOTE]') || text.includes('[!WARNING]') || text.includes('[!BEST-PRACTICE]'))) {
-    const isWarning = text.includes('[!WARNING]');
-    const title = isWarning ? 'Lưu ý quan trọng' : 'Best Practice / Ghi chú';
-    const icon = isWarning ? '⚠️' : '💡';
-    
-    // Parse the inner tokens to HTML
-    const bodyHtml = this.parser.parse(tokens);
-    
-    const cleanedText = bodyHtml
-      .replace(/<p>\[!(?:NOTE|WARNING|BEST-PRACTICE)\]/g, '<p>')
-      .replace(/<\/p>\s*$/, '</p>');
-
-    return `<div class="lc-alert-box ${isWarning ? 'warning' : ''}" style="margin-top: 1rem; margin-bottom: 1rem;">
-              <h4 class="lc-alert-title" style="display:flex; align-items:center; gap:0.5rem; font-weight:700;">${icon} ${title}</h4>
-              <div class="lc-alert-text">${cleanedText}</div>
-            </div>`;
-  }
-  const bodyHtml = this.parser.parse(tokens);
-  return `<blockquote>\n${bodyHtml}</blockquote>\n`;
-};
-
-marked.setOptions({
-  renderer,
-  breaks: true,
-  gfm: true
-});
+import MarkdownRenderer from '../../Common/MarkdownRenderer';
 
 const stepLabels = ['Cơ bản', 'Nội dung', 'Rà soát'];
 
@@ -790,8 +753,9 @@ const CourseDetail = () => {
                           <div 
                             className="acm-preview-content" 
                             style={{ padding: '1rem', overflowY: 'auto', maxHeight: '400px' }}
-                            dangerouslySetInnerHTML={{ __html: marked.parse(lessonForm.contentHtml || '') }}
-                          />
+                          >
+                            <MarkdownRenderer content={lessonForm.contentHtml || ''} />
+                          </div>
                         </div>
                       </div>
                     </label>
