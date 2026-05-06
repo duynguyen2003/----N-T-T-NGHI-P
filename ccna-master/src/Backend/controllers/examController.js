@@ -65,7 +65,7 @@ module.exports.getExams = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const whereClause = { deletedAt: null };
-    if (req.user && req.user.role !== 'ADMIN') {
+    if (!req.user || req.user.role !== 'ADMIN') {
       whereClause.status = 'OPEN';
     }
 
@@ -156,7 +156,7 @@ module.exports.getExamById = async (req, res, next) => {
       deletedAt: null
     };
 
-    if (req.user && req.user.role !== 'ADMIN') {
+    if (!req.user || req.user.role !== 'ADMIN') {
       whereClause.status = 'OPEN';
     }
 
@@ -175,6 +175,23 @@ module.exports.getExamById = async (req, res, next) => {
     if (!exam) {
       return res.status(404).json({ message: 'Không tìm thấy bài thi' });
     }
+
+    // Xử lý questions: Thêm answerCount và bảo mật đáp án cho học viên
+    const isAdmin = req.user && req.user.role === 'ADMIN';
+    
+    exam.questions = exam.questions.map(q => {
+      let answerCount = 1;
+      if (Array.isArray(q.correctAnswer)) {
+        answerCount = q.correctAnswer.length;
+      }
+      
+      if (!isAdmin) {
+        const { correctAnswer, explanation, ...rest } = q;
+        return { ...rest, answerCount };
+      }
+      
+      return { ...q, answerCount };
+    });
 
     res.json({ exam });
   } catch (error) {
@@ -286,6 +303,133 @@ module.exports.uploadQuestionImage = async (req, res, next) => {
       message: 'Tải ảnh câu hỏi thành công',
       imageUrl: uploadResult.secure_url
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- SUBMIT EXAM ---
+module.exports.submitExam = async (req, res, next) => {
+  try {
+    const examId = parseInt(req.params.id, 10);
+    const userId = req.user.id;
+    const { answers, timeSpent } = req.body;
+
+    console.log('>>> [BACKEND] submitExam called:', { examId, userId, answersCount: Object.keys(answers || {}).length, timeSpent });
+
+    if (Number.isNaN(examId)) {
+      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
+    }
+
+    // Idempotency: Chống spam (chặn nộp liên tục trong 30s)
+    const recentAttempt = await prisma.examResult.findFirst({
+      where: {
+        examId,
+        userId,
+        takenAt: {
+          gte: new Date(Date.now() - 30 * 1000)
+        }
+      }
+    });
+
+    if (recentAttempt) {
+      return res.json({ message: 'Nộp bài thành công', resultId: recentAttempt.id });
+    }
+
+    const exam = await prisma.exam.findFirst({
+      where: { id: examId, deletedAt: null },
+      include: { questions: true }
+    });
+
+    if (!exam) {
+      return res.status(404).json({ message: 'Không tìm thấy bài thi' });
+    }
+
+    // Chấm điểm
+    let correctCount = 0;
+    const totalQuestions = exam.questions.length;
+
+    exam.questions.forEach((q) => {
+      const userAns = answers[q.id] || [];
+      const correctAns = q.correctAnswer || [];
+
+      if (userAns.length === correctAns.length && 
+          userAns.every(v => correctAns.includes(v)) &&
+          correctAns.every(v => userAns.includes(v))) {
+        correctCount++;
+      }
+    });
+
+    const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 1000) : 0;
+    const percentage = totalQuestions > 0 ? parseFloat(((correctCount / totalQuestions) * 100).toFixed(2)) : 0;
+    
+    const passingScorePercent = exam.passingScore || 70;
+    const isPassed = percentage >= passingScorePercent;
+
+    const result = await prisma.examResult.create({
+      data: {
+        userId,
+        examId,
+        score,
+        totalQuestions,
+        percentage,
+        isPassed,
+        answers: answers || {},
+        timeSpent: timeSpent || 0,
+      }
+    });
+
+    res.json({ message: 'Nộp bài thành công', resultId: result.id });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- GET EXAM RESULT ---
+module.exports.getExamResultById = async (req, res, next) => {
+  try {
+    const resultId = parseInt(req.params.resultId, 10);
+    const userId = req.user.id;
+
+    if (Number.isNaN(resultId)) {
+      return res.status(400).json({ message: 'ID kết quả không hợp lệ' });
+    }
+
+    const result = await prisma.examResult.findFirst({
+      where: { id: resultId, userId },
+      include: { 
+        exam: {
+          include: { questions: true }
+        }
+      }
+    });
+
+    if (!result) {
+      return res.status(404).json({ message: 'Không tìm thấy kết quả bài thi' });
+    }
+
+    res.json({ data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// --- GET EXAM HISTORY ---
+module.exports.getMyExamHistory = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const history = await prisma.examResult.findMany({
+      where: { userId },
+      orderBy: { takenAt: 'desc' },
+      include: {
+        exam: {
+          select: { title: true, examCode: true, passingScore: true, durationMinutes: true }
+        }
+      }
+    });
+
+    res.json({ data: history });
   } catch (error) {
     next(error);
   }

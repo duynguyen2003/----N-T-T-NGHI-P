@@ -9,7 +9,7 @@ module.exports.getCourses = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const whereClause = { deletedAt: null };
-    if (req.user && req.user.role !== 'ADMIN') {
+    if (!req.user || req.user.role !== 'ADMIN') {
       whereClause.status = 'PUBLISHED';
     }
 
@@ -218,7 +218,7 @@ module.exports.getLabs = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const whereClause = {};
-    if (req.user && req.user.role !== 'ADMIN') {
+    if (!req.user || req.user.role !== 'ADMIN') {
       whereClause.status = 'PUBLISHED';
     }
 

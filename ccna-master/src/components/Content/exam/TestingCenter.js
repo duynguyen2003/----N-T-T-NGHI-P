@@ -16,6 +16,7 @@ const TestingCenter = () => {
 
   const [practiceModules, setPracticeModules] = useState([]);
   const [exams, setExams] = useState([]);
+  const [examHistory, setExamHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('practice'); // 'practice' | 'mock'
   const [expandedModule, setExpandedModule] = useState(null);
@@ -28,14 +29,29 @@ const TestingCenter = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1. Lấy toàn bộ Course (đã bao gồm Modules và Exams theo chương)
+        // 1. Lấy toàn bộ Course
         const coursesData = await api.getCourses(token);
         
-        // 2. Lấy toàn bộ Exams (cho tab Thi thử CCNA)
+        // 2. Lấy toàn bộ Exams
         const examsData = await api.getExams(token);
         setExams(examsData);
 
-        // 3. Chuyển đổi dữ liệu từ Course -> Modules -> Quizzes (Practice)
+        // 3. Lấy Lịch sử thi của user
+        let historyData = [];
+        if (isAuthenticated) {
+           historyData = await api.getMyExamHistory(token);
+           setExamHistory(historyData);
+        }
+
+        // Tạo map lưu điểm cao nhất theo examId
+        const highestScoreMap = {};
+        historyData.forEach(attempt => {
+          if (!highestScoreMap[attempt.examId] || attempt.score > highestScoreMap[attempt.examId].score) {
+            highestScoreMap[attempt.examId] = attempt;
+          }
+        });
+
+        // 4. Chuyển đổi dữ liệu từ Course -> Modules -> Quizzes (Practice)
         const allModules = [];
         const colors = ['#2563eb', '#059669', '#8b5cf6', '#f59e0b', '#ef4444'];
         const bgs = ['#eff6ff', '#ecfdf5', '#f5f3ff', '#fffbeb', '#fef2f2'];
@@ -45,20 +61,40 @@ const TestingCenter = () => {
             if (mod.exams && mod.exams.length > 0) {
               allModules.push({
                 id: mod.id,
-                icon: '⚙️', // Có thể cải tiến lấy icon theo khóa học
+                icon: '⚙️',
                 color: colors[cIdx % colors.length],
                 bg: bgs[cIdx % bgs.length],
                 title: `${course.code} - ${mod.title}`,
                 meta: `${mod.exams.length} Bài tập ôn luyện`,
-                quizzes: mod.exams.map(ex => ({
-                  id: ex.id.toString(),
-                  code: ex.examCode || 'EX',
-                  label: ex.title,
-                  info: `${ex._count?.questions || ex.totalQuestions} câu hỏi · ${ex.durationMinutes} phút`,
-                  score: null, // Sẽ tích hợp lịch sử sau
-                  scoreLabel: 'TRẠNG THÁI',
-                  scoreSub: 'Chưa làm'
-                }))
+                quizzes: mod.exams.map(ex => {
+                  const bestAttempt = highestScoreMap[ex.id];
+                  let scoreLabel = 'TRẠNG THÁI';
+                  let scoreSub = 'Chưa làm';
+                  let scoreVal = null;
+                  let colorClass = '#94a3b8'; // grey
+                  
+                  if (bestAttempt) {
+                    scoreVal = bestAttempt.score;
+                    if (bestAttempt.isPassed) {
+                      scoreSub = 'Đã đạt';
+                      colorClass = '#16a34a'; // green
+                    } else {
+                      scoreSub = 'Chưa đạt';
+                      colorClass = '#dc2626'; // red
+                    }
+                  }
+
+                  return {
+                    id: ex.id.toString(),
+                    code: ex.examCode || 'EX',
+                    label: ex.title,
+                    info: `${ex._count?.questions || ex.totalQuestions || 0} câu hỏi · ${ex.durationMinutes || 0} phút`,
+                    score: scoreVal,
+                    scoreLabel,
+                    scoreSub,
+                    colorClass
+                  };
+                })
               });
             }
           });
@@ -74,7 +110,7 @@ const TestingCenter = () => {
       }
     };
     fetchData();
-  }, [token]);
+  }, [token, isAuthenticated]);
 
   const handleStartExam = (examId) => {
     if (isGuest) {
@@ -96,22 +132,28 @@ const TestingCenter = () => {
   };
 
   const handleViewDetails = (attempt) => {
-    // Navigate to Result page with simulated data
-    navigate(`/exam/result/${selectedExamId}`, { 
-      state: {
-        score: attempt.score,
-        correct: Math.floor(attempt.score / 10), // mock clear answers logic
-        wrong: 100 - Math.floor(attempt.score / 10),
-        total: 100,
-        pass: attempt.pass,
-        timeUsed: attempt.timeUsed,
-        examTitle: exams.find(e => e.id === selectedExamId)?.title,
-      } 
-    });
+    navigate(`/exam/result/${attempt.id}`);
   };
 
-  const selectedExamData = exams.find(e => e.id === selectedExamId);
-  const currentHistoryList = []; // TODO: Fetch from API history
+  const selectedExamData = exams.find(e => e.id === selectedExamId || e.id.toString() === selectedExamId?.toString());
+  
+  // Format currentHistoryList
+  const currentHistoryList = examHistory
+    .filter(h => h.examId.toString() === selectedExamId?.toString())
+    .map((attempt, index, arr) => {
+      const elapsedMin = Math.floor(attempt.timeSpent / 60);
+      const elapsedSec = attempt.timeSpent % 60;
+      const timeUsed = `${String(elapsedMin).padStart(2,'0')}:${String(elapsedSec).padStart(2,'0')}`;
+      
+      return {
+        id: attempt.id,
+        attempt: arr.length - index, // Mới nhất lên đầu
+        date: new Date(attempt.takenAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        timeUsed,
+        score: attempt.score,
+        pass: attempt.isPassed
+      };
+    });
 
   return (
     <div className="tc-page">
@@ -183,10 +225,13 @@ const TestingCenter = () => {
                             <span>{quiz.info}</span>
                           </div>
                         </div>
-                        {quiz.score ? (
+                        {quiz.score !== null ? (
                           <div className="tc-quiz-score">
                             <span>{quiz.scoreLabel}</span>
-                            <strong>{quiz.score}</strong>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                              <strong style={{ color: quiz.colorClass, lineHeight: '1' }}>{quiz.scoreSub}</strong>
+                              <span style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px' }}>{quiz.score}/1000</span>
+                            </div>
                           </div>
                         ) : (
                           <div className="tc-quiz-score">

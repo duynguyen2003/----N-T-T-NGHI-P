@@ -38,6 +38,35 @@ module.exports.verifyToken = (req, res, next) => {
 };
 
 /**
+ * @desc    Verify JWT optionally (Guest access)
+ */
+module.exports.optionalAuth = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+    let token = '';
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ccna_master_secret_2024');
+    req.user = decoded;
+    next();
+  } catch (error) {
+    req.user = null; // Ignore invalid tokens for optional routes
+    next();
+  }
+};
+
+/**
  * @desc    Check user role
  * @param   {string[]} roles - Allowed roles
  */

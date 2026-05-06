@@ -1,16 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const examController = require('../controllers/examController');
-const { verifyToken, checkRole } = require('../middleware/auth');
+const { verifyToken, checkRole, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-router.use(verifyToken);
+// Public (Optional Login)
+router.get('/', optionalAuth, examController.getExams);
+router.get('/detail/:id', optionalAuth, examController.getExamById);
 
-// GET Exams for both Admin and Student
-router.get('/', examController.getExams);
-router.get('/detail/:id', examController.getExamById);
+// Requires Login
+router.get('/history/me', verifyToken, examController.getMyExamHistory);
+router.get('/result/:resultId', verifyToken, examController.getExamResultById);
 
-// Admin Restrictions for modifications
+// Cho phép cả STUDENT và ADMIN nộp bài thi
+router.post('/:id/submit', verifyToken, checkRole(['STUDENT', 'ADMIN']), examController.submitExam);
+
+// Các route bên dưới CHỈ dành cho ADMIN
 router.use(checkRole(['ADMIN']));
 router.post('/question-image', upload.single('image'), examController.uploadQuestionImage);
 router.post('/', examController.createExam);

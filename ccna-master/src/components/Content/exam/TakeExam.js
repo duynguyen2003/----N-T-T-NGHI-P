@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../../../css/ExamFlow.css';
 import { useAuth } from '../../../context/AuthContext';
+import { useToast } from '../../Toast';
 
 import { api } from '../../../services/Api';
-// ─── Timer Hook ────────────────────────────────────────────────
+
 // ─── Timer Hook ────────────────────────────────────────────────
 const useTimer = (totalSeconds, initialLeft) => {
   const [timeLeft, setTimeLeft] = useState(initialLeft !== undefined ? initialLeft : totalSeconds);
@@ -30,7 +31,7 @@ const useTimer = (totalSeconds, initialLeft) => {
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
   };
 
   const elapsed = ready ? totalSeconds - timeLeft : 0;
@@ -39,38 +40,22 @@ const useTimer = (totalSeconds, initialLeft) => {
   return { timeLeft, elapsed, isWarning, formatted: format(timeLeft), ready };
 };
 
-// ─── Score Calculator ──────────────────────────────────────────
-const calculateScore = (questions, answers, passingScore = 700) => {
-  let correctCount = 0;
-  questions.forEach((q) => {
-    const userAns = answers[q.id] || [];
-    const correctAns = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
-    
-    // So sánh mảng đáp án (phải khớp hoàn toàn)
-    if (userAns.length === correctAns.length && userAns.every(val => correctAns.includes(val))) {
-      correctCount++;
-    }
-  });
-  const total = questions.length;
-  const score = total > 0 ? Math.round((correctCount / total) * 1000) : 0;
-  return { score, correct: correctCount, wrong: total - correctCount, total, pass: score >= passingScore };
-};
-
 // ─── Component ────────────────────────────────────────────────
 const TakeExam = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
   const { isAuthenticated, loading, token } = useAuth();
+  const { showToast, ToastComponent } = useToast();
 
-  const EXAM_DURATION = 90 * 60; // 90 phút tính bằng giây
+  const EXAM_DURATION = 90 * 60;
   const STORAGE_KEY = `ccna_exam_session_${examId}`;
 
-  // 1. Khôi phục state từ localStorage
+  // Khôi phục session từ localStorage
   const getSavedSession = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved);
-    } catch (e) {}
+    } catch (e) { }
     return null;
   };
 
@@ -87,6 +72,7 @@ const TakeExam = () => {
   const [userAnswers, setUserAnswers] = useState(initialAnswers);
   const [flagged, setFlagged] = useState(initialFlags);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Fetch Exam Data
   useEffect(() => {
@@ -106,11 +92,10 @@ const TakeExam = () => {
     if (token) fetchExam();
   }, [examId, token]);
 
-  // Chỉ tính duration khi exam đã tải xong (tránh dùng mặc định 90 phút sai)
   const duration = loadingData ? 0 : (exam?.durationMinutes ? exam.durationMinutes * 60 : EXAM_DURATION);
   const { timeLeft, elapsed, isWarning, formatted, ready } = useTimer(duration, initialTime);
 
-  // Lưu state vào localStorage mỗi khi có thay đổi
+  // Lưu session vào localStorage
   useEffect(() => {
     const sessionData = {
       currentQ,
@@ -125,18 +110,18 @@ const TakeExam = () => {
   const totalQ = questions.length;
 
   const selectAnswer = useCallback((index) => {
+    // [BUG-01 FIX] index luôn là NUMBER — nhất quán giữa click chuột và phím tắt
     setUserAnswers(prev => {
       const currentAnswers = prev[question.id] || [];
-      const isMultiple = question.correctAnswer.length > 1;
+      // [BUG-03 FIX] Dùng answerCount thay vì correctAnswer để không lộ đáp án
+      const isMultiple = (question.answerCount ?? 1) > 1;
 
       if (isMultiple) {
-        // Toggle answer
         const next = currentAnswers.includes(index)
           ? currentAnswers.filter(i => i !== index)
           : [...currentAnswers, index];
         return { ...prev, [question.id]: next };
       } else {
-        // Single choice
         return { ...prev, [question.id]: [index] };
       }
     });
@@ -152,9 +137,9 @@ const TakeExam = () => {
     });
   }, [question]);
 
-  // 2. Lắng nghe Phím tắt Keyboard (Shortcuts)
+  // Phím tắt Keyboard
   useEffect(() => {
-    if (showConfirm) return; // Vô hiệu hóa phím tắt khi hiện popup xác nhận
+    if (showConfirm) return;
 
     const handleKeyDown = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -164,10 +149,10 @@ const TakeExam = () => {
       } else if (e.key === 'ArrowLeft' && currentQ > 0) {
         setCurrentQ(q => q - 1);
       } else if (['a', 'b', 'c', 'd'].includes(e.key.toLowerCase())) {
-        const keyMap = { 'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D' };
-        const selectedKey = keyMap[e.key.toLowerCase()];
-        const optExists = question?.options?.some(opt => opt.key === selectedKey);
-        if (optExists) selectAnswer(selectedKey);
+        // [BUG-01 FIX] Dùng index số thay vì string key ('A','B','C','D')
+        const keyMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+        const idx = keyMap[e.key.toLowerCase()];
+        if (idx < (question?.options?.length ?? 0)) selectAnswer(idx);
       } else if (e.key.toLowerCase() === 'f') {
         toggleFlag();
       }
@@ -177,34 +162,44 @@ const TakeExam = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentQ, totalQ, question?.options, selectAnswer, toggleFlag, showConfirm]);
 
-  const handleSubmit = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
-    const result = calculateScore(questions, userAnswers, exam?.passingScore * 10);
-    const elapsedMin = Math.floor(elapsed / 60);
-    const elapsedSec = elapsed % 60;
-    const timeString = `${String(elapsedMin).padStart(2,'0')}:${String(elapsedSec).padStart(2,'0')}`;
-    navigate(`/exam/result/${examId}`, {
-      state: {
-        ...result,
-        examId,
-        examTitle: exam?.title || `CCNA Exam ${examId}`,
-        timeUsed: timeString,
-        userAnswers,
-        questions: questions,
-      }
-    });
-  }, [navigate, examId, userAnswers, elapsed, questions, exam]);
+  const handleSubmit = useCallback(async () => {
+    if (isSubmitting) return;
 
-  // Tự động nộp khi hết giờ (chỉ khi bài thi đã chạy và thực sự chạm mốc 0)
+    console.log('>>> [FRONTEND] handleSubmit starting...', { examId, userAnswers, elapsed });
+
+    setIsSubmitting(true);
+    setShowConfirm(false);
+
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+
+      const res = await api.submitExam(token, examId, userAnswers, elapsed);
+      console.log('>>> [FRONTEND] API Response:', res);
+
+      if (res && res.resultId) {
+        navigate(`/exam/result/${res.resultId}`);
+      } else {
+        showToast('Nộp bài thành công nhưng không lấy được ID kết quả.', 'warning');
+        navigate('/exam/testing-center');
+      }
+    } catch (err) {
+      console.error('>>> [FRONTEND] Lỗi khi nộp bài:', err);
+      showToast('Có lỗi xảy ra khi nộp bài. Vui lòng thử lại!', 'error');
+      setIsSubmitting(false);
+    }
+  }, [navigate, examId, userAnswers, elapsed, token, isSubmitting, showToast, STORAGE_KEY]);
+
+  // Auto-submit khi hết giờ
   const timerStartedRef = React.useRef(false);
   useEffect(() => {
     if (timeLeft > 0) {
       timerStartedRef.current = true;
     }
-    if (timerStartedRef.current && timeLeft === 0 && duration > 0) {
+    // [BUG-04 FIX] Thêm guard !loadingData để tránh submit khi data chưa load xong
+    if (timerStartedRef.current && timeLeft === 0 && duration > 0 && !loadingData) {
       handleSubmit();
     }
-  }, [timeLeft, duration, handleSubmit]);
+  }, [timeLeft, duration, loadingData, handleSubmit]);
 
   const getQDotClass = (index) => {
     const q = questions[index];
@@ -271,17 +266,15 @@ const TakeExam = () => {
     );
   }
 
+  // [BUG-03 FIX] Dùng answerCount thay vì correctAnswer trong render
+  const isMultipleAnswer = (question.answerCount ?? 1) > 1;
+
   return (
     <div className="take-exam-page">
-
-      {/* Không dùng top navbar, để giao diện rộng hơn */ }
-
-      {/* Body */}
       <div className="take-exam__body">
 
         {/* ── Question Card ── */}
         <div className="take-exam__question-card">
-          {/* Meta */}
           <div className="take-exam__question-meta">
             <span className="take-exam__q-tag">CÂU HỎI {currentQ + 1}</span>
             <button className="take-exam__bookmark-btn" onClick={toggleFlag}>
@@ -289,20 +282,17 @@ const TakeExam = () => {
             </button>
           </div>
 
-          {/* Image (nếu có) */}
           {question.imageUrl && (
             <div className="take-exam__q-image">
               <img src={question.imageUrl} alt="Exam topology" style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
             </div>
           )}
 
-          {/* Question Text */}
           <div className="take-exam__q-content" dangerouslySetInnerHTML={{ __html: question.question }} />
 
-          {/* Options */}
           <div className="take-exam__options">
             <div style={{ fontSize: '12px', color: '#6366f1', marginBottom: '10px', fontWeight: 600 }}>
-              {question.correctAnswer.length > 1 ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án đúng)'}
+              {isMultipleAnswer ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án đúng)'}
             </div>
             {question.options.map((opt, idx) => {
               const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
@@ -314,15 +304,12 @@ const TakeExam = () => {
                   onClick={() => selectAnswer(idx)}
                 >
                   <span className="take-exam__option-badge">{OPTION_LABELS[idx]}</span>
-                  <span className="take-exam__option-text">
-                    {opt}
-                  </span>
+                  <span className="take-exam__option-text">{opt}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Nav Buttons */}
           <div className="take-exam__nav">
             <button
               className="btn btn-prev"
@@ -333,17 +320,11 @@ const TakeExam = () => {
             </button>
             <span className="take-exam__nav-info">CÂU {currentQ + 1} TRÊN {totalQ}</span>
             {currentQ < totalQ - 1 ? (
-              <button
-                className="btn btn-next"
-                onClick={() => setCurrentQ(q => q + 1)}
-              >
+              <button className="btn btn-next" onClick={() => setCurrentQ(q => q + 1)}>
                 Câu kế tiếp →
               </button>
             ) : (
-              <button
-                className="btn btn-submit"
-                onClick={() => setShowConfirm(true)}
-              >
+              <button className="btn btn-submit" onClick={() => setShowConfirm(true)}>
                 Nộp bài thi ✓
               </button>
             )}
@@ -352,7 +333,6 @@ const TakeExam = () => {
 
         {/* ── Sidebar ── */}
         <div className="take-exam__sidebar">
-          {/* Thông tin Bài thi và Thời gian */}
           <div className="take-exam__sidebar-card" style={{ marginBottom: '1.5rem', textAlign: 'center', background: isWarning ? '#fef2f2' : 'white', border: isWarning ? '1px solid #fecaca' : '1px solid #e2e8f0' }}>
             <div style={{ fontSize: '0.85rem', fontWeight: 600, color: isWarning ? '#dc2626' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>
               Chế độ thi: Đang diễn ra
@@ -429,15 +409,22 @@ const TakeExam = () => {
                 Làm tiếp
               </button>
               <button
-                style={{ padding: '0.7rem 1.5rem', border: 'none', borderRadius: '0.75rem', background: '#2563eb', color: 'white', cursor: 'pointer', fontWeight: 700 }}
+                style={{
+                  padding: '0.7rem 1.5rem', border: 'none', borderRadius: '0.75rem',
+                  background: isSubmitting ? '#94a3b8' : '#2563eb',
+                  color: 'white', cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem'
+                }}
                 onClick={handleSubmit}
+                disabled={isSubmitting}
               >
-                Nộp bài ✓
+                {isSubmitting ? 'Đang nộp...' : 'Nộp bài ✓'}
               </button>
             </div>
           </div>
         </div>
       )}
+      {ToastComponent}
     </div>
   );
 };

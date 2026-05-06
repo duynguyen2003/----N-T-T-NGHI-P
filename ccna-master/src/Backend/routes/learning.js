@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const learningController = require('../controllers/learningController');
-const { verifyToken, checkRole } = require('../middleware/auth');
+const { verifyToken, checkRole, optionalAuth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
-// Public (Requires Login)
-router.get('/courses', verifyToken, learningController.getCourses);
-router.get('/labs', verifyToken, learningController.getLabs);
-router.get('/resources', verifyToken, learningController.getResources);
-router.get('/resources/:id/download', verifyToken, learningController.downloadResource);
-router.get('/courses/:courseId/modules', verifyToken, learningController.getModulesByCourse);
-router.get('/modules/:moduleId/lessons', verifyToken, learningController.getLessonsByModule);
-router.get('/courses/:courseId/topics', verifyToken, learningController.getTopicsByCourse);
+// Public (Optional Login for Guests)
+router.get('/courses', optionalAuth, learningController.getCourses);
+router.get('/labs', optionalAuth, learningController.getLabs);
+router.get('/resources', optionalAuth, learningController.getResources);
+router.get('/resources/:id/download', optionalAuth, learningController.downloadResource);
+router.get('/courses/:courseId/modules', optionalAuth, learningController.getModulesByCourse);
+router.get('/modules/:moduleId/lessons', optionalAuth, learningController.getLessonsByModule);
+router.get('/courses/:courseId/topics', optionalAuth, learningController.getTopicsByCourse);
 
 // Admin Restricted
 router.use(verifyToken);

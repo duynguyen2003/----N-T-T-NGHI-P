@@ -26,7 +26,7 @@ const Exam = () => {
          <Route path="take/:examId" element={<TakeExam />} />
 
          {/* Màn hình 3: Kết quả thi */}
-         <Route path="result/:examId" element={<ExamResult />} />
+         <Route path="result/:resultId" element={<ExamResult />} />
 
          {/* Màn hình 4: Xem lại & chữa bài */}
          <Route path="review/:examId" element={<ReviewExam />} />
