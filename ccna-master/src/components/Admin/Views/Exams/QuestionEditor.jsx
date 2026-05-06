@@ -83,16 +83,45 @@ export const QuestionDrawer = ({
 
           {/* Options vertically stacked */}
           <div className="efb-field">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
               <span style={{ fontWeight: 600 }}>Đáp án & Đáp án đúng *</span>
-              <span style={{ fontSize: '12px', color: '#6366f1' }}>Chọn radio cho đáp án đúng</span>
+              <button 
+                type="button" 
+                className="efb-btn-secondary" 
+                onClick={() => onDraftChange('options', [...draft.options, ''])}
+                style={{ padding: '4px 12px', fontSize: '12px' }}
+              >
+                + Thêm đáp án
+              </button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {draft.options.map((opt, i) => {
-                const isCorrect = draft.correctAnswer === i;
+                const isCorrect = Array.isArray(draft.correctAnswer) && draft.correctAnswer.includes(i);
+                
+                const toggleCorrect = () => {
+                  let next;
+                  if (isCorrect) {
+                    next = draft.correctAnswer.filter(idx => idx !== i);
+                  } else {
+                    next = [...draft.correctAnswer, i];
+                  }
+                  onDraftChange('correctAnswer', next);
+                };
+
+                const removeOption = () => {
+                  if (draft.options.length <= 2) return;
+                  const nextOptions = draft.options.filter((_, idx) => idx !== i);
+                  // Update correct answers to reflect new indices
+                  const nextCorrect = draft.correctAnswer
+                    .filter(idx => idx !== i)
+                    .map(idx => (idx > i ? idx - 1 : idx));
+                  onDraftChange('options', nextOptions);
+                  onDraftChange('correctAnswer', nextCorrect);
+                };
+
                 return (
-                  <div key={i} className={`efb-option-item ${isCorrect ? 'efb-option-correct' : ''}`} style={{ padding: '12px 14px' }}>
-                    <button type="button" className="efb-option-radio" onClick={() => onDraftChange('correctAnswer', i)}>
+                  <div key={i} className={`efb-option-item ${isCorrect ? 'efb-option-correct' : ''}`} style={{ padding: '10px 14px' }}>
+                    <button type="button" className="efb-option-radio" onClick={toggleCorrect}>
                       {isCorrect ? <CheckCircle2 size={18} color="#4f46e5" /> : <span className="efb-radio-dot" />}
                     </button>
                     <div style={{ fontWeight: 600, color: '#64748b', width: '20px' }}>{OPTION_LABELS[i]}</div>
@@ -103,6 +132,11 @@ export const QuestionDrawer = ({
                       onChange={(e) => onOptionChange(i, e.target.value)}
                       style={{ fontSize: '14px' }}
                     />
+                    {draft.options.length > 2 && (
+                      <button type="button" className="efb-icon-btn efb-icon-danger" onClick={removeOption} style={{ marginLeft: '8px' }}>
+                        <X size={14} />
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -220,15 +254,18 @@ export const QuestionList = ({ questions, onEdit, onDelete }) => {
           </div>
 
           <div className="efb-qoptions">
-            {q.options.map((opt, oi) => (
-              <div key={oi} className={`efb-qoption ${q.correctAnswer === oi ? 'correct' : ''}`}>
-                {q.correctAnswer === oi
-                  ? <CheckCircle2 size={15} className="efb-qoption-correct-icon" />
-                  : <span className="efb-qoption-dot" />}
-                <span style={{ fontWeight: 600, marginRight: '4px', color: q.correctAnswer === oi ? '#15803d' : '#64748b' }}>{OPTION_LABELS[oi]}.</span>
-                <span>{opt || `(Trống)`}</span>
-              </div>
-            ))}
+            {q.options.map((opt, oi) => {
+              const isCorrect = Array.isArray(q.correctAnswer) && q.correctAnswer.includes(oi);
+              return (
+                <div key={oi} className={`efb-qoption ${isCorrect ? 'correct' : ''}`}>
+                  {isCorrect
+                    ? <CheckCircle2 size={15} className="efb-qoption-correct-icon" />
+                    : <span className="efb-qoption-dot" />}
+                  <span style={{ fontWeight: 600, marginRight: '4px', color: isCorrect ? '#15803d' : '#64748b' }}>{OPTION_LABELS[oi]}.</span>
+                  <span>{opt || `(Trống)`}</span>
+                </div>
+              );
+            })}
           </div>
 
           {q.imageUrl && (

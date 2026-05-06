@@ -3,68 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import '../../../css/ExamFlow.css';
 
 // ─── Mock Questions (giống TakeExam) ──────────────────────────
-const MOCK_QUESTIONS = [
-  {
-    id: 1,
-    domain: 'IP Connectivity',
-    content: 'Lệnh nào sau đây được sử dụng để cấu hình định tuyến tĩnh đến mạng 192.168.1.0/24 qua 10.0.0.1?',
-    options: [
-      { key: 'A', text: 'ip route 192.168.1.0 255.255.255.0 10.0.0.1', isCode: true },
-      { key: 'B', text: 'ip route 192.168.1.0 255.255.255.0 10.0.0.1', isCode: true },
-      { key: 'C', text: 'ip route 10.0.0.1 255.255.255.0 192.168.1.0', isCode: true },
-      { key: 'D', text: 'route ip 192.168.1.0 255.255.255.0 10.0.0.1', isCode: true },
-    ],
-    correct: 'B',
-    explanation: 'Cú pháp đúng của lệnh ip route là: ip route [prefix] [mask] [next-hop/exit-interface]. Để định tuyến đến mạng 192.168.1.0/24 qua gateway 10.0.0.1, bạn sử dụng: ip route 192.168.1.0 255.255.255.0 10.0.0.1.',
-    explanationBullets: [
-      'AD của Static Route mặc định là 1.',
-      'AD của OSPF là 110.',
-      'AD của EIGRP là 90.',
-      'AD của RIP là 120.',
-    ],
-    hasImage: true,
-  },
-  {
-    id: 2,
-    domain: 'Network Fundamentals',
-    content: 'Giao thức nào hoạt động ở tầng Transport và cung cấp kết nối hướng luồng (connection-oriented)?',
-    options: [
-      { key: 'A', text: 'UDP — User Datagram Protocol' },
-      { key: 'B', text: 'ICMP — Internet Control Message Protocol' },
-      { key: 'C', text: 'TCP — Transmission Control Protocol' },
-      { key: 'D', text: 'ARP — Address Resolution Protocol' },
-    ],
-    correct: 'C',
-    explanation: 'TCP (Transmission Control Protocol) là giao thức tầng Transport, connection-oriented, đảm bảo delivery thông qua 3-way handshake (SYN, SYN-ACK, ACK). UDP không connection-oriented, ICMP và ARP không phải tầng Transport.',
-    explanationBullets: [
-      'TCP: Connection-oriented, reliable, ordered delivery.',
-      'UDP: Connectionless, low latency, no guarantee.',
-      'ICMP: Network layer, dùng cho ping/traceroute.',
-      'ARP: Link layer, resolve IP to MAC.',
-    ],
-    hasImage: false,
-  },
-  {
-    id: 3,
-    domain: 'Switching',
-    content: 'Khi một switch nhận được frame với địa chỉ MAC đích chưa có trong bảng MAC, nó sẽ thực hiện hành động nào?',
-    options: [
-      { key: 'A', text: 'Drop frame và gửi ICMP error' },
-      { key: 'B', text: 'Forward frame ra tất cả các port trừ port nhận vào (Flooding)' },
-      { key: 'C', text: 'Gửi ARP Request để tìm địa chỉ MAC' },
-      { key: 'D', text: 'Chuyển frame lên tầng Network để xử lý' },
-    ],
-    correct: 'B',
-    explanation: 'Khi MAC address chưa tồn tại trong CAM table, switch thực hiện "Unknown Unicast Flooding" — gửi frame ra tất cả port trừ ingress port. Đây là cơ chế học tự động của switch ở tầng 2.',
-    explanationBullets: [
-      'Switch học MAC của nguồn từ mọi frame vào.',
-      'Nếu MAC đích không tìm thấy → Flood.',
-      'Khi nhận reply → Học MAC đích vào bảng MAC.',
-      'Bảng MAC có aging time mặc định 300 giây.',
-    ],
-    hasImage: false,
-  },
-];
+// Gỡ bỏ MOCK_QUESTIONS và sử dụng dữ liệu truyền vào từ state
 
 // ─── Component ────────────────────────────────────────────────
 const ReviewExam = () => {
@@ -79,8 +18,8 @@ const ReviewExam = () => {
     total: 3,
     pass: true,
     timeUsed: '45:12',
-    userAnswers: { 1: 'A', 2: 'C', 3: 'B' },
-    questions: MOCK_QUESTIONS,
+    userAnswers: {},
+    questions: [],
   };
 
   // Nếu state có userAnswers thật thì dùng, fallback thì dùng demo
@@ -88,24 +27,31 @@ const ReviewExam = () => {
     ? result.userAnswers
     : { 1: 'A', 2: 'C', 3: 'B' };
 
-  const questions = MOCK_QUESTIONS;
+  const questions = result.questions || [];
   const [currentQ, setCurrentQ] = useState(0);
   const question = questions[currentQ];
-  const userAnswer = userAnswers[question.id];
-  const isCorrect = userAnswer === question.correct;
+  const userAns = Array.isArray(userAnswers[question?.id]) ? userAnswers[question.id] : [];
+  const correctAns = Array.isArray(question?.correctAnswer) ? question.correctAnswer : [question?.correctAnswer];
+  
+  const isCorrect = userAns.length === correctAns.length && userAns.every(val => correctAns.includes(val));
 
   // Xác định class cho mỗi option
-  const getOptionClass = (optKey) => {
+  const getOptionClass = (idx) => {
     let cls = 'take-exam__option';
-    // Đáp án đúng luôn highlight xanh
-    if (optKey === question.correct) return cls + ' take-exam__option--correct';
-    // Đáp án sai mà user đã chọn → highlight đỏ
-    if (optKey === userAnswer && !isCorrect) return cls + ' take-exam__option--wrong';
+    const isAnsCorrect = correctAns.includes(idx);
+    const isAnsUser = userAns.includes(idx);
+
+    if (isAnsCorrect) return cls + ' take-exam__option--correct';
+    if (isAnsUser && !isAnsCorrect) return cls + ' take-exam__option--wrong';
     return cls;
   };
 
-  const answeredCorrect = questions.filter(q => userAnswers[q.id] === q.correct).length;
-  const reviewPct = Math.round((currentQ + 1) / questions.length * 100);
+  const answeredCorrect = questions.filter(q => {
+    const ua = Array.isArray(userAnswers[q.id]) ? userAnswers[q.id] : [];
+    const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+    return ua.length === ca.length && ua.every(val => ca.includes(val));
+  }).length;
+  const reviewPct = questions.length > 0 ? Math.round((currentQ + 1) / questions.length * 100) : 0;
 
   return (
     <div className="review-exam-page">
@@ -114,9 +60,16 @@ const ReviewExam = () => {
 
       {/* Body */}
       <div className="take-exam__body">
-
-        {/* ── Question Card (Review Mode) ── */}
-        <div className="take-exam__question-card">
+        {!question ? (
+          <div className="take-exam__question-card" style={{ textAlign: 'center', padding: '3rem' }}>
+            <h2>Không có dữ liệu câu hỏi để xem lại</h2>
+            <button className="btn btn-primary" onClick={() => navigate('/exam/testing-center')}>
+              Quay lại trang chủ
+            </button>
+          </div>
+        ) : (
+          /* ── Question Card (Review Mode) ── */
+          <div className="take-exam__question-card">
           {/* Meta */}
           <div className="take-exam__question-meta">
             <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -130,38 +83,37 @@ const ReviewExam = () => {
             </div>
           </div>
 
-          {/* Image placeholder (nếu có) */}
-          {question.hasImage && (
-            <div className="take-exam__q-image-placeholder">
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🖧</div>
-                <div>Sơ đồ cấu trúc mạng (Topology)</div>
-                <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: '#94a3b8' }}>
-                  NGUỒN: Router A &nbsp;→&nbsp; ĐÍCH: 192.168.1.0/24
-                </div>
-              </div>
+          {/* Image (nếu có) */}
+          {question.imageUrl && (
+            <div className="take-exam__q-image">
+              <img src={question.imageUrl} alt="Exam topology" style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
             </div>
           )}
 
           {/* Question Text */}
-          <div className="take-exam__q-content">{question.content}</div>
+          <div className="take-exam__q-content" dangerouslySetInnerHTML={{ __html: question.question }} />
 
           {/* Options (READ ONLY mode - pointer-events: none) */}
           <div className="take-exam__options" style={{ pointerEvents: 'none' }}>
-            {question.options.map((opt) => (
-              <div key={opt.key} className={getOptionClass(opt.key)}>
-                <span className="take-exam__option-badge">{opt.key}</span>
-                <span className="take-exam__option-text" style={opt.isCode ? { fontFamily: 'monospace', fontSize: '0.88rem' } : {}}>
-                  {opt.text}
-                  {opt.key === question.correct && (
-                    <span style={{ marginLeft: '0.5rem', fontSize: '0.78rem', color: '#16a34a', fontWeight: 600 }}>← Đáp án đúng</span>
-                  )}
-                  {opt.key === userAnswer && !isCorrect && (
-                    <span style={{ marginLeft: '0.5rem', fontSize: '0.78rem', color: '#dc2626', fontWeight: 600 }}>← Lựa chọn của bạn (Sai)</span>
-                  )}
-                </span>
-              </div>
-            ))}
+            {question.options.map((opt, idx) => {
+              const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+              const isAnsCorrect = correctAns.includes(idx);
+              const isAnsUser = userAns.includes(idx);
+              return (
+                <div key={idx} className={getOptionClass(idx)}>
+                  <span className="take-exam__option-badge">{OPTION_LABELS[idx]}</span>
+                  <span className="take-exam__option-text">
+                    {opt}
+                    {isAnsCorrect && (
+                      <span style={{ marginLeft: '0.5rem', fontSize: '0.78rem', color: '#16a34a', fontWeight: 600 }}>← Đáp án đúng</span>
+                    )}
+                    {isAnsUser && !isAnsCorrect && (
+                      <span style={{ marginLeft: '0.5rem', fontSize: '0.78rem', color: '#dc2626', fontWeight: 600 }}>← Lựa chọn của bạn (Sai)</span>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
           </div>
 
           {/* ── Explanation Callout ── */}
@@ -170,7 +122,10 @@ const ReviewExam = () => {
               <span>💡</span> Giải thích chi tiết
             </div>
             <div className="review-exam__explanation-body">
-              <p style={{ margin: '0 0 0.75rem' }}>{question.explanation}</p>
+              <div 
+                style={{ margin: '0 0 0.75rem', lineHeight: '1.6' }} 
+                dangerouslySetInnerHTML={{ __html: question.explanation }} 
+              />
               {question.explanationBullets && (
                 <ul>
                   {question.explanationBullets.map((b, i) => <li key={i}>{b}</li>)}
@@ -198,8 +153,9 @@ const ReviewExam = () => {
             </button>
           </div>
         </div>
+      )}
 
-        {/* ── Sidebar ── */}
+      {/* ── Sidebar ── */}
         <div className="take-exam__sidebar">
           {/* Nút Quay lại và Thống kê */}
           <div className="take-exam__sidebar-card" style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -240,11 +196,12 @@ const ReviewExam = () => {
             </div>
             <div className="take-exam__q-grid">
               {questions.map((q, index) => {
-                const ua = userAnswers[q.id];
-                const isRightAnswer = ua === q.correct;
+                const ua = Array.isArray(userAnswers[q.id]) ? userAnswers[q.id] : [];
+                const ca = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+                const isRightAnswer = ua.length === ca.length && ua.every(val => ca.includes(val));
                 let bg = '#f1f5f9', color = '#64748b', border = 'none';
                 if (index === currentQ) { bg = 'white'; color = '#2563eb'; border = '2px solid #2563eb'; }
-                else if (!ua) { bg = '#f1f5f9'; color = '#94a3b8'; }
+                else if (ua.length === 0) { bg = '#f1f5f9'; color = '#94a3b8'; }
                 else if (isRightAnswer) { bg = '#dcfce7'; color = '#16a34a'; }
                 else { bg = '#fee2e2'; color = '#dc2626'; }
                 return (

@@ -15,27 +15,42 @@ const sanitizeQuestionsInput = (questions) => {
 
   return questions.map((questionItem, index) => {
     const rawOptions = Array.isArray(questionItem.options) ? questionItem.options : [];
-    const normalizedOptions = [0, 1, 2, 3].map((optionIndex) => `${rawOptions[optionIndex] || ''}`.trim());
+    // Hỗ trợ số lượng đáp án linh hoạt (ít nhất 2)
+    const normalizedOptions = rawOptions.map(opt => `${opt || ''}`.trim()).filter(opt => opt !== '');
     const questionText = `${questionItem.question || ''}`.trim();
-    const correctAnswer = parseInt(questionItem.correctAnswer, 10);
+    
+    // Hỗ trợ chọn nhiều đáp án (Lưu dạng mảng index)
+    let correctAnswers = questionItem.correctAnswer;
+    if (!Array.isArray(correctAnswers)) {
+      // Fallback cho dữ liệu cũ hoặc single choice gửi lên dạng số
+      const single = parseInt(correctAnswers, 10);
+      correctAnswers = Number.isNaN(single) ? [] : [single];
+    } else {
+      correctAnswers = correctAnswers.map(ans => parseInt(ans, 10)).filter(ans => !Number.isNaN(ans));
+    }
+
     const imageUrl = `${questionItem.imageUrl || ''}`.trim() || null;
 
     if (!questionText) {
       throw new ValidationError(`Câu hỏi ${index + 1} không được để trống`);
     }
 
-    if (normalizedOptions.some((option) => !option)) {
-      throw new ValidationError(`Câu hỏi ${index + 1} cần đủ 4 đáp án`);
+    if (normalizedOptions.length < 2) {
+      throw new ValidationError(`Câu hỏi ${index + 1} cần ít nhất 2 đáp án`);
     }
 
-    if (Number.isNaN(correctAnswer) || correctAnswer < 0 || correctAnswer > 3) {
+    if (correctAnswers.length === 0) {
+      throw new ValidationError(`Câu hỏi ${index + 1} chưa chọn đáp án đúng`);
+    }
+
+    if (correctAnswers.some(ans => ans < 0 || ans >= normalizedOptions.length)) {
       throw new ValidationError(`Câu hỏi ${index + 1} có đáp án đúng không hợp lệ`);
     }
 
     return {
       question: questionText,
       options: normalizedOptions,
-      correctAnswer,
+      correctAnswer: correctAnswers, // Lưu mảng JSON vào DB
       explanation: `${questionItem.explanation || ''}`.trim() || null,
       imageUrl,
       orderIndex: index + 1
@@ -88,6 +103,7 @@ module.exports.createExam = async (req, res, next) => {
       difficulty,
       courseId,
       moduleId,
+      status,
       questions
     } = req.body;
 
@@ -109,6 +125,7 @@ module.exports.createExam = async (req, res, next) => {
         difficulty: difficulty || null,
         courseId: courseId || null,
         moduleId: moduleId || null,
+        status: status || 'DRAFT',
         questions: {
           create: sanitizedQuestions
         }
@@ -180,6 +197,7 @@ module.exports.updateExam = async (req, res, next) => {
       difficulty,
       courseId,
       moduleId,
+      status,
       questions
     } = req.body;
 
@@ -199,6 +217,7 @@ module.exports.updateExam = async (req, res, next) => {
         difficulty: difficulty || null,
         courseId: courseId || null,
         moduleId: moduleId || null,
+        status: status,
         ...(sanitizedQuestions
           ? {
               questions: {

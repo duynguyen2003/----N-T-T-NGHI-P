@@ -89,50 +89,28 @@ const ExamResult = () => {
           </div>
         </div>
 
-        {/* ── Topic Breakdown ── */}
-        <div className="er-topic-section">
-          <div className="er-topic-section__header">
-            <div className="er-topic-section__title">
-              <span>▐</span> Chi tiết từng chuyên đề
-            </div>
-            <div className="er-topic-section__actions">
-              {/* CTA 1: Xem lại đáp án (Primary) */}
-              <button
-                className="er-btn-primary"
-                onClick={() => navigate(`/exam/review/${examId}`, { state: result })}
-              >
-                ☰ Xem lại đáp án
-              </button>
-              {/* CTA 2: Quay về trang chủ (Secondary) */}
-              <button
-                className="er-btn-secondary"
-                onClick={() => navigate('/exam/testing-center')}
-              >
-                🏠 Quay về trang chủ
-              </button>
-            </div>
-          </div>
-
-          <div className="er-topic-grid">
-            {TOPIC_BREAKDOWN.map((topic) => (
-              <div key={topic.label} className="er-topic-item">
-                <div className="er-topic-item__header">
-                  <span>{topic.label}</span>
-                  <span className="er-topic-item__pct">{topic.pct}%</span>
-                </div>
-                <div className="er-progress-bar">
-                  <div
-                    className="er-progress-fill"
-                    style={{
-                      width: `${topic.pct}%`,
-                      background: topic.pct >= 80 ? '#16a34a' : topic.pct >= 60 ? '#2563eb' : '#dc2626',
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* ── Actions ── */}
+        <div className="er-actions" style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
+          <button
+            className="er-btn-primary"
+            onClick={() => navigate(`/exam/review/${examId}`, { state: result })}
+          >
+            ☰ Xem lại đáp án
+          </button>
+          <button
+            className="er-btn-secondary"
+            onClick={() => navigate('/exam/testing-center')}
+          >
+            🏠 Quay về trang chủ
+          </button>
         </div>
+
+        {/* ── Topic Breakdown (Temporarily Hidden) ── */}
+        {/* 
+        <div className="er-topic-section">
+          ... (hidden code)
+        </div>
+        */}
 
       </div>
     </div>

@@ -3,89 +3,64 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../../../css/ExamFlow.css';
 import { useAuth } from '../../../context/AuthContext';
 
-// ─── Mock Questions ────────────────────────────────────────────
-const MOCK_QUESTIONS = [
-  {
-    id: 1,
-    domain: 'IP Connectivity',
-    content: 'Lệnh nào sau đây được sử dụng để cấu hình định tuyến tĩnh đến mạng 192.168.1.0/24 qua 10.0.0.1?',
-    options: [
-      { key: 'A', text: 'ip route 192.168.1.0 255.255.255.0 10.0.0.1', isCode: true },
-      { key: 'B', text: 'ip route 192.168.1.0 255.255.255.0 10.0.0.1', isCode: true },
-      { key: 'C', text: 'ip route 10.0.0.1 255.255.255.0 192.168.1.0', isCode: true },
-      { key: 'D', text: 'route ip 192.168.1.0 255.255.255.0 10.0.0.1', isCode: true },
-    ],
-    correct: 'B',
-    hasImage: true,
-  },
-  {
-    id: 2,
-    domain: 'Network Fundamentals',
-    content: 'Giao thức nào hoạt động ở tầng Transport và cung cấp kết nối hướng luồng (connection-oriented)?',
-    options: [
-      { key: 'A', text: 'UDP — User Datagram Protocol' },
-      { key: 'B', text: 'ICMP — Internet Control Message Protocol' },
-      { key: 'C', text: 'TCP — Transmission Control Protocol' },
-      { key: 'D', text: 'ARP — Address Resolution Protocol' },
-    ],
-    correct: 'C',
-    hasImage: false,
-  },
-  {
-    id: 3,
-    domain: 'Switching',
-    content: 'Khi một switch nhận được frame với địa chỉ MAC đích chưa có trong bảng MAC, nó sẽ thực hiện hành động nào?',
-    options: [
-      { key: 'A', text: 'Drop frame và gửi ICMP error' },
-      { key: 'B', text: 'Forward frame ra tất cả các port trừ port nhận vào (Flooding)' },
-      { key: 'C', text: 'Gửi ARP Request để tìm địa chỉ MAC' },
-      { key: 'D', text: 'Chuyển frame lên tầng Network để xử lý' },
-    ],
-    correct: 'B',
-    hasImage: false,
-  },
-];
-
+import { api } from '../../../services/Api';
 // ─── Timer Hook ────────────────────────────────────────────────
 // ─── Timer Hook ────────────────────────────────────────────────
 const useTimer = (totalSeconds, initialLeft) => {
   const [timeLeft, setTimeLeft] = useState(initialLeft !== undefined ? initialLeft : totalSeconds);
+  const [ready, setReady] = useState(totalSeconds > 0);
 
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (totalSeconds > 0) {
+      if (!ready) {
+        setTimeLeft(initialLeft !== undefined ? initialLeft : totalSeconds);
+        setReady(true);
+      }
+    }
+  }, [totalSeconds, initialLeft, ready]);
+
+  useEffect(() => {
+    if (!ready || timeLeft <= 0) return;
     const t = setTimeout(() => setTimeLeft(prev => prev - 1), 1000);
     return () => clearTimeout(t);
-  }, [timeLeft]);
+  }, [timeLeft, ready]);
 
   const format = (s) => {
+    if (!ready) return "--:--:--";
     const h = Math.floor(s / 3600);
     const m = Math.floor((s % 3600) / 60);
     const sec = s % 60;
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   };
 
-  const elapsed = totalSeconds - timeLeft;
-  const isWarning = timeLeft < 300; // Cảnh báo khi còn dưới 5 phút
+  const elapsed = ready ? totalSeconds - timeLeft : 0;
+  const isWarning = ready && timeLeft > 0 && timeLeft < 300;
 
-  return { timeLeft, elapsed, isWarning, formatted: format(timeLeft) };
+  return { timeLeft, elapsed, isWarning, formatted: format(timeLeft), ready };
 };
 
 // ─── Score Calculator ──────────────────────────────────────────
-const calculateScore = (answers) => {
-  let correct = 0;
-  MOCK_QUESTIONS.forEach((q) => {
-    if (answers[q.id] === q.correct) correct++;
+const calculateScore = (questions, answers, passingScore = 700) => {
+  let correctCount = 0;
+  questions.forEach((q) => {
+    const userAns = answers[q.id] || [];
+    const correctAns = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer];
+    
+    // So sánh mảng đáp án (phải khớp hoàn toàn)
+    if (userAns.length === correctAns.length && userAns.every(val => correctAns.includes(val))) {
+      correctCount++;
+    }
   });
-  const total = MOCK_QUESTIONS.length;
-  const score = Math.round((correct / total) * 1000);
-  return { score, correct, wrong: total - correct, total, pass: score >= 825 };
+  const total = questions.length;
+  const score = total > 0 ? Math.round((correctCount / total) * 1000) : 0;
+  return { score, correct: correctCount, wrong: total - correctCount, total, pass: score >= passingScore };
 };
 
 // ─── Component ────────────────────────────────────────────────
 const TakeExam = () => {
   const navigate = useNavigate();
   const { examId } = useParams();
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, token } = useAuth();
 
   const EXAM_DURATION = 90 * 60; // 90 phút tính bằng giây
   const STORAGE_KEY = `ccna_exam_session_${examId}`;
@@ -103,14 +78,37 @@ const TakeExam = () => {
   const initialQ = savedSession?.currentQ ?? 0;
   const initialAnswers = savedSession?.userAnswers || {};
   const initialFlags = savedSession?.flagged ? new Set(savedSession.flagged) : new Set();
-  const initialTime = savedSession?.timeLeft ?? EXAM_DURATION;
+  const initialTime = savedSession?.timeLeft > 0 ? savedSession.timeLeft : undefined;
 
+  const [exam, setExam] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
   const [currentQ, setCurrentQ] = useState(initialQ);
   const [userAnswers, setUserAnswers] = useState(initialAnswers);
   const [flagged, setFlagged] = useState(initialFlags);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const { timeLeft, elapsed, isWarning, formatted } = useTimer(EXAM_DURATION, initialTime);
+  // Fetch Exam Data
+  useEffect(() => {
+    const fetchExam = async () => {
+      try {
+        const examData = await api.getExamById(token, examId);
+        if (examData) {
+          setExam(examData);
+          setQuestions(examData.questions || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch exam", err);
+      } finally {
+        setLoadingData(false);
+      }
+    };
+    if (token) fetchExam();
+  }, [examId, token]);
+
+  // Chỉ tính duration khi exam đã tải xong (tránh dùng mặc định 90 phút sai)
+  const duration = loadingData ? 0 : (exam?.durationMinutes ? exam.durationMinutes * 60 : EXAM_DURATION);
+  const { timeLeft, elapsed, isWarning, formatted, ready } = useTimer(duration, initialTime);
 
   // Lưu state vào localStorage mỗi khi có thay đổi
   useEffect(() => {
@@ -123,21 +121,36 @@ const TakeExam = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionData));
   }, [currentQ, userAnswers, flagged, timeLeft, STORAGE_KEY]);
 
-  const question = MOCK_QUESTIONS[currentQ];
-  const totalQ = MOCK_QUESTIONS.length;
+  const question = questions[currentQ];
+  const totalQ = questions.length;
 
-  const selectAnswer = useCallback((key) => {
-    setUserAnswers(prev => ({ ...prev, [question.id]: key }));
-  }, [question.id]);
+  const selectAnswer = useCallback((index) => {
+    setUserAnswers(prev => {
+      const currentAnswers = prev[question.id] || [];
+      const isMultiple = question.correctAnswer.length > 1;
+
+      if (isMultiple) {
+        // Toggle answer
+        const next = currentAnswers.includes(index)
+          ? currentAnswers.filter(i => i !== index)
+          : [...currentAnswers, index];
+        return { ...prev, [question.id]: next };
+      } else {
+        // Single choice
+        return { ...prev, [question.id]: [index] };
+      }
+    });
+  }, [question]);
 
   const toggleFlag = useCallback(() => {
+    if (!question) return;
     setFlagged(prev => {
       const next = new Set(prev);
       if (next.has(question.id)) next.delete(question.id);
       else next.add(question.id);
       return next;
     });
-  }, [question.id]);
+  }, [question]);
 
   // 2. Lắng nghe Phím tắt Keyboard (Shortcuts)
   useEffect(() => {
@@ -153,7 +166,7 @@ const TakeExam = () => {
       } else if (['a', 'b', 'c', 'd'].includes(e.key.toLowerCase())) {
         const keyMap = { 'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D' };
         const selectedKey = keyMap[e.key.toLowerCase()];
-        const optExists = question.options.some(opt => opt.key === selectedKey);
+        const optExists = question?.options?.some(opt => opt.key === selectedKey);
         if (optExists) selectAnswer(selectedKey);
       } else if (e.key.toLowerCase() === 'f') {
         toggleFlag();
@@ -162,11 +175,11 @@ const TakeExam = () => {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentQ, totalQ, question.options, selectAnswer, toggleFlag, showConfirm]);
+  }, [currentQ, totalQ, question?.options, selectAnswer, toggleFlag, showConfirm]);
 
   const handleSubmit = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY); // Xóa session khi đã nộp bài thành công
-    const result = calculateScore(userAnswers);
+    localStorage.removeItem(STORAGE_KEY);
+    const result = calculateScore(questions, userAnswers, exam?.passingScore * 10);
     const elapsedMin = Math.floor(elapsed / 60);
     const elapsedSec = elapsed % 60;
     const timeString = `${String(elapsedMin).padStart(2,'0')}:${String(elapsedSec).padStart(2,'0')}`;
@@ -174,29 +187,39 @@ const TakeExam = () => {
       state: {
         ...result,
         examId,
-        examTitle: `CCNA 200-301 Mock ${examId}`,
+        examTitle: exam?.title || `CCNA Exam ${examId}`,
         timeUsed: timeString,
         userAnswers,
-        questions: MOCK_QUESTIONS,
+        questions: questions,
       }
     });
-  }, [navigate, examId, userAnswers, elapsed]);
+  }, [navigate, examId, userAnswers, elapsed, questions, exam]);
 
-  // Tự động nộp khi hết giờ
+  // Tự động nộp khi hết giờ (chỉ khi bài thi đã chạy và thực sự chạm mốc 0)
+  const timerStartedRef = React.useRef(false);
   useEffect(() => {
-    if (timeLeft === 0) handleSubmit();
-  }, [timeLeft, handleSubmit]);
+    if (timeLeft > 0) {
+      timerStartedRef.current = true;
+    }
+    if (timerStartedRef.current && timeLeft === 0 && duration > 0) {
+      handleSubmit();
+    }
+  }, [timeLeft, duration, handleSubmit]);
 
   const getQDotClass = (index) => {
-    const q = MOCK_QUESTIONS[index];
+    const q = questions[index];
     if (index === currentQ) return 'take-exam__q-dot take-exam__q-dot--active';
     if (flagged.has(q.id)) return 'take-exam__q-dot take-exam__q-dot--flagged';
-    if (userAnswers[q.id]) return 'take-exam__q-dot take-exam__q-dot--answered';
+    if (userAnswers[q.id] && userAnswers[q.id].length > 0) return 'take-exam__q-dot take-exam__q-dot--answered';
     return 'take-exam__q-dot take-exam__q-dot--unanswered';
   };
 
-  if (loading) {
-    return null;
+  if (loading || loadingData) {
+    return (
+      <div className="take-exam-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p>Đang tải bài thi...</p>
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
@@ -228,6 +251,26 @@ const TakeExam = () => {
     );
   }
 
+  if (!question || questions.length === 0) {
+    return (
+      <div className="take-exam-page" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+        <div style={{ maxWidth: 560, width: '100%', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '2rem', textAlign: 'center' }}>
+          <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#0f172a' }}>Không có dữ liệu câu hỏi</h2>
+          <p style={{ marginTop: 0, marginBottom: '1.5rem', color: '#64748b' }}>
+            Bài thi này hiện tại chưa có câu hỏi nào. Vui lòng quay lại sau.
+          </p>
+          <button
+            type="button"
+            className="btn btn-prev"
+            onClick={() => navigate('/exam/testing-center', { replace: true })}
+          >
+            Quay lại trung tâm
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="take-exam-page">
 
@@ -246,35 +289,33 @@ const TakeExam = () => {
             </button>
           </div>
 
-          {/* Image placeholder (nếu có) */}
-          {question.hasImage && (
-            <div className="take-exam__q-image-placeholder">
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🖧</div>
-                <div>Sơ đồ cấu trúc mạng (Topology)</div>
-                <div style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: '#94a3b8' }}>
-                  NGUỒN: Router A &nbsp;→&nbsp; ĐÍCH: 192.168.1.0/24
-                </div>
-              </div>
+          {/* Image (nếu có) */}
+          {question.imageUrl && (
+            <div className="take-exam__q-image">
+              <img src={question.imageUrl} alt="Exam topology" style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
             </div>
           )}
 
           {/* Question Text */}
-          <div className="take-exam__q-content">{question.content}</div>
+          <div className="take-exam__q-content" dangerouslySetInnerHTML={{ __html: question.question }} />
 
           {/* Options */}
           <div className="take-exam__options">
-            {question.options.map((opt) => {
-              const isSelected = userAnswers[question.id] === opt.key;
+            <div style={{ fontSize: '12px', color: '#6366f1', marginBottom: '10px', fontWeight: 600 }}>
+              {question.correctAnswer.length > 1 ? '(Chọn nhiều đáp án)' : '(Chọn 1 đáp án đúng)'}
+            </div>
+            {question.options.map((opt, idx) => {
+              const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+              const isSelected = Array.isArray(userAnswers[question.id]) && userAnswers[question.id].includes(idx);
               return (
                 <button
-                  key={opt.key}
+                  key={idx}
                   className={`take-exam__option ${isSelected ? 'take-exam__option--selected' : ''}`}
-                  onClick={() => selectAnswer(opt.key)}
+                  onClick={() => selectAnswer(idx)}
                 >
-                  <span className="take-exam__option-badge">{opt.key}</span>
-                  <span className="take-exam__option-text" style={opt.isCode ? { fontFamily: 'monospace', fontSize: '0.88rem' } : {}}>
-                    {opt.text}
+                  <span className="take-exam__option-badge">{OPTION_LABELS[idx]}</span>
+                  <span className="take-exam__option-text">
+                    {opt}
                   </span>
                 </button>
               );
@@ -329,7 +370,7 @@ const TakeExam = () => {
               <span style={{ fontWeight: 400 }}>{totalQ} CÂU</span>
             </div>
             <div className="take-exam__q-grid">
-              {MOCK_QUESTIONS.map((_, index) => (
+              {questions.map((_, index) => (
                 <button
                   key={index}
                   className={getQDotClass(index)}

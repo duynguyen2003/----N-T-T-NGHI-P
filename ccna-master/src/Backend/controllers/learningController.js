@@ -244,7 +244,7 @@ module.exports.getLabs = async (req, res, next) => {
 
 module.exports.createLab = async (req, res, next) => {
   try {
-    const { title, category, difficulty, duration, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
+    const { title, category, difficulty, duration, status, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
     
     let fileUrl = null;
     let imageUrl = null;
@@ -291,6 +291,7 @@ module.exports.createLab = async (req, res, next) => {
         duration: duration || null,
         guideContent: guideContent || null,
         objective: objective || null,
+        status: status || 'DRAFT',
         tools: tools ? (typeof tools === 'string' ? JSON.parse(tools) : tools) : null,
         steps: steps ? (typeof steps === 'string' ? JSON.parse(steps) : steps) : null,
         fileUrl,
@@ -310,13 +311,14 @@ module.exports.createLab = async (req, res, next) => {
 module.exports.updateLab = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { title, category, difficulty, duration, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
+    const { title, category, difficulty, duration, status, guideContent, courseId, moduleId, objective, tools, steps } = req.body;
     
     const dataToUpdate = { 
       title, 
       category,
       difficulty,
       duration,
+      status,
       guideContent,
       objective,
       courseId: courseId || null,

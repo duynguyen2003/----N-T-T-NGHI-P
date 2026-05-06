@@ -229,7 +229,7 @@ export const useExamForm = (token, onSuccess) => {
     const nextQuestion = {
       question: trimmedQuestion,
       options: cleanedOptions,
-      correctAnswer: Number(questionDraft.correctAnswer) || 0,
+      correctAnswer: questionDraft.correctAnswer, // Lưu dạng mảng index
       explanation: questionDraft.explanation.trim(),
       imageUrl: questionDraft.imageUrl?.trim() || ''
     };

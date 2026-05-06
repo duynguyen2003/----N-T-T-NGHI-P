@@ -12,33 +12,36 @@ export const getDifficultyLabel = (difficulty) => {
 };
 
 export const normalizeQuestionFromApi = (questionItem) => {
-  const rawOptions = Array.isArray(questionItem?.options) ? questionItem.options : [];
-  const normalizedOptions = OPTION_LABELS.map((_, optionIndex) => `${rawOptions[optionIndex] || ''}`);
-  const normalizedCorrectAnswer = Number.isInteger(Number(questionItem?.correctAnswer))
-    ? Number(questionItem.correctAnswer)
-    : 0;
+  const options = Array.isArray(questionItem?.options) ? questionItem.options : ['', '', '', ''];
+  
+  let correctAnswers = questionItem?.correctAnswer;
+  // Xử lý dữ liệu từ DB (Json/Int)
+  if (!Array.isArray(correctAnswers)) {
+    const single = Number.isInteger(Number(correctAnswers)) ? Number(correctAnswers) : 0;
+    correctAnswers = [single];
+  }
 
   return {
     question: `${questionItem?.question || ''}`,
-    options: normalizedOptions,
-    correctAnswer: Math.min(Math.max(normalizedCorrectAnswer, 0), 3),
+    options: options,
+    correctAnswer: correctAnswers,
     explanation: `${questionItem?.explanation || ''}`,
     imageUrl: `${questionItem?.imageUrl || ''}`
   };
 };
 
 export const parseCorrectAnswer = (value) => {
-  if (Number.isInteger(Number(value))) {
-    const numericValue = Number(value);
-    if (numericValue >= 0 && numericValue <= 3) return numericValue;
-    if (numericValue >= 1 && numericValue <= 4) return numericValue - 1;
-  }
+  const valStr = `${value || ''}`.trim();
+  if (!valStr) return [];
 
-  const text = `${value || ''}`.trim().toUpperCase();
-  const answerIndex = OPTION_LABELS.indexOf(text);
-  if (answerIndex !== -1) return answerIndex;
-
-  throw new Error(`Đáp án đúng "${value}" không hợp lệ (chấp nhận: A-D, 0-3, 1-4).`);
+  // Hỗ trợ cả single choice (A, 0) và multiple choice (A,B hoặc 0,2)
+  return valStr.split(/[,;|]/)
+    .map(s => s.trim())
+    .map(s => {
+      const idx = OPTION_LABELS.indexOf(s.toUpperCase());
+      return idx !== -1 ? idx : parseInt(s, 10);
+    })
+    .filter(n => !Number.isNaN(n) && n >= 0);
 };
 
 export const parseCsvLine = (line) => {
@@ -107,16 +110,18 @@ export const normalizeImportedQuestion = (rawQuestion, index) => {
   }
 
   const options = Array.isArray(rawQuestion?.options)
-    ? OPTION_LABELS.map((_, optionIndex) => `${rawQuestion.options[optionIndex] || ''}`.trim())
+    ? rawQuestion.options.map(opt => `${opt || ''}`.trim())
     : [
         `${rawQuestion?.optionA || rawQuestion?.a || ''}`.trim(),
         `${rawQuestion?.optionB || rawQuestion?.b || ''}`.trim(),
         `${rawQuestion?.optionC || rawQuestion?.c || ''}`.trim(),
-        `${rawQuestion?.optionD || rawQuestion?.d || ''}`.trim()
-      ];
+        `${rawQuestion?.optionD || rawQuestion?.d || ''}`.trim(),
+        `${rawQuestion?.optionE || rawQuestion?.e || ''}`.trim(),
+        `${rawQuestion?.optionF || rawQuestion?.f || ''}`.trim()
+      ].filter(opt => opt !== '');
 
-  if (options.some((option) => !option)) {
-    throw new Error(`Dòng ${index + 1}: cần đủ 4 đáp án A/B/C/D.`);
+  if (options.length < 2) {
+    throw new Error(`Dòng ${index + 1}: cần ít nhất 2 đáp án.`);
   }
 
   const correctAnswer = parseCorrectAnswer(rawQuestion?.correctAnswer ?? rawQuestion?.answer);

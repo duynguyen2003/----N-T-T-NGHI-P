@@ -283,8 +283,8 @@ export const api = {
 
   getExamById: async (token, examId) => {
     try {
-      const json = await apiFetch(`/exams/${examId}`, token);
-      return json.data;
+      const json = await apiFetch(`/exams/detail/${examId}`, token);
+      return json.exam || json.data;
     } catch (error) {
       console.error("Error fetching exam detail:", error);
       throw error;

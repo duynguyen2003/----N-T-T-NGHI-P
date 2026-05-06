@@ -1,4 +1,4 @@
-export const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+export const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
 export const difficultyOptions = [
   { value: '', label: 'Không chọn' },
@@ -27,7 +27,7 @@ export const defaultFormData = {
 export const defaultQuestionDraft = {
   question: '',
   options: ['', '', '', ''],
-  correctAnswer: 0,
+  correctAnswer: [], // Array of indices
   explanation: '',
   imageUrl: ''
 };
