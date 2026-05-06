@@ -317,6 +317,39 @@ export const api = {
       return [];
     }
   },
+
+  // ========================
+  // PROGRESS APIs
+  // ========================
+
+  /** Lấy toàn bộ tiến độ học tập của user hiện tại */
+  getUserProgress: async (token) => {
+    try {
+      const json = await apiFetch('/users/progress', token);
+      const raw = json.data || [];
+      // Tạo map để tra cứu nhanh: { lessonId: percentage }
+      const map = {};
+      raw.forEach(p => {
+        if (p.lessonId) map[p.lessonId] = p.progressPercent;
+      });
+      return { _raw: raw, map };
+    } catch (error) {
+      console.error("Error fetching user progress:", error);
+      return { _raw: [], map: {} };
+    }
+  },
+
+  /** Cập nhật tiến độ một bài học */
+  updateUserProgress: async (token, { courseId, moduleId, lessonId, progressPercent, status }) => {
+    try {
+      return await apiFetch('/users/progress', token, {
+        method: 'POST',
+        body: JSON.stringify({ courseId, moduleId, lessonId, progressPercent, status }),
+      });
+    } catch (error) {
+      console.error("Error updating progress:", error);
+    }
+  },
 };
 
 export default api;

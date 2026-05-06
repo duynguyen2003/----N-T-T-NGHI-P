@@ -6,7 +6,7 @@ import course1 from '../../image/course1.jpg';
 import course2 from '../../image/course2.jpg';
 import course3 from '../../image/course3.jpg';
 import { useAuth } from '../../context/AuthContext';
-import { api } from '../../services/Api';
+import api from '../../services/Api';
 
 /* ===============================
    STATIC DATA
@@ -227,9 +227,10 @@ export const Home = () => {
           isAuthenticated && token ? api.getUserProgress(token) : Promise.resolve({})
         ]);
         const mapped = data.map((c, idx) => {
-          const progress = progressMap[c.id] ?? c.progress ?? 0;
+          // Lấy progress đã tính toán từ Backend
+          const progress = c.progress || 0;
           return {
-            id: idx + 1,
+            id: c.id, // Dùng ID thật từ DB
             courseId: c.id,
             icon: COURSE_ICONS[c.code] || FALLBACK_ICON,
             title: c.title,
@@ -399,14 +400,19 @@ export const Home = () => {
 
                   {isAuthenticated && (
                     <div className="course-progress-section">
-                      <div className="progress-bar-bg">
+                      <div className="progress-bar-bg" style={{ height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
                         <div
                           className="progress-bar-fill"
-                          style={{ width: `${course.progress}%`, backgroundColor: course.progress > 0 ? '#2563eb' : 'transparent' }}
+                          style={{ 
+                            width: `${course.progress}%`, 
+                            height: '100%',
+                            background: 'linear-gradient(90deg, #2563eb, #3b82f6)',
+                            transition: 'width 0.5s ease-out'
+                          }}
                         />
                       </div>
-                      <p className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`}>
-                        {course.statusText}
+                      <p className={`progress-text ${course.progress === 0 ? 'inactive' : ''}`} style={{ marginTop: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
+                        {course.progress > 0 ? `Tiến độ: ${course.progress}%` : 'Chưa bắt đầu'}
                       </p>
                     </div>
                   )}

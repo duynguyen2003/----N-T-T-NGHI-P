@@ -1,18 +1,10 @@
-require('dotenv').config();
-const { getPrisma } = require('./src/Backend/config/database');
+require('dotenv').config({ path: './.env' });
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 async function main() {
-  const prisma = getPrisma();
-  const courses = await prisma.course.findMany({
-    select: {
-      id: true,
-      code: true,
-      title: true,
-    }
-  });
-  console.log('--- DATABASE COURSES ---');
-  console.log(JSON.stringify(courses, null, 2));
+  const data = await prisma.userProgress.findMany();
+  console.log(JSON.stringify(data, null, 2));
 }
 
-main()
-  .catch(e => console.error(e));
+main().finally(() => prisma.$disconnect());

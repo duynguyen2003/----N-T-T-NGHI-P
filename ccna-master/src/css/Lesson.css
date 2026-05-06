@@ -202,8 +202,10 @@
 .lc-topbar-right {
     display: flex;
     gap: 0.5rem;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
     justify-content: flex-end;
+    flex-shrink: 0;
 }
 
 .lc-topbar-doc-btn {

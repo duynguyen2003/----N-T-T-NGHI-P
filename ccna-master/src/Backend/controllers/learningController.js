@@ -42,30 +42,60 @@ module.exports.getCourses = async (req, res, next) => {
       prisma.course.count({ where: whereClause })
     ]);
 
-    // Tính toán tổng thời lượng cho từng khóa học
-    const coursesWithDuration = courses.map(course => {
+    // Lấy tiến độ của user nếu đã đăng nhập
+    let userProgress = [];
+    if (req.user && req.user.id) {
+      userProgress = await prisma.userProgress.findMany({
+        where: { userId: req.user.id }
+      });
+    }
+
+    // Tính toán tổng thời lượng và tiến độ cho từng khóa học
+    const coursesWithStats = courses.map(course => {
       let totalSeconds = 0;
+      let totalLessons = 0;
+      let sumProgress = 0;
+
       course.modules.forEach(module => {
         module.lessons.forEach(lesson => {
+          totalLessons++;
+          
+          // Tính thời lượng
           if (lesson.videoDuration) {
             const parts = lesson.videoDuration.split(':').map(Number);
-            if (parts.length === 2) { // MM:SS
+            if (parts.length === 2) {
               totalSeconds += (parts[0] || 0) * 60 + (parts[1] || 0);
-            } else if (parts.length === 3) { // HH:MM:SS
+            } else if (parts.length === 3) {
               totalSeconds += (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
             }
+          }
+
+          // Cộng dồn phần trăm tiến độ
+          const progress = userProgress.find(p => p.lessonId === lesson.id);
+          if (progress) {
+            sumProgress += (progress.progressPercent || 0);
           }
         });
       });
       
+      // Tính % tiến độ trung bình (Luôn làm tròn lên để không bị 0% nếu đã học)
+      let progressPercent = 0;
+      if (totalLessons > 0) {
+         progressPercent = Math.ceil(sumProgress / totalLessons);
+         // Nếu chưa học gì thì trả về 0, còn nếu đã nhích lên thì ít nhất là 1%
+         if (sumProgress > 0 && progressPercent === 0) progressPercent = 1;
+      }
+
       return {
         ...course,
-        totalHours: totalSeconds > 0 ? Math.round((totalSeconds / 3600) * 10) / 10 : 0
+        totalHours: totalSeconds > 0 ? Math.round((totalSeconds / 3600) * 10) / 10 : 0,
+        progress: progressPercent,
+        isStarted: sumProgress > 0
       };
     });
 
     res.json({
-      data: coursesWithDuration,
+      data: coursesWithStats,
       pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
     });
   } catch (error) {

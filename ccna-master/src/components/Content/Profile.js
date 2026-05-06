@@ -11,9 +11,7 @@ import {
   FileText,
   MonitorPlay,
   ChevronRight,
-  Award,
   Flame,
-  Target,
   BarChart2,
   Loader2,
 } from "lucide-react";
