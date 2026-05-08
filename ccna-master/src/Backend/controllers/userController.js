@@ -330,3 +330,70 @@ module.exports.deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+const MAX_NOTE_LENGTH = 10000;
+
+module.exports.getUserNote = async (req, res, next) => {
+  try {
+    const { lessonId } = req.params;
+    const userId = req.user.id;
+
+    if (!lessonId || isNaN(parseInt(lessonId))) {
+      return res.status(400).json({ message: 'lessonId không hợp lệ.' });
+    }
+
+    const note = await prisma.userNote.findUnique({
+      where: {
+        userId_lessonId: {
+          userId: parseInt(userId),
+          lessonId: parseInt(lessonId)
+        }
+      }
+    });
+
+    res.json({ content: note?.content ?? '' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports.upsertUserNote = async (req, res, next) => {
+  try {
+    const { lessonId, content } = req.body;
+    const userId = req.user.id;
+
+    if (!lessonId || isNaN(parseInt(lessonId))) {
+      return res.status(400).json({ message: 'lessonId không hợp lệ.' });
+    }
+    if (typeof content !== 'string') {
+      return res.status(400).json({ message: 'content phải là chuỗi.' });
+    }
+    if (content.length > MAX_NOTE_LENGTH) {
+      return res.status(400).json({
+        message: `Ghi chú không được vượt quá ${MAX_NOTE_LENGTH} ký tự.`
+      });
+    }
+
+    await prisma.userNote.upsert({
+      where: {
+        userId_lessonId: {
+          userId: parseInt(userId),
+          lessonId: parseInt(lessonId)
+        }
+      },
+      update: {
+        content,
+        updatedAt: new Date()
+      },
+      create: {
+        userId: parseInt(userId),
+        lessonId: parseInt(lessonId),
+        content
+      }
+    });
+
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+};

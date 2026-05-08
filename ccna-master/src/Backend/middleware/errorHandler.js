@@ -19,8 +19,8 @@ const errorHandler = (err, req, res, next) => {
   };
 
   // In production, không cần stack trace
-  if (process.env.NODE_ENV !== 'production') {
-    errorResponse.error.stack = err.stack;
+  if (process.env.NODE_ENV !== 'production' && err && err.stack) {
+    errorResponse.stack = err.stack;
   }
 
   res.json(errorResponse);

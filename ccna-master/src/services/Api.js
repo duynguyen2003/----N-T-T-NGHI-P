@@ -271,6 +271,19 @@ export const api = {
       body: JSON.stringify(progressData),
     }),
 
+  // ── User Notes ────────────────────────────────────────────────────────────
+
+  getUserNote: async (token, lessonId) => {
+    const json = await safeApiFetch(`/users/notes/${lessonId}`, token, { content: "" });
+    return json.content || "";
+  },
+
+  updateUserNote: (token, noteData) =>
+    apiFetch("/users/notes", token, {
+      method: "POST",
+      body: JSON.stringify(noteData),
+    }),
+
   // ── Exams ─────────────────────────────────────────────────────────────────
 
   getExams: async (token) => {

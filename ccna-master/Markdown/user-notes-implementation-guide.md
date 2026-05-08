@@ -353,12 +353,12 @@ useEffect(() => {
 ## 7. Checklist triển khai
 
 ```
-[ ] Chạy migration tạo bảng user_notes
-[ ] Thêm getUserNote, upsertUserNote vào userController.js
-[ ] Đăng ký 2 route mới trong users.js (có authenticate)
-[ ] Thêm getUserNote, updateUserNote vào Api.js
-[ ] Cập nhật Lesson.js: state, useEffect, handleNoteChange, JSX
+[x] Chạy migration tạo bảng user_notes
+[x] Thêm getUserNote, upsertUserNote vào userController.js
+[x] Đăng ký 2 route mới trong users.js (có authenticate)
+[x] Thêm getUserNote, updateUserNote vào Api.js
+[x] Cập nhật Lesson.js: state, useEffect, handleNoteChange, JSX
 [ ] Test Postman toàn bộ 7 case
 [ ] Test manual toàn bộ 6 case
-[ ] Review code trước khi merge
+[x] Review code trước khi merge
 ```

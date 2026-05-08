@@ -11,4 +11,8 @@ router.get('/profile/me', verifyToken, userController.getProfileMe);
 router.get('/progress', verifyToken, userController.getUserProgress);
 router.post('/progress', verifyToken, userController.updateProgress);
 
+// Học viên lưu ghi chú cá nhân
+router.get('/notes/:lessonId', verifyToken, userController.getUserNote);
+router.post('/notes', verifyToken, userController.upsertUserNote);
+
 module.exports = router;

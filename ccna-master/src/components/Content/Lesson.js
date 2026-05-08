@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
    ChevronLeft, ChevronRight, Menu, FileText,
@@ -15,10 +15,6 @@ const getViewportWidth = () => (
    typeof window === 'undefined' ? RESOURCE_BREAKPOINT : window.innerWidth
 );
 
-const extractIframeSrc = (value) => {
-   const match = value?.match(/src=["']([^"']+)["']/i);
-   return match ? match[1] : value;
-};
 
 /** Trích xuất YouTube video ID từ mọi dạng URL */
 const getYoutubeVideoId = (url) => {
@@ -263,6 +259,10 @@ const Lesson = () => {
    const [lessons, setLessons] = useState([]);
    const [selectedLessonId, setSelectedLessonId] = useState(null);
    const [loading, setLoading] = useState(true);
+   const [noteContent, setNoteContent] = useState('');
+   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+   const debounceTimer = useRef(null);
+   const currentLessonRef = useRef(selectedLessonId);
 
    const [lessonProgress, setLessonProgress] = useState({});
 
@@ -304,7 +304,7 @@ const Lesson = () => {
             setLoading(true);
             // 1. Fetch Course & Modules
             const courses = await api.getCourses(token);
-            const currentCourse = courses.find(c => c.id == courseId);
+            const currentCourse = courses.find(c => c.id === courseId);
             setCourse(currentCourse);
 
             const courseModules = await api.getModulesByCourse(token, courseId);
@@ -344,6 +344,68 @@ const Lesson = () => {
       };
       initLesson();
    }, [courseId, token]);
+
+   // 1. Fetch note mỗi khi đổi lesson
+   useEffect(() => {
+      if (!selectedLessonId) return;
+
+      currentLessonRef.current = selectedLessonId;
+      setNoteContent('');
+      setSaveStatus('idle');
+
+      // Hủy debounce đang pending của lesson cũ
+      if (debounceTimer.current) {
+         clearTimeout(debounceTimer.current);
+      }
+
+      const fetchNote = async () => {
+         try {
+            const content = await api.getUserNote(token, selectedLessonId);
+            // Chỉ set nếu user chưa chuyển sang lesson khác
+            if (currentLessonRef.current === selectedLessonId) {
+               setNoteContent(content);
+            }
+         } catch (error) {
+            console.error("[Lesson] Lỗi tải ghi chú:", error);
+         }
+      };
+
+      fetchNote();
+   }, [selectedLessonId, token]);
+
+   // 2. Auto-save với debounce 700ms
+   const handleNoteChange = useCallback((e) => {
+      const value = e.target.value;
+      setNoteContent(value);
+      setSaveStatus('saving');
+
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+      debounceTimer.current = setTimeout(async () => {
+         // Chỉ save nếu vẫn đang ở đúng lesson
+         if (currentLessonRef.current !== selectedLessonId) return;
+
+         try {
+            await api.updateUserNote(token, {
+               lessonId: selectedLessonId,
+               content: value
+            });
+            setSaveStatus('saved');
+            // Sau 2s thì reset status về idle để sạch giao diện
+            setTimeout(() => setSaveStatus('idle'), 2000);
+         } catch (error) {
+            setSaveStatus('error');
+            console.error("[Lesson] Lỗi lưu ghi chú:", error);
+         }
+      }, 700);
+   }, [selectedLessonId, token]);
+
+   // 3. Cleanup khi unmount
+   useEffect(() => {
+      return () => {
+         if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      };
+   }, []);
 
    const lastSyncRef = React.useRef({});
 
@@ -400,38 +462,6 @@ const Lesson = () => {
       });
    };
 
-   const handlePlay = (lessonId) => {
-      const lesson = lessons.find((item) => item.id === lessonId);
-      console.log('onPlay', { lessonId, videoUrl: lesson?.videoUrl });
-   };
-
-   const handlePause = (lessonId) => {
-      console.log('onPause', {
-         lessonId,
-         playedSeconds: lessonProgress[lessonId]?.playedSeconds ?? 0
-      });
-   };
-
-   const handleEnded = (lessonId) => {
-      setLessonProgress((currentProgress) => ({
-         ...currentProgress,
-         [lessonId]: {
-            ...currentProgress[lessonId],
-            played: 1,
-            completed: true
-         }
-      }));
-      updateLessonCompletion(lessonId, true);
-      
-      // Sync completion to backend
-      api.updateUserProgress(token, {
-         courseId,
-         moduleId: activeModule?.id,
-         lessonId,
-         progressPercent: 100,
-         status: 'COMPLETED'
-      }).catch(err => console.error("Failed to sync final progress:", err));
-   };
 
    const handleProgress = (lessonId, state) => {
       const playedRatio = state.played || 0;
@@ -702,7 +732,15 @@ const Lesson = () => {
                   <textarea
                      className="rs-textarea"
                      placeholder="Viết ghi chú tại đây... (được lưu tự động)"
+                     value={noteContent}
+                     onChange={handleNoteChange}
+                     maxLength={10000}
                   ></textarea>
+                  <div className="rs-note-status" style={{ fontSize: '0.75rem', marginTop: '4px', textAlign: 'right', minHeight: '1.2em' }}>
+                     {saveStatus === 'saving' && <span style={{ color: '#64748b' }}> đang lưu...</span>}
+                     {saveStatus === 'saved' && <span style={{ color: '#16a34a' }}>Đã lưu ✓</span>}
+                     {saveStatus === 'error' && <span style={{ color: '#dc2626' }}>Lỗi lưu, thử lại sau.</span>}
+                  </div>
                </div>
 
                <div className="rs-discussion-box">

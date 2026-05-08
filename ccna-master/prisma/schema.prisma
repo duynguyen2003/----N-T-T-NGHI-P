@@ -319,11 +319,13 @@ model UserNote {
   userId    Int      @map("user_id")
   lessonId  Int      @map("lesson_id")
   content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
+  @@unique([userId, lessonId])
   @@map("user_notes")
 }
 
