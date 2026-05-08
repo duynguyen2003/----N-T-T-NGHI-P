@@ -4,29 +4,43 @@ const { ValidationError } = require('../errors/validation-error');
 
 const prisma = getPrisma();
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+// [OPT-05] Tránh lặp parseInt + isNaN ở mọi controller
+const parseId = (raw, label = 'ID') => {
+  const id = parseInt(raw, 10);
+  if (Number.isNaN(id)) {
+    throw Object.assign(new Error(`${label} không hợp lệ`), { status: 400 });
+  }
+  return id;
+};
+
+// ─── Sanitizer ───────────────────────────────────────────────────────────────
+
 const sanitizeQuestionsInput = (questions) => {
   if (!Array.isArray(questions)) {
     throw new ValidationError('Danh sách câu hỏi không hợp lệ');
   }
-
   if (questions.length === 0) {
     throw new ValidationError('Cần ít nhất 1 câu hỏi cho bài thi');
   }
 
   return questions.map((questionItem, index) => {
     const rawOptions = Array.isArray(questionItem.options) ? questionItem.options : [];
-    // Hỗ trợ số lượng đáp án linh hoạt (ít nhất 2)
-    const normalizedOptions = rawOptions.map(opt => `${opt || ''}`.trim()).filter(opt => opt !== '');
+    const normalizedOptions = rawOptions
+      .map(opt => `${opt || ''}`.trim())
+      .filter(opt => opt !== '');
     const questionText = `${questionItem.question || ''}`.trim();
-    
-    // Hỗ trợ chọn nhiều đáp án (Lưu dạng mảng index)
+
+    // Hỗ trợ chọn nhiều đáp án (lưu dạng mảng index)
     let correctAnswers = questionItem.correctAnswer;
     if (!Array.isArray(correctAnswers)) {
-      // Fallback cho dữ liệu cũ hoặc single choice gửi lên dạng số
       const single = parseInt(correctAnswers, 10);
       correctAnswers = Number.isNaN(single) ? [] : [single];
     } else {
-      correctAnswers = correctAnswers.map(ans => parseInt(ans, 10)).filter(ans => !Number.isNaN(ans));
+      correctAnswers = correctAnswers
+        .map(ans => parseInt(ans, 10))
+        .filter(ans => !Number.isNaN(ans));
     }
 
     const imageUrl = `${questionItem.imageUrl || ''}`.trim() || null;
@@ -34,15 +48,12 @@ const sanitizeQuestionsInput = (questions) => {
     if (!questionText) {
       throw new ValidationError(`Câu hỏi ${index + 1} không được để trống`);
     }
-
     if (normalizedOptions.length < 2) {
       throw new ValidationError(`Câu hỏi ${index + 1} cần ít nhất 2 đáp án`);
     }
-
     if (correctAnswers.length === 0) {
       throw new ValidationError(`Câu hỏi ${index + 1} chưa chọn đáp án đúng`);
     }
-
     if (correctAnswers.some(ans => ans < 0 || ans >= normalizedOptions.length)) {
       throw new ValidationError(`Câu hỏi ${index + 1} có đáp án đúng không hợp lệ`);
     }
@@ -50,13 +61,15 @@ const sanitizeQuestionsInput = (questions) => {
     return {
       question: questionText,
       options: normalizedOptions,
-      correctAnswer: correctAnswers, // Lưu mảng JSON vào DB
+      correctAnswer: correctAnswers,
       explanation: `${questionItem.explanation || ''}`.trim() || null,
       imageUrl,
-      orderIndex: index + 1
+      orderIndex: index + 1,
     };
   });
 };
+
+// ─── Controllers ─────────────────────────────────────────────────────────────
 
 module.exports.getExams = async (req, res, next) => {
   try {
@@ -78,15 +91,15 @@ module.exports.getExams = async (req, res, next) => {
         include: {
           _count: { select: { questions: true, results: true } },
           course: { select: { title: true, code: true } },
-          module: { select: { id: true, title: true } }
-        }
+          module: { select: { id: true, title: true } },
+        },
       }),
-      prisma.exam.count({ where: whereClause })
+      prisma.exam.count({ where: whereClause }),
     ]);
 
     res.json({
       data: exams,
-      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) }
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
     next(error);
@@ -96,21 +109,12 @@ module.exports.getExams = async (req, res, next) => {
 module.exports.createExam = async (req, res, next) => {
   try {
     const {
-      title,
-      examCode,
-      durationMinutes,
-      passingScore,
-      difficulty,
-      courseId,
-      moduleId,
-      status,
-      questions
+      title, examCode, durationMinutes, passingScore,
+      difficulty, courseId, moduleId, status, questions,
     } = req.body;
 
     if (!title || !durationMinutes) {
-      return res.status(400).json({
-        message: 'Vui lòng nhập đầy đủ: Tên và Thời gian thi'
-      });
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ: Tên và Thời gian thi' });
     }
 
     const sanitizedQuestions = sanitizeQuestionsInput(questions || []);
@@ -126,13 +130,9 @@ module.exports.createExam = async (req, res, next) => {
         courseId: courseId || null,
         moduleId: moduleId || null,
         status: status || 'DRAFT',
-        questions: {
-          create: sanitizedQuestions
-        }
+        questions: { create: sanitizedQuestions },
       },
-      include: {
-        questions: true
-      }
+      include: { questions: true },
     });
 
     res.status(201).json({ message: 'Tạo bài thi thành công', exam });
@@ -146,50 +146,36 @@ module.exports.createExam = async (req, res, next) => {
 
 module.exports.getExamById = async (req, res, next) => {
   try {
-    const examId = parseInt(req.params.id, 10);
-    if (Number.isNaN(examId)) {
-      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
-    }
+    // [OPT-05] Dùng parseId helper
+    let examId;
+    try { examId = parseId(req.params.id, 'ID bài thi'); }
+    catch (e) { return res.status(400).json({ message: e.message }); }
 
-    const whereClause = {
-      id: examId,
-      deletedAt: null
-    };
-
-    if (!req.user || req.user.role !== 'ADMIN') {
-      whereClause.status = 'OPEN';
-    }
+    const isAdmin = req.user?.role === 'ADMIN';
+    const whereClause = { id: examId, deletedAt: null };
+    if (!isAdmin) whereClause.status = 'OPEN';
 
     const exam = await prisma.exam.findFirst({
       where: whereClause,
       include: {
-        questions: {
-          orderBy: { orderIndex: 'asc' }
-        },
+        questions: { orderBy: { orderIndex: 'asc' } },
         _count: { select: { questions: true, results: true } },
         course: { select: { title: true, code: true } },
-        module: { select: { id: true, title: true } }
-      }
+        module: { select: { id: true, title: true } },
+      },
     });
 
     if (!exam) {
       return res.status(404).json({ message: 'Không tìm thấy bài thi' });
     }
 
-    // Xử lý questions: Thêm answerCount và bảo mật đáp án cho học viên
-    const isAdmin = req.user && req.user.role === 'ADMIN';
-    
+    // Thêm answerCount; ẩn correctAnswer và explanation với học viên
     exam.questions = exam.questions.map(q => {
-      let answerCount = 1;
-      if (Array.isArray(q.correctAnswer)) {
-        answerCount = q.correctAnswer.length;
-      }
-      
+      const answerCount = Array.isArray(q.correctAnswer) ? q.correctAnswer.length : 1;
       if (!isAdmin) {
         const { correctAnswer, explanation, ...rest } = q;
         return { ...rest, answerCount };
       }
-      
       return { ...q, answerCount };
     });
 
@@ -201,27 +187,18 @@ module.exports.getExamById = async (req, res, next) => {
 
 module.exports.updateExam = async (req, res, next) => {
   try {
-    const examId = parseInt(req.params.id, 10);
-    if (Number.isNaN(examId)) {
-      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
-    }
+    let examId;
+    try { examId = parseId(req.params.id, 'ID bài thi'); }
+    catch (e) { return res.status(400).json({ message: e.message }); }
 
     const {
-      title,
-      examCode,
-      durationMinutes,
-      passingScore,
-      difficulty,
-      courseId,
-      moduleId,
-      status,
-      questions
+      title, examCode, durationMinutes, passingScore,
+      difficulty, courseId, moduleId, status, questions,
     } = req.body;
 
-    let sanitizedQuestions = null;
-    if (questions !== undefined) {
-      sanitizedQuestions = sanitizeQuestionsInput(questions);
-    }
+    const sanitizedQuestions = questions !== undefined
+      ? sanitizeQuestionsInput(questions)
+      : null;
 
     const exam = await prisma.exam.update({
       where: { id: examId },
@@ -234,21 +211,12 @@ module.exports.updateExam = async (req, res, next) => {
         difficulty: difficulty || null,
         courseId: courseId || null,
         moduleId: moduleId || null,
-        status: status,
+        status,
         ...(sanitizedQuestions
-          ? {
-              questions: {
-                deleteMany: {},
-                create: sanitizedQuestions
-              }
-            }
-          : {})
+          ? { questions: { deleteMany: {}, create: sanitizedQuestions } }
+          : {}),
       },
-      include: {
-        questions: {
-          orderBy: { orderIndex: 'asc' }
-        }
-      }
+      include: { questions: { orderBy: { orderIndex: 'asc' } } },
     });
 
     res.json({ message: 'Cập nhật bài thi thành công', exam });
@@ -265,13 +233,12 @@ module.exports.updateExam = async (req, res, next) => {
 
 module.exports.deleteExam = async (req, res, next) => {
   try {
-    const examId = parseInt(req.params.id, 10);
-    if (Number.isNaN(examId)) {
-      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
-    }
+    let examId;
+    try { examId = parseId(req.params.id, 'ID bài thi'); }
+    catch (e) { return res.status(400).json({ message: e.message }); }
 
     const existing = await prisma.exam.findFirst({
-      where: { id: examId, deletedAt: null }
+      where: { id: examId, deletedAt: null },
     });
     if (!existing) {
       return res.status(404).json({ message: 'Không tìm thấy bài thi' });
@@ -279,7 +246,7 @@ module.exports.deleteExam = async (req, res, next) => {
 
     await prisma.exam.update({
       where: { id: examId },
-      data: { deletedAt: new Date() }
+      data: { deletedAt: new Date() },
     });
 
     res.json({ message: 'Xóa bài thi thành công' });
@@ -296,73 +263,89 @@ module.exports.uploadQuestionImage = async (req, res, next) => {
 
     const uploadResult = await uploadBufferToCloudinary(req.file, {
       folder: 'ccna/exams/questions',
-      resourceType: 'image'
+      resourceType: 'image',
     });
 
     res.status(201).json({
       message: 'Tải ảnh câu hỏi thành công',
-      imageUrl: uploadResult.secure_url
+      imageUrl: uploadResult.secure_url,
     });
   } catch (error) {
     next(error);
   }
 };
 
-// --- SUBMIT EXAM ---
+// ─── Submit Exam ─────────────────────────────────────────────────────────────
+
 module.exports.submitExam = async (req, res, next) => {
   try {
-    const examId = parseInt(req.params.id, 10);
+    let examId;
+    try { examId = parseId(req.params.id, 'ID bài thi'); }
+    catch (e) { return res.status(400).json({ message: e.message }); }
+
     const userId = req.user.id;
     const { answers, timeSpent } = req.body;
 
-    console.log('>>> [BACKEND] submitExam called:', { examId, userId, answersCount: Object.keys(answers || {}).length, timeSpent });
-
-    if (Number.isNaN(examId)) {
-      return res.status(400).json({ message: 'ID bài thi không hợp lệ' });
+    // [OPT-03] Validate answers trước khi xử lý
+    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+      return res.status(400).json({ message: 'Dữ liệu đáp án không hợp lệ' });
     }
 
-    // Idempotency: Chống spam (chặn nộp liên tục trong 30s)
+    // Validate timeSpent
+    const safeTimeSpent = Math.max(0, parseInt(timeSpent, 10) || 0);
+
+    console.log('>>> [BACKEND] submitExam called:', {
+      examId,
+      userId,
+      answersCount: Object.keys(answers).length,
+      timeSpent: safeTimeSpent,
+    });
+
+    // [BUG-02] Idempotency — tăng window lên 5 phút để tránh duplicate do timeout mạng
+    // TODO: Nâng cấp lên attemptToken (UUID) để chính xác hơn
     const recentAttempt = await prisma.examResult.findFirst({
       where: {
         examId,
         userId,
-        takenAt: {
-          gte: new Date(Date.now() - 30 * 1000)
-        }
-      }
+        takenAt: { gte: new Date(Date.now() - 5 * 60 * 1000) },
+      },
     });
-
     if (recentAttempt) {
       return res.json({ message: 'Nộp bài thành công', resultId: recentAttempt.id });
     }
 
     const exam = await prisma.exam.findFirst({
       where: { id: examId, deletedAt: null },
-      include: { questions: true }
+      include: { questions: true },
     });
-
     if (!exam) {
       return res.status(404).json({ message: 'Không tìm thấy bài thi' });
     }
 
-    // Chấm điểm
+    // Chấm điểm server-side
     let correctCount = 0;
     const totalQuestions = exam.questions.length;
 
     exam.questions.forEach((q) => {
-      const userAns = answers[q.id] || [];
+      // [BUG-01] Explicit String() — JSON key luôn là string, q.id từ Prisma là number
+      const userAns = answers[String(q.id)] ?? [];
       const correctAns = q.correctAnswer || [];
 
-      if (userAns.length === correctAns.length && 
-          userAns.every(v => correctAns.includes(v)) &&
-          correctAns.every(v => userAns.includes(v))) {
+      // [OPT-06] Bỏ kiểm tra 2 chiều thừa — length + every một chiều là đủ
+      if (
+        userAns.length === correctAns.length &&
+        userAns.every(v => correctAns.includes(v))
+      ) {
         correctCount++;
       }
     });
 
     const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 1000) : 0;
-    const percentage = totalQuestions > 0 ? parseFloat(((correctCount / totalQuestions) * 100).toFixed(2)) : 0;
-    
+    const percentage = totalQuestions > 0
+      ? parseFloat(((correctCount / totalQuestions) * 100).toFixed(2))
+      : 0;
+
+    // passingScore lưu dưới dạng % (ví dụ: 70 = 70%)
     const passingScorePercent = exam.passingScore || 70;
     const isPassed = percentage >= passingScorePercent;
 
@@ -374,9 +357,9 @@ module.exports.submitExam = async (req, res, next) => {
         totalQuestions,
         percentage,
         isPassed,
-        answers: answers || {},
-        timeSpent: timeSpent || 0,
-      }
+        answers,
+        timeSpent: safeTimeSpent,
+      },
     });
 
     res.json({ message: 'Nộp bài thành công', resultId: result.id });
@@ -385,23 +368,23 @@ module.exports.submitExam = async (req, res, next) => {
   }
 };
 
-// --- GET EXAM RESULT ---
+// ─── Get Exam Result ─────────────────────────────────────────────────────────
+
 module.exports.getExamResultById = async (req, res, next) => {
   try {
-    const resultId = parseInt(req.params.resultId, 10);
-    const userId = req.user.id;
+    let resultId;
+    try { resultId = parseId(req.params.resultId, 'ID kết quả'); }
+    catch (e) { return res.status(400).json({ message: e.message }); }
 
-    if (Number.isNaN(resultId)) {
-      return res.status(400).json({ message: 'ID kết quả không hợp lệ' });
-    }
+    const userId = req.user.id;
 
     const result = await prisma.examResult.findFirst({
       where: { id: resultId, userId },
-      include: { 
+      include: {
         exam: {
-          include: { questions: true }
-        }
-      }
+          include: { questions: { orderBy: { orderIndex: 'asc' } } },
+        },
+      },
     });
 
     if (!result) {
@@ -414,22 +397,41 @@ module.exports.getExamResultById = async (req, res, next) => {
   }
 };
 
-// --- GET EXAM HISTORY ---
+// ─── Get Exam History ────────────────────────────────────────────────────────
+
 module.exports.getMyExamHistory = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const history = await prisma.examResult.findMany({
-      where: { userId },
-      orderBy: { takenAt: 'desc' },
-      include: {
-        exam: {
-          select: { title: true, examCode: true, passingScore: true, durationMinutes: true }
-        }
-      }
-    });
+    // [OPT-04] Thêm pagination — tránh trả về toàn bộ bảng
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 20;
+    const skip = (page - 1) * limit;
 
-    res.json({ data: history });
+    const [history, total] = await Promise.all([
+      prisma.examResult.findMany({
+        where: { userId },
+        orderBy: { takenAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          exam: {
+            select: {
+              title: true,
+              examCode: true,
+              passingScore: true,
+              durationMinutes: true,
+            },
+          },
+        },
+      }),
+      prisma.examResult.count({ where: { userId } }),
+    ]);
+
+    res.json({
+      data: history,
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     next(error);
   }
