@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
-import api from "../../services/Api";
+import api, { API_URL } from "../../services/Api";
 import { 
   FileText, 
   Download, 
@@ -12,42 +12,27 @@ import {
   Sparkles,
   Loader
 } from "lucide-react";
-
-// Dữ liệu mẫu fallback nếu database trống
-const MOCK_RESOURCES = [
-  { id: "m1", title: "Subnetting Table Pro Cheat Sheet", type: "PDF", size: "450 KB", fileUrl: "#", createdAt: new Date() },
-  { id: "m2", title: "CCNA Exam Topics v1.1 2024", type: "PDF", size: "1.2 MB", fileUrl: "#", createdAt: new Date() },
-  { id: "m3", title: "OSPF Multi-area Configuration Lab", type: "Packet Tracer", size: "2.4 MB", fileUrl: "#", createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-  { id: "m4", title: "Cisco IOS Commands Cheat Sheet 2024", type: "PDF", size: "850 KB", fileUrl: "#", createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
-  { id: "m5", title: "Module 05: EtherChannel & HSRP Concepts", type: "Slides", size: "12.1 MB", fileUrl: "#", createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
-  { id: "m6", title: "Subnetting Fast Track Video", type: "Video", size: "45 MB", fileUrl: "#", createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-];
-
 export const Resources = () => {
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("Tất cả");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 3;
+  const itemsPerPage = 10;
   const { token } = useAuth();
 
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, activeFilter]);
-
   useEffect(() => {
     const fetchResources = async () => {
       try {
         const res = await api.getResources(token);
-        if (res && res.data && res.data.length > 0) {
+        if (res && res.data) {
           setResources(res.data);
-        } else {
-          setResources(MOCK_RESOURCES);
         }
       } catch (error) {
         console.error("Error fetching resources:", error);
-        setResources(MOCK_RESOURCES);
       } finally {
         setLoading(false);
       }
@@ -56,13 +41,9 @@ export const Resources = () => {
   }, [token]);
 
   const getFileUrl = (item) => {
-    if (!item || !item.fileUrl) return "#";
-    // Nếu là mock data (id bắt đầu bằng 'm')
-    if (typeof item.id === 'string' && item.id.startsWith("m")) {
-      return item.fileUrl;
-    }
-    // File mới lưu local: dùng backend proxy download để đặt tên đúng
-    return `http://localhost:5000/api/learning/resources/${item.id}/download?token=${token}`;
+    if (!item || !item.id) return "#";
+    // File lưu local: dùng backend proxy download để đặt tên đúng
+    return `${API_URL}/learning/resources/${item.id}/download?token=${token}`;
   };
 
   // Hàm lấy Icon tương ứng với loại tài liệu

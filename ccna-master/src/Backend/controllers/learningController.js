@@ -10,7 +10,7 @@ module.exports.getCourses = async (req, res, next) => {
 
     const whereClause = { deletedAt: null };
     if (!req.user || req.user.role !== 'ADMIN') {
-      whereClause.status = 'PUBLISHED';
+      whereClause.status = { in: ['PUBLISHED', 'OPEN'] };
     }
 
     const [courses, total] = await Promise.all([

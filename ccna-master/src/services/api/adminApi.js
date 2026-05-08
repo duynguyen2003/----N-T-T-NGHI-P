@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from '../Api';
 const DEFAULT_TIMEOUT_MS = 10000;
 
 const getHeaders = (token, isFormData = false) => ({

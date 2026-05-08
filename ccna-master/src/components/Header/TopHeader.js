@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { API_URL } from '../../services/Api';
 
 const TopHeader = () => {
     const { user, isAuthenticated, logout } = useAuth();
@@ -79,7 +80,7 @@ const TopHeader = () => {
                                         className="avatar"
                                         src={user.avatarUrl.startsWith('http') 
                                             ? user.avatarUrl 
-                                            : `http://localhost:5000${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}`
+                                            : `${API_URL.replace('/api', '')}${user.avatarUrl.startsWith('/') ? '' : '/'}${user.avatarUrl}`
                                         }
                                         onError={(e) => {
                                             e.target.style.display = 'none';

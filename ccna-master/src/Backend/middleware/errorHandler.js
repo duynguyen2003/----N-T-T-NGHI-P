@@ -14,10 +14,8 @@ const errorHandler = (err, req, res, next) => {
   res.status(statusCode);
 
   const errorResponse = {
-    error: {
-      message: err.message || 'Internal Server Error',
-      status: statusCode,
-    },
+    message: err.message || 'Internal Server Error',
+    status: statusCode,
   };
 
   // In production, không cần stack trace

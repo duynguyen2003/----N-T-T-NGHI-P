@@ -15,7 +15,7 @@ import {
   BarChart2,
   Loader2,
 } from "lucide-react";
-import { api } from "../../services/Api.js";
+import { api, API_URL } from "../../services/Api.js";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Profile() {
@@ -67,7 +67,7 @@ export default function Profile() {
                   <img 
                     src={profile.avatarUrl.startsWith('http') 
                       ? profile.avatarUrl 
-                      : `http://localhost:5000${profile.avatarUrl.startsWith('/') ? '' : '/'}${profile.avatarUrl}`
+                      : `${API_URL.replace('/api', '')}${profile.avatarUrl.startsWith('/') ? '' : '/'}${profile.avatarUrl}`
                     } 
                     alt="avatar" 
                     onError={(e) => {

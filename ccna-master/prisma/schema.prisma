@@ -318,14 +318,12 @@ model UserNote {
   id        Int      @id @default(autoincrement())
   userId    Int      @map("user_id")
   lessonId  Int      @map("lesson_id")
-  content   String   @db.Text @default("")
-  createdAt DateTime @default(now()) @map("created_at")
+  content   String   @db.Text
   updatedAt DateTime @updatedAt @map("updated_at")
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, lessonId])
   @@map("user_notes")
 }
 

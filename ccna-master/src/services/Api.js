@@ -1,6 +1,6 @@
 // fe/src/services/Api.js
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+export const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 // ─── Static Metadata ────────────────────────────────────────────────────────
 const COURSE_METADATA = {
@@ -71,13 +71,15 @@ const apiFetch = async (endpoint, token, options = {}) => {
   };
 
   const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
-
+  const data = await response.json().catch(() => ({}));
+  
   if (response.status === 401) {
-    window.dispatchEvent(new Event("unauthorized"));
-    throw new Error("UNAUTHORIZED");
+    // Nếu là login, cho phép hiển thị lỗi sai mật khẩu thay vì quăng UNAUTHORIZED chung chung
+    if (endpoint !== "/auth/login" && endpoint !== "/auth/register") {
+       window.dispatchEvent(new Event("unauthorized"));
+       throw new Error("UNAUTHORIZED");
+    }
   }
-
-  const data = await response.json();
 
   if (!response.ok) {
     if (response.status >= 500) {
@@ -85,7 +87,7 @@ const apiFetch = async (endpoint, token, options = {}) => {
         new CustomEvent("api_error", { detail: "Lỗi máy chủ (500). Vui lòng thử lại sau." })
       );
     }
-    throw new Error(data.message || `Lỗi API: ${response.status}`);
+    throw new Error(data.message || data.error?.message || `Lỗi API: ${response.status}`);
   }
 
   return data;
