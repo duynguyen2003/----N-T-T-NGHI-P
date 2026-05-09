@@ -402,3 +402,45 @@
   .cdp-hero-title { font-size: 1.5rem; }
   .cdp-lesson-list { padding-left: 1.25rem; }
 }
+
+/* =========================================
+   LOADING STATE
+   ========================================= */
+.cdp-loading-container {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  padding: 2rem;
+}
+
+.cdp-loading-card {
+  background: white;
+  padding: 3.5rem 2.5rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+.cdp-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f1f5f9;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.cdp-loading-card p {
+  color: #64748b;
+  font-size: 1.1rem;
+  font-weight: 500;
+}

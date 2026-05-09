@@ -2,6 +2,14 @@ const bcrypt = require('bcrypt');
 const { getPrisma } = require('../config/database');
 const prisma = getPrisma();
 
+// Helper to get ISO week number for labeling charts
+function getISOWeekLabel(date) {
+  const d = new Date(date);
+  const startOfYear = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d - startOfYear) / 86400000 + startOfYear.getDay() + 1) / 7);
+  return `Tuần ${week}`;
+}
+
 module.exports.getAll = async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -121,7 +129,37 @@ module.exports.getProfileMe = async (req, res, next) => {
 
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Tính toán các chỉ số tổng hợp
+    // --- 1. weeklyScores: last 7 weeks from ExamResults ---
+    const weeklyMap = {};
+    user.examResults.forEach(r => {
+      const week = getISOWeekLabel(r.takenAt || r.createdAt || new Date()); 
+      if (!weeklyMap[week]) weeklyMap[week] = [];
+      weeklyMap[week].push(Number(r.percentage));
+    });
+    const weeklyScores = Object.entries(weeklyMap).map(([week, scores]) => ({
+      week,
+      score: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
+    })).slice(-7);
+
+    // --- 2. dailyStudyTime: last 7 days from UserActivity ---
+    // Since we don't have a 'watchedTime' per event, we estimate study time 
+    // based on activity count (e.g., 15 minutes per lesson/lab activity)
+    const DAY_LABELS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const dailyMap = { CN: 0, T2: 0, T3: 0, T4: 0, T5: 0, T6: 0, T7: 0 };
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    user.activities.forEach(act => {
+      if (new Date(act.createdAt) >= sevenDaysAgo) {
+        const label = DAY_LABELS[new Date(act.createdAt).getDay()];
+        // Estimate: 15 mins for lesson/lab, 5 mins for others
+        const estimatedMins = act.type.includes('COMPLETED') ? 20 : 5;
+        dailyMap[label] += estimatedMins;
+      }
+    });
+    const dailyStudyTime = DAY_LABELS.map(day => ({ day, minutes: dailyMap[day] }));
+
+    // --- 3. Summary metrics ---
     const courseProgress = user.progress.map(p => ({
       courseId: p.courseId,
       courseName: p.course?.title || p.courseId,
@@ -140,7 +178,9 @@ module.exports.getProfileMe = async (req, res, next) => {
       ? Math.round(user.examResults.reduce((sum, r) => sum + Number(r.percentage), 0) / user.examResults.length)
       : 0;
 
-    const { examResults, progress, ...baseUser } = user;
+    const examCount = user.examResults.length;
+
+    const { examResults, progress, activities, ...baseUser } = user;
 
     res.json({
       data: {
@@ -148,8 +188,17 @@ module.exports.getProfileMe = async (req, res, next) => {
         progress: courseProgress,
         totalProgress,
         completedLabs,
-        totalLabs: 50, // Placeholder, có thể lấy động sau
+        totalLabs: 50,
         averageScore,
+        examCount,
+        weeklyScores,
+        dailyStudyTime,
+        stats: {
+          totalStudyTime: user.totalStudyTime * 60, // Phút -> Giây để thống nhất với plan (h:m format)
+          avgScore: averageScore,
+          examCount: examCount,
+          labsDone: completedLabs
+        }
       }
     });
   } catch (error) {

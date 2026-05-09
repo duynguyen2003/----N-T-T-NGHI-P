@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
    ChevronLeft, ChevronRight, Menu, FileText,
-   AlertCircle, CheckCircle, Play, ArrowLeft
+   AlertCircle, CheckCircle, Play, ArrowLeft as ArrowLeftIcon, Map
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/Api';
 import MarkdownRenderer from '../Common/MarkdownRenderer';
+import errorIllustration from '../../image/fix1.png';
 
 const MOBILE_BREAKPOINT = 1024;
 const RESOURCE_BREAKPOINT = 1280;
@@ -39,12 +40,12 @@ const getYoutubeVideoId = (url) => {
 
 /** Component video: dùng YouTube IFrame API cho YouTube, <video> cho file */
 const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChange }) => {
-   const playerRef     = useRef(null);  // YouTube Player instance
-   const intervalRef   = useRef(null);  // setInterval reference
-   const lastSavedRef  = useRef(0);     // Thời điểm save cuối (tránh trùng)
+   const playerRef = useRef(null);  // YouTube Player instance
+   const intervalRef = useRef(null);  // setInterval reference
+   const lastSavedRef = useRef(0);     // Thời điểm save cuối (tránh trùng)
    const maxWatchedRef = useRef(0);     // Thời điểm xem xa nhất
-   const containerRef  = useRef(null);  // div chứa player
-   const videoRef      = useRef(null);  // video element cho file .mp4
+   const containerRef = useRef(null);  // div chứa player
+   const videoRef = useRef(null);  // video element cho file .mp4
 
    const [localProgress, setLocalProgress] = useState({ percentage: 0, watchedTime: 0, status: 'Chưa học' });
    const youtubeId = getYoutubeVideoId(url);
@@ -111,7 +112,7 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChang
             playerRef.current = null;
          }
       };
-   // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [youtubeId, lessonId]);
 
    // ── Tracking mỗi 1 giây ──────────────────────────────────────────────────
@@ -121,8 +122,8 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChang
          if (!playerRef.current || typeof playerRef.current.getCurrentTime !== 'function') return;
 
          const currentTime = playerRef.current.getCurrentTime() || 0;
-         const duration    = playerRef.current.getDuration()    || 1;
-         const percent     = Math.min((currentTime / duration) * 100, 100);
+         const duration = playerRef.current.getDuration() || 1;
+         const percent = Math.min((currentTime / duration) * 100, 100);
 
          if (currentTime > maxWatchedRef.current) {
             maxWatchedRef.current = currentTime;
@@ -176,13 +177,13 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChang
    useEffect(() => {
       const forceSave = () => {
          if (playerRef.current && playerRef.current.getCurrentTime && playerRef.current.getDuration) {
-             const currentTime = playerRef.current.getCurrentTime();
-             const duration = playerRef.current.getDuration();
-             if (duration > 0) {
-                 const percent = (currentTime / duration) * 100;
-                 const status = percent >= 90 ? 'Hoàn thành' : percent > 0 ? 'Đang học' : 'Chưa học';
-                 saveProgressToServer(currentTime, percent, status);
-             }
+            const currentTime = playerRef.current.getCurrentTime();
+            const duration = playerRef.current.getDuration();
+            if (duration > 0) {
+               const percent = (currentTime / duration) * 100;
+               const status = percent >= 90 ? 'Hoàn thành' : percent > 0 ? 'Đang học' : 'Chưa học';
+               saveProgressToServer(currentTime, percent, status);
+            }
          }
       };
 
@@ -191,7 +192,7 @@ const VideoPlayer = ({ url, lessonId, courseId, moduleId, token, onProgressChang
          window.removeEventListener('beforeunload', forceSave);
          forceSave(); // Kích hoạt lưu ngay khi component bị hủy (người dùng chuyển trang)
       };
-   // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
    }, [lessonId, courseId, moduleId, token]);
 
    // ── Tracking cho video file .mp4 ─────────────────────────────────────────
@@ -252,7 +253,7 @@ const Lesson = () => {
    const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
    const [leftOpen, setLeftOpen] = useState(() => getViewportWidth() >= MOBILE_BREAKPOINT);
    const [rightOpen, setRightOpen] = useState(() => getViewportWidth() >= RESOURCE_BREAKPOINT);
-   
+
    const [course, setCourse] = useState(null);
    const [, setModules] = useState([]);
    const [activeModule, setActiveModule] = useState(null);
@@ -273,7 +274,7 @@ const Lesson = () => {
       // Hàm cập nhật kích thước
       const handleResize = () => setViewportWidth(window.innerWidth);
       window.addEventListener('resize', handleResize);
-      
+
       // Đồng bộ ngay khi load trang
       handleResize();
 
@@ -327,11 +328,11 @@ const Lesson = () => {
             if (courseModules.length > 0) {
                const firstModule = courseModules[0];
                setActiveModule(firstModule);
-               
+
                // 3. Fetch Lessons for the first module
                const moduleLessons = await api.getLessonsByModule(token, firstModule.id);
                setLessons(moduleLessons);
-               
+
                if (moduleLessons.length > 0) {
                   setSelectedLessonId(moduleLessons[0].id);
                }
@@ -493,7 +494,7 @@ const Lesson = () => {
       const now = Date.now();
 
       if (
-         (currentPercent >= lastSync.percent + 10 || (completed && !lastSync.completed)) && 
+         (currentPercent >= lastSync.percent + 10 || (completed && !lastSync.completed)) &&
          (now - lastSync.time > 5000)
       ) {
          lastSyncRef.current[lessonId] = { percent: currentPercent, time: now, completed };
@@ -535,9 +536,26 @@ const Lesson = () => {
 
    if (!selectedLesson) {
       return (
-         <div className="lesson-error">
-            <h2>Không tìm thấy bài học</h2>
-            <button onClick={() => navigate('/roadmap')}>Quay lại Lộ trình</button>
+         <div className="lesson-error-container">
+            <div className="lesson-error-card">
+               <div className="lesson-error-illustration">
+                  <img src={errorIllustration} alt="Không tìm thấy bài học" />
+               </div>
+               <h2 className="lesson-error-title">Không tìm thấy bài học</h2>
+               <p className="lesson-error-desc">
+                  Xin lỗi, chúng tôi không thể tìm thấy nội dung bài học này hoặc bài học chưa được cập nhật.
+               </p>
+               <div className="lesson-error-actions">
+                  <button className="btn-map-2" onClick={() => navigate('/roadmap')}>
+                     <Map size={20} />
+                     <span>Xem lộ trình</span>
+                  </button>
+                  <button className="btn-back-2" onClick={() => navigate(-1)}>
+                     <ArrowLeftIcon size={20} />
+                     <span>Quay lại</span>
+                  </button>
+               </div>
+            </div>
          </div>
       );
    }
@@ -620,7 +638,7 @@ const Lesson = () => {
                               onClick={() => navigate(`/course/${courseId}?from=lesson`)}
                               style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'none', border: 'none', color: '#2563eb', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem', padding: 0, flexShrink: 0 }}
                            >
-                              <ArrowLeft size={14} /> Khóa học
+                              <ArrowLeftIcon size={14} /> Khóa học
                            </button>
                            <span style={{ color: '#cbd5e1', flexShrink: 0 }}>/</span>
                         </>
@@ -640,8 +658,8 @@ const Lesson = () => {
                   >
                      <FileText size={20} />
                   </button>
-                  <button 
-                     type="button" 
+                  <button
+                     type="button"
                      className="btn lc-btn-prev"
                      onClick={handlePrev}
                      disabled={!hasPrev}
@@ -649,8 +667,8 @@ const Lesson = () => {
                   >
                      <ChevronLeft size={16} className="icon-mr-4" /> Trước
                   </button>
-                  <button 
-                     type="button" 
+                  <button
+                     type="button"
                      className={`btn btn-primary lc-btn-next ${isNextDisabled ? 'disabled' : ''}`}
                      onClick={handleNext}
                      disabled={isNextDisabled}

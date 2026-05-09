@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Play, CheckCircle, Lock, ChevronRight } from 'lucide-react';
+import { Play, CheckCircle, Lock, ChevronRight, Map, ArrowLeft } from 'lucide-react';
 import { api } from '../../services/Api';
 import { useAuth } from '../../context/AuthContext';
+import errorIllustration from '../../image/fix1.png';
 import '../../css/CourseDetail.css';
 
 const COURSE_GRADIENTS = {
@@ -49,10 +50,10 @@ const CourseDetail = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: 36, height: 36, border: '3px solid #e2e8f0', borderTopColor: '#2563eb', borderRadius: '50%', animation: 'spin 0.7s linear infinite', margin: '0 auto 1rem' }} />
-          <p style={{ color: '#64748b' }}>Đang tải khóa học...</p>
+      <div className="cdp-loading-container">
+        <div className="cdp-loading-card">
+          <div className="cdp-spinner" />
+          <p>Đang chuẩn bị nội dung khóa học...</p>
         </div>
       </div>
     );
@@ -60,9 +61,26 @@ const CourseDetail = () => {
 
   if (error || !course) {
     return (
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem' }}>
-        <p style={{ color: '#ef4444' }}>{error || 'Khóa học không tồn tại.'}</p>
-        <button className="cdp-breadcrumb-tag" onClick={() => navigate('/roadmap')}>← Quay lại</button>
+      <div className="lesson-error-container">
+        <div className="lesson-error-card">
+          <div className="lesson-error-illustration">
+             <img src={errorIllustration} alt="Khóa học không tồn tại" />
+          </div>
+          <h2 className="lesson-error-title">Ôi hỏng!</h2>
+          <p className="lesson-error-desc">
+            {error || 'Khóa học bạn đang tìm kiếm không tồn tại hoặc đã bị gỡ bỏ.'}
+          </p>
+          <div className="lesson-error-actions">
+            <button className="btn-xem-lo-trinh" onClick={() => navigate('/roadmap')}>
+               <Map size={20} />
+               <span>Xem lộ trình</span>
+            </button>
+            <button className="btn-quay-lai" onClick={() => navigate(-1)}>
+               <ArrowLeft size={20} />
+               <span>Quay lại</span>
+            </button>
+          </div>
+        </div>
       </div>
     );
   }

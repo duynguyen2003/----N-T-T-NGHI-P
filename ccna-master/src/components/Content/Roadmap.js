@@ -9,10 +9,13 @@ import {
   AlertCircle,
   BookOpen,
   ChevronRight,
+  Map,
+  ArrowLeft
 } from 'lucide-react';
 import { api } from '../../services/Api.js';
 import { useAuth } from '../../context/AuthContext';
 import '../../css/Roadmap.css';
+import errorIllustration from '../../image/fix1.png';
 
 // Màu gradient cho từng khóa học
 const COURSE_GRADIENTS = {
@@ -59,10 +62,10 @@ export const Roadmap = () => {
 
   if (loading) {
     return (
-      <div className="roadmap-wrapper" style={{ paddingTop: '6rem', paddingBottom: '6rem' }}>
-        <div style={{ textAlign: 'center' }}>
-          <Loader2 size={32} className="spin" color="#2563eb" style={{ margin: '0 auto 1rem', display: 'block' }} />
-          <p style={{ color: '#64748b' }}>Đang tải lộ trình...</p>
+      <div className="cdp-loading-container">
+        <div className="cdp-loading-card">
+          <div className="cdp-spinner" />
+          <p>Đang tải lộ trình học tập...</p>
         </div>
       </div>
     );
@@ -70,10 +73,23 @@ export const Roadmap = () => {
 
   if (error) {
     return (
-      <div className="roadmap-wrapper" style={{ paddingTop: '4rem', paddingBottom: '4rem' }}>
-        <div style={{ textAlign: 'center' }}>
-          <AlertCircle size={40} color="#ef4444" style={{ margin: '0 auto 1rem', display: 'block' }} />
-          <p style={{ color: '#ef4444' }}>{error}</p>
+      <div className="lesson-error-container">
+        <div className="lesson-error-card">
+          <div className="lesson-error-illustration">
+             <img src={errorIllustration} alt="Lỗi tải dữ liệu" />
+          </div>
+          <h2 className="lesson-error-title">Lỗi hệ thống</h2>
+          <p className="lesson-error-desc">{error}</p>
+          <div className="lesson-error-actions">
+            <button className="btn-xem-lo-trinh" onClick={() => window.location.reload()}>
+               <Map size={20} />
+               <span>Thử lại ngay</span>
+            </button>
+            <button className="btn-quay-lai" onClick={() => navigate(-1)}>
+               <ArrowLeft size={20} />
+               <span>Quay lại</span>
+            </button>
+          </div>
         </div>
       </div>
     );
