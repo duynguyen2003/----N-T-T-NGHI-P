@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const { getPrisma } = require('../config/database');
+const { sendResetPasswordEmail } = require('../config/email');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -129,7 +130,7 @@ module.exports.login = async (req, res, next) => {
     // 4. Generate JWT
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'ccna_master_secret_2024',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
@@ -200,8 +201,13 @@ module.exports.forgotPassword = async (req, res, next) => {
 
     const resetUrl = buildResetPasswordUrl(rawToken);
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[forgot-password] Reset link for ${user.email}: ${resetUrl}`);
+    // 6. Gửi email khôi phục mật khẩu thực tế
+    try {
+      await sendResetPasswordEmail(user.email, user.fullName, resetUrl);
+    } catch (emailError) {
+      // Nếu lỗi gửi email, chúng ta vẫn trả về 200 để tránh bị lộ email tồn tại (Security Best Practice)
+      // nhưng log lỗi để Admin biết
+      console.error('Email sending failed, but continuing response:', emailError);
     }
 
     return res.json({
@@ -332,6 +338,27 @@ module.exports.getProfile = async (req, res, next) => {
 };
 
 /**
+ * @desc    Logout user
+ * @route   POST /api/auth/logout
+ * @access  Private
+ */
+module.exports.logout = async (req, res, next) => {
+  try {
+    // If using refresh tokens in DB, delete them here:
+    if (req.user && req.user.id) {
+      await prisma.refreshToken.deleteMany({
+        where: { userId: req.user.id }
+      });
+    }
+
+    res.json({ message: 'Đăng xuất thành công' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    next(error);
+  }
+};
+
+/**
  * @desc    Authenticate user via Google
  * @route   POST /api/auth/google
  * @access  Public
@@ -403,7 +430,7 @@ module.exports.googleLogin = async (req, res, next) => {
     // Generate our system JWT
     const accessToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'ccna_master_secret_2024',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
